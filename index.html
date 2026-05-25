@@ -685,59 +685,296 @@ function setBranchFilter(id) {
   renderBorrowers();
 }
 
-// ── ประวัติชำระรายลูกค้า ──
+// ── โปรไฟล์ลูกค้าแบบเต็ม ──
 function showBorrowerHistory(bid) {
+  const b = getBorrower(bid);
+  if(!b) return;
+  _renderBorrowerProfile(bid);
+}
+
+function _renderBorrowerProfile(bid) {
   const b = getBorrower(bid);
   if(!b) return;
   const bLoans = LOANS.filter(l=>l.borrower_id===bid);
   const allPays = bLoans.flatMap(l=>PAYMENTS.filter(p=>p.loan_id===l.id).map(p=>({...p,loan:l})));
-  allPays.sort((a,b)=>new Date(b.payment_date)-new Date(a.payment_date));
+  allPays.sort((a,z)=>new Date(z.payment_date)-new Date(a.payment_date));
+  const br=getBranch(b.branch_id);
+  const creator=getEmployee(b.created_by);
+  const activeLoans=bLoans.filter(l=>l.status==='active');
 
-  const loanSummary = bLoans.map(l=>{
+  const loanCards = bLoans.map(l=>{
     const d=daysDiff(l.start_date);
     const interest=calcInt(l.principal,l.interest_rate,d);
     const total=Number(l.principal)+interest;
     const rem=total-Number(l.total_paid);
+    const pct=Math.min(100,(Number(l.total_paid)/total)*100).toFixed(0);
     const lPays=PAYMENTS.filter(p=>p.loan_id===l.id);
-    return `<div style="background:rgba(255,255,255,0.03);border-radius:12px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:13px;font-weight:600">เงินต้น ฿${fmt(l.principal)} · ${l.interest_rate}%/วัน</span>
-        <span class="badge ${l.status==='active'?'badge-green':l.status==='overdue'?'badge-red':'badge-yellow'}" style="font-size:10px">${l.status==='active'?'ใช้งาน':l.status==='overdue'?'เกินกำหนด':'ปิดแล้ว'}</span>
+    const isOverdue=l.due_date&&new Date(l.due_date)<new Date()&&l.status==='active';
+    const actions=l.status==='active'?`
+      <div class="action-row" style="margin-top:10px">
+        <button class="btn btn-secondary btn-sm" onclick="confirmCloseLoanProfile('${l.id}','${bid}')">🔒 ปิดสัญญา</button>
+        <button class="btn btn-primary btn-sm" style="flex:1" onclick="showPaymentProfile('${l.id}','${bid}')">💵 บันทึกชำระ</button>
+      </div>` : `<div style="color:var(--text3);font-size:12px;margin-top:8px">ชำระแล้ว ${lPays.length} ครั้ง · ปิดแล้ว</div>`;
+    return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isOverdue?'rgba(239,68,68,0.25)':'rgba(255,255,255,0.06)'};border-radius:12px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div>
+          <div style="font-size:13px;font-weight:600">฿${fmt(l.principal)} · ${l.interest_rate}%/วัน</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">เริ่ม ${l.start_date}${l.due_date?' · ครบ '+l.due_date:''} · ${d} วัน</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:15px;font-weight:700;color:${rem<=0?'var(--green2)':'var(--yellow2)'}">฿${fmt(rem)}</div>
+          <span class="badge ${l.status==='active'?(isOverdue?'badge-red':'badge-green'):l.status==='overdue'?'badge-red':'badge-yellow'}" style="font-size:10px">${l.status==='active'?(isOverdue?'เกินกำหนด':'ใช้งาน'):l.status==='overdue'?'เกินกำหนด':'ปิดแล้ว'}</span>
+        </div>
       </div>
-      <div style="display:flex;gap:12px;font-size:12px;color:var(--text3)">
-        <span>เริ่ม ${l.start_date}</span>
-        <span>ชำระ ${lPays.length} ครั้ง</span>
-        <span style="color:${rem<=0?'var(--green2)':'var(--red2)'}">คงเหลือ ฿${fmt(rem)}</span>
-      </div>
+      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%;${isOverdue?'background:linear-gradient(90deg,var(--red),var(--red2))':''}"></div></div>
+      <div class="progress-label">ชำระแล้ว ${pct}% · ${lPays.length} ครั้ง</div>
+      ${actions}
     </div>`;
   }).join('');
 
   const payHistory = allPays.length===0
     ? '<div style="color:var(--text3);text-align:center;padding:20px">ยังไม่มีประวัติชำระ</div>'
-    : allPays.map(p=>{
+    : allPays.slice(0,20).map(p=>{
         const who=getEmployee(p.created_by);
         return `<div class="pay-item">
           <div>
             <div style="font-size:14px;font-weight:600">${p.payment_date}</div>
-            <div class="pay-who">👤 กดโดย: ${who?.name||'ไม่ระบุ'}${p.note?` · ${p.note}`:''}</div>
+            <div class="pay-who">👤 ${who?.name||'ไม่ระบุ'}${p.note?` · ${p.note}`:''}</div>
           </div>
           <div style="color:var(--green2);font-weight:800;font-size:16px">+฿${fmt(p.amount)}</div>
         </div>`;
       }).join('');
 
-  const br=getBranch(b.branch_id);
-  const creator=getEmployee(b.created_by);
-  openSheet(`ประวัติ — ${b.name}`,`
-    <div style="margin-bottom:14px">
-      <div style="color:var(--text3);font-size:12px;margin-bottom:4px">${b.phone||'ไม่มีเบอร์'}${b.id_card?' · 🪪 '+b.id_card:''}</div>
-      ${br?`<div style="color:var(--text3);font-size:12px">🏠 สาขา: ${br.name}</div>`:''}
-      ${creator?`<div style="color:var(--text3);font-size:12px">👤 รับโดย: ${creator.name}</div>`:''}
+  openSheet(`${b.name}`,`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div class="avatar" style="width:50px;height:50px;font-size:22px">${b.name[0]}</div>
+      <div style="flex:1">
+        <div style="font-size:17px;font-weight:700">${b.name}</div>
+        <div style="color:var(--text3);font-size:12px;margin-top:3px">${b.phone||'ไม่มีเบอร์'}${b.id_card?' · 🪪 '+b.id_card:''}</div>
+        ${b.address?`<div style="color:var(--text3);font-size:12px;margin-top:2px">📍 ${b.address}</div>`:''}
+        ${br?`<div style="color:var(--text3);font-size:12px;margin-top:2px">🏠 ${br.name}</div>`:''}
+        ${creator?`<div style="color:var(--text3);font-size:11px;margin-top:2px">👤 รับโดย: ${creator.name}</div>`:''}
+      </div>
     </div>
-    <div class="section-title">สัญญา (${bLoans.length} รายการ)</div>
-    ${loanSummary||'<div style="color:var(--text3);font-size:13px">ยังไม่มีสัญญา</div>'}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px" onclick="showEditBorrower('${b.id}')">✏️<br><span style="font-size:10px;color:var(--text3)">แก้ไข</span></button>
+      ${b.phone?`<a href="tel:${b.phone}" style="text-decoration:none"><button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px;width:100%">📞<br><span style="font-size:10px;color:var(--text3)">โทรหา</span></button></a>`:`<button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px;opacity:0.4" disabled>📞<br><span style="font-size:10px;color:var(--text3)">โทรหา</span></button>`}
+      <button class="btn btn-danger btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px" onclick="showDeleteBorrower('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️<br><span style="font-size:10px">ลบ</span></button>
+    </div>
+    <button class="btn btn-primary" style="margin-bottom:14px;border-radius:12px" onclick="showAddLoanForBorrower('${b.id}')">＋ สร้างสัญญากู้ใหม่</button>
+    <div class="section-title">สัญญา (${bLoans.length} รายการ · active ${activeLoans.length})</div>
+    ${loanCards||'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">ยังไม่มีสัญญา</div>'}
     <div class="section-title">ประวัติชำระ (${allPays.length} รายการ)</div>
     ${payHistory}
   `);
+}
+
+// ── เพิ่มสัญญาจากหน้า Profile ──
+function showAddLoanForBorrower(bid) {
+  const b = getBorrower(bid);
+  openSheet('สร้างสัญญากู้ใหม่',`
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px">
+      <div style="font-size:13px;color:var(--primary2);font-weight:600">👤 ${b?.name}</div>
+    </div>
+    <div class="field"><label>จำนวนเงินกู้ (บาท) *</label><input class="input" id="l-principal" placeholder="5000" inputmode="numeric" oninput="updateCalc()"></div>
+    <div class="field"><label>ดอกเบี้ยรายวัน (%)</label><input class="input" id="l-rate" value="2" inputmode="decimal" oninput="updateCalc()"></div>
+    <div class="field"><label>วันเริ่มกู้</label><input class="input" id="l-start" type="date" value="${today()}"></div>
+    <div class="field"><label>วันครบกำหนด</label><input class="input" id="l-due" type="date"></div>
+    <div class="calc-box" id="l-calc" style="display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
+      <button class="btn btn-primary" id="save-loan-btn" onclick="saveLoanForBorrower('${bid}')">บันทึกสัญญา</button>
+    </div>`);
+}
+
+async function saveLoanForBorrower(bid) {
+  const principal=document.getElementById('l-principal').value;
+  if(!principal||Number(principal)<=0) return showToast('กรุณากรอกจำนวนเงินให้ถูกต้อง','error');
+  const rate=Number(document.getElementById('l-rate').value||2);
+  if(rate<=0||rate>10) return showToast('ดอกเบี้ยต้องอยู่ระหว่าง 0.1–10%','error');
+  const startDate=document.getElementById('l-start').value||today();
+  const dueDate=document.getElementById('l-due').value||null;
+  if(dueDate&&dueDate<=startDate) return showToast('วันครบกำหนดต้องหลังวันเริ่มกู้','error');
+  const btn=document.getElementById('save-loan-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
+  showLoading('กำลังบันทึก...');
+  try {
+    const rows=await sbInsert('loans',{
+      borrower_id:bid, principal:Number(principal),
+      interest_rate:rate, start_date:startDate,
+      due_date:dueDate, status:'active', total_paid:0, created_by:currentUser.id
+    });
+    LOANS.unshift(rows[0]);
+    showToast('สร้างสัญญาแล้ว');
+    _renderBorrowerProfile(bid);
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึกสัญญา';} }
+  finally{ hideLoading(); }
+}
+
+// ── บันทึกชำระจาก Profile ──
+function showPaymentProfile(lid, bid) {
+  payLoan=getLoan(lid);
+  const b=getBorrower(payLoan.borrower_id);
+  const d=daysDiff(payLoan.start_date);
+  const interest=calcInt(payLoan.principal,payLoan.interest_rate,d);
+  const rem=Number(payLoan.principal)+interest-Number(payLoan.total_paid);
+  openSheet(`บันทึกชำระ — ${b?.name}`,`
+    <div class="calc-box"><p>คงเหลือ: <strong style="color:var(--red2)">฿${fmt(rem)}</strong></p><p style="font-size:12px;margin-top:4px">เงินต้น ฿${fmt(payLoan.principal)} · ${payLoan.interest_rate}%/วัน · ${d} วัน</p></div>
+    <div class="field"><label>จำนวนที่ชำระ (บาท) *</label><input class="input" id="pay-amt" placeholder="500" inputmode="numeric" oninput="_updatePaySummary(${rem})"></div>
+    <div class="field"><label>วันที่ชำระ</label><input class="input" id="pay-date" type="date" value="${today()}"></div>
+    <div class="field"><label>หมายเหตุ</label><input class="input" id="pay-note" placeholder="เช่น ชำระงวด 1"></div>
+    <div id="pay-summary" style="display:none;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--green2)"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
+      <button class="btn btn-primary" id="confirm-pay-btn" onclick="savePaymentProfile('${bid}')" disabled style="opacity:0.5">ยืนยันชำระ</button>
+    </div>`);
+}
+
+function _updatePaySummary(rem) {
+  const amt=Number(document.getElementById('pay-amt')?.value||0);
+  const btn=document.getElementById('confirm-pay-btn');
+  const box=document.getElementById('pay-summary');
+  if(amt>0&&amt<=rem*2) {
+    const date=document.getElementById('pay-date')?.value||today();
+    box.style.display='block';
+    box.innerHTML=`✅ ยืนยันชำระ ฿${fmt(amt)} · วันที่ ${date}<br><span style="font-size:12px;color:var(--text2)">คงเหลือหลังชำระ ฿${fmt(Math.max(0,rem-amt))}</span>`;
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  } else {
+    box.style.display='none';
+    if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+  }
+}
+
+async function savePaymentProfile(bid) {
+  const amt=Number(document.getElementById('pay-amt').value);
+  if(!amt||amt<=0) return showToast('กรุณากรอกจำนวนเงิน','error');
+  const btn=document.getElementById('confirm-pay-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
+  showLoading('กำลังบันทึก...');
+  try {
+    const newPaid=Number(payLoan.total_paid)+amt;
+    const [payRow]=await Promise.all([
+      sbInsert('payments',{loan_id:payLoan.id,amount:amt,payment_date:document.getElementById('pay-date').value||today(),note:document.getElementById('pay-note').value.trim(),created_by:currentUser.id}),
+      sbUpdate('loans',{total_paid:newPaid},`id=eq.${payLoan.id}`)
+    ]);
+    PAYMENTS.unshift(payRow[0]||{id:'p'+Date.now(),loan_id:payLoan.id,amount:amt,payment_date:today(),created_by:currentUser.id});
+    payLoan.total_paid=newPaid;
+    showToast('บันทึกชำระแล้ว');
+    _renderBorrowerProfile(bid);
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='ยืนยันชำระ';} }
+  finally{ hideLoading(); }
+}
+
+// ── ปิดสัญญาจาก Profile (มียืนยัน) ──
+function confirmCloseLoanProfile(lid, bid) {
+  const l=getLoan(lid);
+  const d=daysDiff(l.start_date);
+  const interest=calcInt(l.principal,l.interest_rate,d);
+  const rem=Number(l.principal)+interest-Number(l.total_paid);
+  openSheet('ยืนยันปิดสัญญา',`
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:8px">⚠️ การปิดสัญญาไม่สามารถยกเลิกได้</div>
+      <div style="font-size:13px;color:var(--text2)">เงินต้น: ฿${fmt(l.principal)}</div>
+      <div style="font-size:13px;color:var(--text2)">ดอกเบี้ยสะสม: ฿${fmt(interest)}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red2);margin-top:8px">ยอดคงเหลือ: ฿${fmt(rem)}</div>
+    </div>
+    <div class="field">
+      <label>พิมพ์ "ยืนยัน" เพื่อปิดสัญญา</label>
+      <input class="input" id="close-confirm-input" placeholder="ยืนยัน" oninput="
+        const ok=this.value==='ยืนยัน';
+        const btn=document.getElementById('close-loan-btn');
+        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
+      ">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
+      <button class="btn btn-danger" id="close-loan-btn" onclick="doCloseLoanProfile('${lid}','${bid}')" disabled style="opacity:0.5">🔒 ปิดสัญญา</button>
+    </div>`);
+}
+
+async function doCloseLoanProfile(lid, bid) {
+  const btn=document.getElementById('close-loan-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังปิด...';}
+  showLoading('กำลังอัปเดต...');
+  try {
+    await sbUpdate('loans',{status:'closed'},`id=eq.${lid}`);
+    const l=getLoan(lid); if(l) l.status='closed';
+    showToast('ปิดสัญญาแล้ว');
+    _renderBorrowerProfile(bid);
+  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); if(btn){btn.disabled=false;btn.textContent='🔒 ปิดสัญญา';} }
+  finally{ hideLoading(); }
+}
+
+// ── แก้ไขข้อมูลลูกค้า ──
+function showEditBorrower(bid) {
+  const b=getBorrower(bid);
+  if(!b) return;
+  const branchOpts = BRANCHES.map(br=>`<option value="${br.id}" ${b.branch_id===br.id?'selected':''}>${br.name}</option>`).join('');
+  const branchField = currentUser.role!=='staff' && BRANCHES.length>0
+    ? `<div class="field"><label>สาขา</label><select class="input" id="eb-branch"><option value="">-- เลือกสาขา --</option>${branchOpts}</select></div>` : '';
+  openSheet('แก้ไขข้อมูลลูกค้า',`
+    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="eb-name" value="${b.name}"></div>
+    <div class="field"><label>เบอร์โทร</label><input class="input" id="eb-phone" value="${b.phone||''}" type="tel"></div>
+    <div class="field"><label>เลขบัตรประชาชน</label><input class="input" id="eb-idcard" value="${b.id_card||''}" maxlength="13" inputmode="numeric"></div>
+    <div class="field"><label>ที่อยู่</label><input class="input" id="eb-addr" value="${b.address||''}"></div>
+    <div class="field"><label>หมายเหตุ</label><input class="input" id="eb-note" value="${b.note||''}"></div>
+    ${branchField}
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
+      <button class="btn btn-primary" id="save-edit-btn" onclick="saveEditBorrower('${bid}')">บันทึก</button>
+    </div>`);
+}
+
+async function saveEditBorrower(bid) {
+  const name=document.getElementById('eb-name').value.trim();
+  if(!name) return showToast('กรุณากรอกชื่อ','error');
+  const btn=document.getElementById('save-edit-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
+  let branch_id=getBorrower(bid)?.branch_id||null;
+  if(currentUser.role!=='staff'){const s=document.getElementById('eb-branch');if(s)branch_id=s.value||null;}
+  showLoading('กำลังบันทึก...');
+  try {
+    const updated={name,phone:document.getElementById('eb-phone').value.trim(),id_card:document.getElementById('eb-idcard').value.trim(),address:document.getElementById('eb-addr').value.trim(),note:document.getElementById('eb-note').value.trim(),branch_id};
+    await sbUpdate('borrowers',updated,`id=eq.${bid}`);
+    const idx=BORROWERS.findIndex(x=>x.id===bid);
+    if(idx>=0) Object.assign(BORROWERS[idx],updated);
+    showToast('แก้ไขข้อมูลแล้ว');
+    _renderBorrowerProfile(bid);
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
+  finally{ hideLoading(); }
+}
+
+// ── ลบลูกค้า (ต้องพิมพ์ชื่อยืนยัน) ──
+function showDeleteBorrower(bid, bname) {
+  openSheet('ลบลูกค้า',`
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:6px">⚠️ คำเตือน: ลบไม่ได้ย้อนกลับ</div>
+      <div style="font-size:13px;color:var(--text2)">การลบจะลบข้อมูลลูกค้า <strong>${bname}</strong> ออกจากระบบ สัญญาและประวัติชำระที่มีอยู่จะยังคงอยู่</div>
+    </div>
+    <div class="field">
+      <label>พิมพ์ชื่อ "<strong>${bname}</strong>" เพื่อยืนยัน</label>
+      <input class="input" id="del-confirm-input" placeholder="${bname}" oninput="
+        const ok=this.value==='${bname.replace(/'/g,"\\'")}';
+        const btn=document.getElementById('del-borrower-btn');
+        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
+      ">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
+      <button class="btn btn-danger" id="del-borrower-btn" onclick="doDeleteBorrower('${bid}')" disabled style="opacity:0.5">🗑️ ลบลูกค้า</button>
+    </div>`);
+}
+
+async function doDeleteBorrower(bid) {
+  const btn=document.getElementById('del-borrower-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังลบ...';}
+  showLoading('กำลังลบ...');
+  try {
+    await sbDelete('borrowers',`id=eq.${bid}`);
+    BORROWERS=BORROWERS.filter(x=>x.id!==bid);
+    closeSheet(); renderBorrowers(); showToast('ลบลูกค้าแล้ว');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='🗑️ ลบลูกค้า';} }
+  finally{ hideLoading(); }
 }
 
 function showAddBorrower() {
@@ -868,30 +1105,63 @@ async function saveLoan() {
   const bid=document.getElementById('l-bid').value;
   const principal=document.getElementById('l-principal').value;
   if(!bid) return showToast('กรุณาเลือกลูกหนี้','error');
-  if(!principal) return showToast('กรุณากรอกจำนวนเงิน','error');
+  if(!principal||Number(principal)<=0) return showToast('กรุณากรอกจำนวนเงินให้ถูกต้อง','error');
+  const rate=Number(document.getElementById('l-rate').value||2);
+  if(rate<=0||rate>10) return showToast('ดอกเบี้ยต้องอยู่ระหว่าง 0.1–10%','error');
+  const startDate=document.getElementById('l-start').value||today();
+  const dueDate=document.getElementById('l-due').value||null;
+  if(dueDate&&dueDate<=startDate) return showToast('วันครบกำหนดต้องหลังวันเริ่มกู้','error');
+  const btn=document.querySelector('#sheet-body .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
   showLoading('กำลังบันทึก...');
   try {
     const rows=await sbInsert('loans',{
       borrower_id:bid, principal:Number(principal),
-      interest_rate:Number(document.getElementById('l-rate').value||2),
-      start_date:document.getElementById('l-start').value||today(),
-      due_date:document.getElementById('l-due').value||null,
-      status:'active', total_paid:0, created_by:currentUser.id
+      interest_rate:rate, start_date:startDate,
+      due_date:dueDate, status:'active', total_paid:0, created_by:currentUser.id
     });
     LOANS.unshift(rows[0]);
     closeSheet(); renderLoans(); showToast('สร้างสัญญาแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึกสัญญา';} }
   finally{ hideLoading(); }
 }
 
-async function confirmCloseLoan(lid) {
-  if(!confirm('ต้องการปิดสัญญานี้?')) return;
+function confirmCloseLoan(lid) {
+  const l=getLoan(lid);
+  const b=getBorrower(l.borrower_id);
+  const d=daysDiff(l.start_date);
+  const interest=calcInt(l.principal,l.interest_rate,d);
+  const rem=Number(l.principal)+interest-Number(l.total_paid);
+  openSheet('ยืนยันปิดสัญญา',`
+    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:8px">⚠️ การปิดสัญญาไม่สามารถยกเลิกได้</div>
+      <div style="font-size:13px;color:var(--text2)">ลูกค้า: <strong>${b?.name||'ไม่ระบุ'}</strong></div>
+      <div style="font-size:13px;color:var(--text2)">เงินต้น: ฿${fmt(l.principal)} · ดอกเบี้ย: ฿${fmt(interest)}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red2);margin-top:8px">ยอดคงเหลือ: ฿${fmt(rem)}</div>
+    </div>
+    <div class="field">
+      <label>พิมพ์ "ยืนยัน" เพื่อปิดสัญญา</label>
+      <input class="input" id="close-confirm-input" placeholder="ยืนยัน" oninput="
+        const ok=this.value==='ยืนยัน';
+        const btn=document.getElementById('close-loan-btn');
+        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
+      ">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
+      <button class="btn btn-danger" id="close-loan-btn" onclick="doCloseLoan('${lid}')" disabled style="opacity:0.5">🔒 ปิดสัญญา</button>
+    </div>`);
+}
+
+async function doCloseLoan(lid) {
+  const btn=document.getElementById('close-loan-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังปิด...';}
   showLoading('กำลังอัปเดต...');
   try {
     await sbUpdate('loans',{status:'closed'},`id=eq.${lid}`);
     const l=getLoan(lid); if(l) l.status='closed';
-    renderLoans(); showToast('ปิดสัญญาแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); }
+    closeSheet(); renderLoans(); showToast('ปิดสัญญาแล้ว');
+  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='🔒 ปิดสัญญา';} }
   finally{ hideLoading(); }
 }
 
@@ -901,20 +1171,38 @@ function showPayment(lid) {
   const d=daysDiff(payLoan.start_date);
   const interest=calcInt(payLoan.principal,payLoan.interest_rate,d);
   const rem=Number(payLoan.principal)+interest-Number(payLoan.total_paid);
-  openSheet(`ชำระ — ${b?.name}`,`
+  openSheet(`บันทึกชำระ — ${b?.name}`,`
     <div class="calc-box"><p>คงเหลือ: <strong style="color:var(--red2)">฿${fmt(rem)}</strong></p></div>
-    <div class="field"><label>จำนวนที่ชำระ (บาท) *</label><input class="input" id="pay-amt" placeholder="500" inputmode="numeric"></div>
+    <div class="field"><label>จำนวนที่ชำระ (บาท) *</label><input class="input" id="pay-amt" placeholder="500" inputmode="numeric" oninput="_updatePaySummaryMain(${rem})"></div>
     <div class="field"><label>วันที่ชำระ</label><input class="input" id="pay-date" type="date" value="${today()}"></div>
     <div class="field"><label>หมายเหตุ</label><input class="input" id="pay-note" placeholder="เช่น ชำระงวด 1"></div>
+    <div id="pay-summary" style="display:none;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--green2)"></div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="savePayment()">บันทึกชำระ</button>
+      <button class="btn btn-primary" id="confirm-pay-btn" onclick="savePayment()" disabled style="opacity:0.5">ยืนยันชำระ</button>
     </div>`);
+}
+
+function _updatePaySummaryMain(rem) {
+  const amt=Number(document.getElementById('pay-amt')?.value||0);
+  const btn=document.getElementById('confirm-pay-btn');
+  const box=document.getElementById('pay-summary');
+  if(amt>0&&amt<=rem*2){
+    const date=document.getElementById('pay-date')?.value||today();
+    box.style.display='block';
+    box.innerHTML=`✅ ยืนยันชำระ ฿${fmt(amt)} · วันที่ ${date}<br><span style="font-size:12px;color:var(--text2)">คงเหลือหลังชำระ ฿${fmt(Math.max(0,rem-amt))}</span>`;
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  } else {
+    box.style.display='none';
+    if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+  }
 }
 
 async function savePayment() {
   const amt=Number(document.getElementById('pay-amt').value);
-  if(!amt) return showToast('กรุณากรอกจำนวนเงิน','error');
+  if(!amt||amt<=0) return showToast('กรุณากรอกจำนวนเงิน','error');
+  const btn=document.getElementById('confirm-pay-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
   showLoading('กำลังบันทึก...');
   try {
     const newPaid=Number(payLoan.total_paid)+amt;
@@ -925,7 +1213,10 @@ async function savePayment() {
     PAYMENTS.unshift(payRow[0]||{id:'p'+Date.now(),loan_id:payLoan.id,amount:amt,payment_date:today(),created_by:currentUser.id});
     payLoan.total_paid=newPaid;
     closeSheet(); renderLoans(); showToast('บันทึกชำระแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error');
+    const btn=document.getElementById('confirm-pay-btn');
+    if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='ยืนยันชำระ';}
+  }
   finally{ hideLoading(); }
 }
 
@@ -1008,7 +1299,11 @@ function renderEmployees() {
           </div>
           <div style="color:var(--text3);font-size:12px">@${e.username}${e.phone?` · ${e.phone}`:''}</div>
         </div>
-        ${e.id!==currentUser.id?`<button class="btn btn-xs" style="color:${e.active?'var(--red2)':'var(--green2)'};border:1px solid ${e.active?'rgba(239,68,68,0.3)':'rgba(34,197,94,0.3)'};background:transparent" onclick="toggleEmp('${e.id}','${e.active}')">${e.active?'ปิด':'เปิด'}</button>`:''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-xs btn-secondary" onclick="showEditEmployee('${e.id}')">✏️ แก้ไข</button>
+        <button class="btn btn-xs" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.2);color:var(--yellow2)" onclick="showChangePassword('${e.id}','${e.name.replace(/'/g,"\\'")}')">🔑 เปลี่ยนรหัส</button>
+        ${e.id!==currentUser.id?`<button class="btn btn-xs" style="color:${e.active?'var(--red2)':'var(--green2)'};border:1px solid ${e.active?'rgba(239,68,68,0.3)':'rgba(34,197,94,0.3)'};background:transparent" onclick="toggleEmp('${e.id}','${e.active}')">${e.active?'🚫 ปิด':'✅ เปิด'}</button>`:''}
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
         <div style="text-align:center"><div style="font-size:10px;color:var(--text3)">รับลูกค้า</div><div style="font-size:15px;font-weight:800;color:var(--primary2)">${borrowersCreated}</div></div>
@@ -1104,15 +1399,18 @@ async function saveEmployee() {
   const username=document.getElementById('e-user').value.trim();
   const password=document.getElementById('e-pass').value;
   if(!name||!username||!password) return showToast('กรุณากรอกข้อมูลให้ครบ','error');
+  if(password.length<4) return showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
   if(EMPLOYEES.find(e=>e.username===username)) return showToast('ชื่อผู้ใช้นี้มีอยู่แล้ว','error');
   const branchSel=document.getElementById('e-branch');
   const branch_id=branchSel?branchSel.value||null:null;
+  const btn=document.querySelector('#sheet-body .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
   showLoading('กำลังบันทึก...');
   try {
     const rows=await sbInsert('employees',{name,username,password,role:selectedRole,phone:document.getElementById('e-phone').value.trim(),active:true,branch_id});
     EMPLOYEES.push(rows[0]);
     closeSheet(); renderEmployees(); showToast('เพิ่มพนักงานแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
   finally{ hideLoading(); }
 }
 
@@ -1124,6 +1422,86 @@ async function toggleEmp(id, active) {
     const e=EMPLOYEES.find(x=>x.id===id); if(e) e.active=newActive;
     renderEmployees(); showToast(newActive?'เปิดบัญชีแล้ว':'ปิดบัญชีแล้ว');
   } catch(e){ showToast('เกิดข้อผิดพลาด','error'); }
+  finally{ hideLoading(); }
+}
+
+function showEditEmployee(eid) {
+  const e=EMPLOYEES.find(x=>x.id===eid);
+  if(!e) return;
+  const branchOpts=BRANCHES.map(b=>`<option value="${b.id}" ${e.branch_id===b.id?'selected':''}>${b.name}</option>`).join('');
+  const branchField=BRANCHES.length>0
+    ?`<div class="field"><label>สาขา</label><select class="input" id="ee-branch"><option value="">-- ไม่ระบุสาขา --</option>${branchOpts}</select></div>`:'' ;
+  openSheet('แก้ไขข้อมูลพนักงาน',`
+    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="ee-name" value="${e.name}"></div>
+    <div class="field"><label>ชื่อผู้ใช้ *</label><input class="input" id="ee-user" value="${e.username}" autocapitalize="none"></div>
+    <div class="field"><label>เบอร์โทร</label><input class="input" id="ee-phone" value="${e.phone||''}" type="tel"></div>
+    ${branchField}
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
+      <button class="btn btn-primary" id="save-emp-btn" onclick="saveEditEmployee('${eid}')">บันทึก</button>
+    </div>`);
+}
+
+async function saveEditEmployee(eid) {
+  const name=document.getElementById('ee-name').value.trim();
+  const username=document.getElementById('ee-user').value.trim();
+  if(!name||!username) return showToast('กรุณากรอกข้อมูลให้ครบ','error');
+  const existing=EMPLOYEES.find(x=>x.username===username&&x.id!==eid);
+  if(existing) return showToast('ชื่อผู้ใช้นี้มีอยู่แล้ว','error');
+  const btn=document.getElementById('save-emp-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
+  const branchSel=document.getElementById('ee-branch');
+  const branch_id=branchSel?branchSel.value||null:EMPLOYEES.find(x=>x.id===eid)?.branch_id||null;
+  showLoading('กำลังบันทึก...');
+  try {
+    const updated={name,username,phone:document.getElementById('ee-phone').value.trim(),branch_id};
+    await sbUpdate('employees',updated,`id=eq.${eid}`);
+    const idx=EMPLOYEES.findIndex(x=>x.id===eid);
+    if(idx>=0) Object.assign(EMPLOYEES[idx],updated);
+    closeSheet(); renderEmployees(); showToast('แก้ไขข้อมูลพนักงานแล้ว');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
+  finally{ hideLoading(); }
+}
+
+function showChangePassword(eid, ename) {
+  openSheet(`เปลี่ยนรหัสผ่าน — ${ename}`,`
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--yellow2)">
+      🔑 เปลี่ยนรหัสผ่านให้ <strong>${ename}</strong>
+    </div>
+    <div class="field"><label>รหัสผ่านใหม่ *</label><input class="input" id="new-pass" type="password" placeholder="••••••••" oninput="_checkPassMatch()"></div>
+    <div class="field"><label>ยืนยันรหัสผ่านใหม่ *</label><input class="input" id="confirm-pass" type="password" placeholder="••••••••" oninput="_checkPassMatch()"></div>
+    <div id="pass-match-msg" style="font-size:13px;margin-bottom:12px;display:none"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
+      <button class="btn btn-primary" id="save-pass-btn" onclick="saveChangePassword('${eid}')" disabled style="opacity:0.5">🔑 บันทึกรหัสผ่าน</button>
+    </div>`);
+}
+
+function _checkPassMatch() {
+  const p1=document.getElementById('new-pass')?.value||'';
+  const p2=document.getElementById('confirm-pass')?.value||'';
+  const msg=document.getElementById('pass-match-msg');
+  const btn=document.getElementById('save-pass-btn');
+  if(!p1){msg.style.display='none';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
+  if(p1.length<4){msg.style.display='block';msg.style.color='var(--red2)';msg.textContent='❌ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
+  if(p2&&p1!==p2){msg.style.display='block';msg.style.color='var(--red2)';msg.textContent='❌ รหัสผ่านไม่ตรงกัน';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
+  if(p1===p2&&p1.length>=4){msg.style.display='block';msg.style.color='var(--green2)';msg.textContent='✅ รหัสผ่านตรงกัน';if(btn){btn.disabled=false;btn.style.opacity='1';}return;}
+  msg.style.display='none';if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+}
+
+async function saveChangePassword(eid) {
+  const pass=document.getElementById('new-pass').value;
+  const confirm=document.getElementById('confirm-pass').value;
+  if(!pass||pass.length<4) return showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
+  if(pass!==confirm) return showToast('รหัสผ่านไม่ตรงกัน','error');
+  const btn=document.getElementById('save-pass-btn');
+  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
+  showLoading('กำลังบันทึก...');
+  try {
+    await sbUpdate('employees',{password:pass},`id=eq.${eid}`);
+    const emp=EMPLOYEES.find(x=>x.id===eid); if(emp) emp.password=pass;
+    closeSheet(); renderEmployees(); showToast('เปลี่ยนรหัสผ่านแล้ว');
+  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='🔑 บันทึกรหัสผ่าน';} }
   finally{ hideLoading(); }
 }
 
