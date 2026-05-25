@@ -272,17 +272,16 @@ async function sbDelete(table, match) {
 }
 
 // ══════════════════════════════════════
-//  REALTIME — polling + WebSocket hybrid
+//  REALTIME — polling เสมอ + WebSocket เสริม
 // ══════════════════════════════════════
 let realtimeWS = null;
 let realtimeHeartbeat = null;
 let realtimeRef = 1;
 let pollingInterval = null;
-let lastPollTimestamps = {}; // เก็บ created_at ล่าสุดของแต่ละตาราง
 
-// ── Polling fallback (ทุก 6 วินาที) ──
+// ── Polling ทุก 5 วินาที (ทำงานเสมอหลัง login) ──
 function startPolling() {
-  if(pollingInterval) return;
+  stopPolling();
   pollingInterval = setInterval(async () => {
     if(!currentUser || document.hidden) return;
     try {
@@ -300,26 +299,19 @@ function startPolling() {
         renders[currentTab]?.();
       }
     } catch(e){}
-  }, 6000);
+  }, 5000);
 }
 function stopPolling() { clearInterval(pollingInterval); pollingInterval = null; }
 
-// ── WebSocket (ลองก่อน ถ้าใช้ได้ดีกว่า polling) ──
+// ── WebSocket (เสริม polling ให้เร็วขึ้น แต่ไม่แทน) ──
 function startRealtime() {
-  stopPolling();
+  startPolling(); // เริ่ม polling เสมอ
   if(realtimeWS) realtimeWS.close();
 
-  let wsWorking = false;
   const wsUrl = SB_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
-  try { realtimeWS = new WebSocket(wsUrl); } catch(e) { startPolling(); return; }
-
-  // ถ้า WS ไม่ทำงานใน 5 วินาที → fallback polling
-  const wsTimeout = setTimeout(() => { if(!wsWorking) { realtimeWS?.close(); startPolling(); } }, 5000);
+  try { realtimeWS = new WebSocket(wsUrl); } catch(e) { return; }
 
   realtimeWS.onopen = () => {
-    wsWorking = true;
-    clearTimeout(wsTimeout);
-    // ลอง subscribe แบบ v2 (postgres_changes)
     const tables = ['loans','payments','borrowers','employees','branches','app_settings'];
     tables.forEach(table => {
       realtimeWS.send(JSON.stringify({
@@ -329,7 +321,6 @@ function startRealtime() {
         ref: String(realtimeRef++)
       }));
     });
-    // Heartbeat
     realtimeHeartbeat = setInterval(() => {
       if(realtimeWS?.readyState === WebSocket.OPEN)
         realtimeWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(realtimeRef++)}));
@@ -339,20 +330,13 @@ function startRealtime() {
   realtimeWS.onmessage = async (rawE) => {
     try {
       const msg = JSON.parse(rawE.data);
-      // รองรับ Supabase Realtime v1 และ v2
       let ev, table, record, old;
       if(msg.event === 'postgres_changes') {
-        // v2 format
-        ev = msg.payload?.data?.type;
-        table = msg.payload?.data?.table;
-        record = msg.payload?.data?.record;
-        old = msg.payload?.data?.old_record;
+        ev = msg.payload?.data?.type; table = msg.payload?.data?.table;
+        record = msg.payload?.data?.record; old = msg.payload?.data?.old_record;
       } else if(['INSERT','UPDATE','DELETE'].includes(msg.event)) {
-        // v1 format
-        ev = msg.event;
-        table = msg.topic?.split(':')?.[2];
-        record = msg.payload?.record;
-        old = msg.payload?.old_record;
+        ev = msg.event; table = msg.topic?.split(':')?.[2];
+        record = msg.payload?.record; old = msg.payload?.old_record;
       } else { return; }
       if(!ev || !table) return;
 
@@ -362,41 +346,33 @@ function startRealtime() {
       }
       if(!currentUser) return;
 
-      // อัปเดต array ใน memory
       if(table === 'loans') {
-        if(ev==='INSERT' && record) { if(!LOANS.find(x=>x.id===record.id)) LOANS.unshift(record); }
-        else if(ev==='UPDATE' && record) { const i=LOANS.findIndex(x=>x.id===record.id); if(i>=0) LOANS[i]=record; else LOANS.unshift(record); }
-        else if(ev==='DELETE' && old) { LOANS=LOANS.filter(x=>x.id!==old.id); }
+        if(ev==='INSERT'&&record){if(!LOANS.find(x=>x.id===record.id))LOANS.unshift(record);}
+        else if(ev==='UPDATE'&&record){const i=LOANS.findIndex(x=>x.id===record.id);if(i>=0)LOANS[i]=record;else LOANS.unshift(record);}
+        else if(ev==='DELETE'&&old){LOANS=LOANS.filter(x=>x.id!==old.id);}
       } else if(table === 'payments') {
-        if(ev==='INSERT' && record) { if(!PAYMENTS.find(x=>x.id===record.id)) PAYMENTS.unshift(record); }
-        else if(ev==='UPDATE' && record) { const i=PAYMENTS.findIndex(x=>x.id===record.id); if(i>=0) PAYMENTS[i]=record; else PAYMENTS.unshift(record); }
-        else if(ev==='DELETE' && old) { PAYMENTS=PAYMENTS.filter(x=>x.id!==old.id); }
+        if(ev==='INSERT'&&record){if(!PAYMENTS.find(x=>x.id===record.id))PAYMENTS.unshift(record);}
+        else if(ev==='UPDATE'&&record){const i=PAYMENTS.findIndex(x=>x.id===record.id);if(i>=0)PAYMENTS[i]=record;else PAYMENTS.unshift(record);}
+        else if(ev==='DELETE'&&old){PAYMENTS=PAYMENTS.filter(x=>x.id!==old.id);}
       } else if(table === 'borrowers') {
-        if(ev==='INSERT' && record) { if(!BORROWERS.find(x=>x.id===record.id)) BORROWERS.unshift(record); }
-        else if(ev==='UPDATE' && record) { const i=BORROWERS.findIndex(x=>x.id===record.id); if(i>=0) BORROWERS[i]=record; else BORROWERS.unshift(record); }
-        else if(ev==='DELETE' && old) { BORROWERS=BORROWERS.filter(x=>x.id!==old.id); }
+        if(ev==='INSERT'&&record){if(!BORROWERS.find(x=>x.id===record.id))BORROWERS.unshift(record);}
+        else if(ev==='UPDATE'&&record){const i=BORROWERS.findIndex(x=>x.id===record.id);if(i>=0)BORROWERS[i]=record;else BORROWERS.unshift(record);}
+        else if(ev==='DELETE'&&old){BORROWERS=BORROWERS.filter(x=>x.id!==old.id);}
       } else if(table === 'employees') {
-        if(ev==='INSERT' && record) { if(!EMPLOYEES.find(x=>x.id===record.id)) EMPLOYEES.push(record); }
-        else if(ev==='UPDATE' && record) { const i=EMPLOYEES.findIndex(x=>x.id===record.id); if(i>=0) EMPLOYEES[i]=record; }
-        else if(ev==='DELETE' && old) { EMPLOYEES=EMPLOYEES.filter(x=>x.id!==old.id); }
+        if(ev==='INSERT'&&record){if(!EMPLOYEES.find(x=>x.id===record.id))EMPLOYEES.push(record);}
+        else if(ev==='UPDATE'&&record){const i=EMPLOYEES.findIndex(x=>x.id===record.id);if(i>=0)EMPLOYEES[i]=record;}
+        else if(ev==='DELETE'&&old){EMPLOYEES=EMPLOYEES.filter(x=>x.id!==old.id);}
       } else if(table === 'branches') {
-        if(ev==='INSERT' && record) { if(!BRANCHES.find(x=>x.id===record.id)) BRANCHES.push(record); }
-        else if(ev==='UPDATE' && record) { const i=BRANCHES.findIndex(x=>x.id===record.id); if(i>=0) BRANCHES[i]=record; }
-        else if(ev==='DELETE' && old) { BRANCHES=BRANCHES.filter(x=>x.id!==old.id); }
+        if(ev==='INSERT'&&record){if(!BRANCHES.find(x=>x.id===record.id))BRANCHES.push(record);}
+        else if(ev==='UPDATE'&&record){const i=BRANCHES.findIndex(x=>x.id===record.id);if(i>=0)BRANCHES[i]=record;}
+        else if(ev==='DELETE'&&old){BRANCHES=BRANCHES.filter(x=>x.id!==old.id);}
       }
-
-      // Re-render แท็บปัจจุบัน
       const renders = {dashboard:renderDashboard,borrowers:renderBorrowers,loans:renderLoans,report:renderReport,employees:renderEmployees,settings:renderSettings};
       renders[currentTab]?.();
     } catch(err){}
   };
 
-  realtimeWS.onclose = () => {
-    clearInterval(realtimeHeartbeat);
-    wsWorking = false;
-    // fallback polling แทน reconnect
-    if(currentUser) startPolling();
-  };
+  realtimeWS.onclose = () => { clearInterval(realtimeHeartbeat); };
   realtimeWS.onerror = () => realtimeWS.close();
 }
 
