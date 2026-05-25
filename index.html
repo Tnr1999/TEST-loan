@@ -1441,7 +1441,7 @@ function renderEmployees() {
   document.getElementById('tab-employees').innerHTML=`
   <div style="display:flex;gap:10px;margin-bottom:16px">
     <button class="btn btn-primary" onclick="showAddEmployee()" style="flex:2">＋ เพิ่มพนักงาน</button>
-    ${currentUser.role==='owner'?`<button class="btn btn-secondary" onclick="showBranchManager()" style="flex:1">🏠 สาขา</button>`:''}
+    ${(currentUser.role==='owner'||currentUser.role==='admin')?`<button class="btn btn-secondary" onclick="showBranchManager()" style="flex:1">🏠 สาขา</button>`:''}
   </div>
   <div class="section-title">ทีมงาน (${visibleEmps.length} คน)</div>
   ${cards||'<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ยังไม่มีพนักงาน</div></div>'}`;
