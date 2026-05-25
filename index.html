@@ -180,9 +180,9 @@ select.input option{background:#1a2640;color:#f1f5f9}
 <!-- LOGIN -->
 <div id="screen-login" class="screen active">
   <div class="login-logo">
-    <div class="login-logo-icon">💰</div>
-    <div class="login-title">MoneyFlow</div>
-    <div class="login-sub">ระบบจัดการเงินกู้รายวัน</div>
+    <div class="login-logo-icon" id="login-logo-icon">💰</div>
+    <div class="login-title" id="login-logo-title">MoneyFlow</div>
+    <div class="login-sub" id="login-logo-sub">ระบบจัดการเงินกู้รายวัน</div>
   </div>
   <div class="login-card">
     <div class="field">
@@ -272,6 +272,94 @@ async function sbDelete(table, match) {
 }
 
 // ══════════════════════════════════════
+//  REALTIME (Supabase WebSocket)
+// ══════════════════════════════════════
+let realtimeWS = null;
+let realtimeHeartbeat = null;
+let realtimeRef = 1;
+
+function startRealtime() {
+  if(realtimeWS) realtimeWS.close();
+  const wsUrl = SB_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
+  realtimeWS = new WebSocket(wsUrl);
+
+  realtimeWS.onopen = () => {
+    // Subscribe to all tables we care about
+    const tables = ['loans','payments','borrowers','employees','branches','app_settings'];
+    tables.forEach(table => {
+      realtimeWS.send(JSON.stringify({
+        topic: `realtime:public:${table}`,
+        event: 'phx_join',
+        payload: {},
+        ref: String(realtimeRef++)
+      }));
+    });
+    // Heartbeat ทุก 25 วินาที
+    realtimeHeartbeat = setInterval(() => {
+      if(realtimeWS.readyState === WebSocket.OPEN) {
+        realtimeWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(realtimeRef++)}));
+      }
+    }, 25000);
+  };
+
+  realtimeWS.onmessage = async (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if(msg.event !== 'INSERT' && msg.event !== 'UPDATE' && msg.event !== 'DELETE') return;
+      const table = msg.topic?.split(':')?.[2];
+      const record = msg.payload?.record;
+      const old = msg.payload?.old_record;
+      const ev = msg.event;
+
+      if(table === 'app_settings') {
+        if(record) { Object.assign(APP, record); applyAppSettings(); }
+        return;
+      }
+      if(!currentUser) return; // ยังไม่ login ไม่ต้อง re-render
+
+      // อัปเดต array ใน memory
+      if(table === 'loans') {
+        if(ev==='INSERT' && record) { if(!LOANS.find(x=>x.id===record.id)) LOANS.unshift(record); }
+        else if(ev==='UPDATE' && record) { const i=LOANS.findIndex(x=>x.id===record.id); if(i>=0) LOANS[i]=record; else LOANS.unshift(record); }
+        else if(ev==='DELETE' && old) { LOANS=LOANS.filter(x=>x.id!==old.id); }
+      } else if(table === 'payments') {
+        if(ev==='INSERT' && record) { if(!PAYMENTS.find(x=>x.id===record.id)) PAYMENTS.unshift(record); }
+        else if(ev==='UPDATE' && record) { const i=PAYMENTS.findIndex(x=>x.id===record.id); if(i>=0) PAYMENTS[i]=record; else PAYMENTS.unshift(record); }
+        else if(ev==='DELETE' && old) { PAYMENTS=PAYMENTS.filter(x=>x.id!==old.id); }
+      } else if(table === 'borrowers') {
+        if(ev==='INSERT' && record) { if(!BORROWERS.find(x=>x.id===record.id)) BORROWERS.unshift(record); }
+        else if(ev==='UPDATE' && record) { const i=BORROWERS.findIndex(x=>x.id===record.id); if(i>=0) BORROWERS[i]=record; else BORROWERS.unshift(record); }
+        else if(ev==='DELETE' && old) { BORROWERS=BORROWERS.filter(x=>x.id!==old.id); }
+      } else if(table === 'employees') {
+        if(ev==='INSERT' && record) { if(!EMPLOYEES.find(x=>x.id===record.id)) EMPLOYEES.push(record); }
+        else if(ev==='UPDATE' && record) { const i=EMPLOYEES.findIndex(x=>x.id===record.id); if(i>=0) EMPLOYEES[i]=record; }
+        else if(ev==='DELETE' && old) { EMPLOYEES=EMPLOYEES.filter(x=>x.id!==old.id); }
+      } else if(table === 'branches') {
+        if(ev==='INSERT' && record) { if(!BRANCHES.find(x=>x.id===record.id)) BRANCHES.push(record); }
+        else if(ev==='UPDATE' && record) { const i=BRANCHES.findIndex(x=>x.id===record.id); if(i>=0) BRANCHES[i]=record; }
+        else if(ev==='DELETE' && old) { BRANCHES=BRANCHES.filter(x=>x.id!==old.id); }
+      }
+
+      // Re-render แท็บปัจจุบัน
+      const renders = {dashboard:renderDashboard,borrowers:renderBorrowers,loans:renderLoans,report:renderReport,employees:renderEmployees,settings:renderSettings};
+      renders[currentTab]?.();
+    } catch(err){}
+  };
+
+  realtimeWS.onclose = () => {
+    clearInterval(realtimeHeartbeat);
+    // reconnect อัตโนมัติถ้ายัง login อยู่
+    if(currentUser) setTimeout(startRealtime, 3000);
+  };
+  realtimeWS.onerror = () => realtimeWS.close();
+}
+
+function stopRealtime() {
+  clearInterval(realtimeHeartbeat);
+  if(realtimeWS) { realtimeWS.onclose = null; realtimeWS.close(); realtimeWS = null; }
+}
+
+// ══════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════
 let currentUser = null;
@@ -298,9 +386,10 @@ function applyAppSettings() {
   document.querySelector('meta[name="apple-mobile-web-app-title"]').content = APP.name;
   document.documentElement.style.setProperty('--primary', APP.color);
   document.documentElement.style.setProperty('--primary2', APP.color+'bb');
-  const loginIcon = document.querySelector('.login-logo-icon');
-  const loginTitle = document.querySelector('.login-title');
-  const loginSub = document.querySelector('.login-sub');
+  // Login screen (by ID — reliable even on fresh load)
+  const loginIcon = document.getElementById('login-logo-icon');
+  const loginTitle = document.getElementById('login-logo-title');
+  const loginSub = document.getElementById('login-logo-sub');
   if(loginIcon) loginIcon.textContent = APP.logo;
   if(loginTitle) loginTitle.textContent = APP.name;
   if(loginSub) loginSub.textContent = APP.subtitle;
@@ -308,7 +397,7 @@ function applyAppSettings() {
   if(loginVer) loginVer.textContent = APP.version||'';
   const topbar = document.getElementById('topbar-title');
   if(topbar && currentUser) topbar.textContent = APP.logo + ' ' + APP.name;
-  // cache ไว้ใน localStorage เพื่อให้หน้า login แสดงถูกต้องหลัง refresh
+  // cache ใน localStorage
   try { localStorage.setItem('mf_app', JSON.stringify({name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version})); } catch(e){}
 }
 
@@ -371,6 +460,7 @@ async function doLogin() {
       if(br) { bEl.textContent='🏠 '+br.name; bEl.style.display='inline-flex'; }
     }
     renderDashboard();
+    startRealtime(); // เริ่ม Realtime subscription
   } catch(e) {
     err.textContent='เชื่อมต่อ server ไม่ได้ กรุณาลองใหม่';
     err.style.display='block';
@@ -396,6 +486,7 @@ async function loadAllData() {
 
 function doLogout() {
   if(!confirm('ต้องการออกจากระบบ?')) return;
+  stopRealtime(); // หยุด Realtime
   currentUser=null; EMPLOYEES=[]; BORROWERS=[]; LOANS=[]; PAYMENTS=[]; BRANCHES=[];
   filterBranchId=null;
   document.getElementById('login-user').value='';
@@ -1108,12 +1199,21 @@ async function resetSettings() {
 }
 
 // โหลด cache ก่อนเลย ให้หน้า login แสดงโลโก้/ชื่อ/สีที่ตั้งค่าไว้แม้ยัง refresh
-(function(){
+(async function(){
   try {
     const cached = localStorage.getItem('mf_app');
     if(cached) { Object.assign(APP, JSON.parse(cached)); }
   } catch(e){}
-  applyAppSettings();
+  applyAppSettings(); // แสดงจาก cache ก่อนเพื่อความเร็ว
+
+  // ดึงค่าล่าสุดจาก Supabase เลย (ไม่ต้อง login)
+  try {
+    const settings = await sbSelect('app_settings','select=*&limit=1');
+    if(settings?.[0]) {
+      Object.assign(APP, settings[0]);
+      applyAppSettings(); // อัปเดตหน้า login ด้วยค่าจริงจาก DB
+    }
+  } catch(e){ /* ไม่มี internet หรือ table ยังไม่ได้สร้าง ใช้ cache แทน */ }
 })();
 </script>
 
