@@ -196,7 +196,7 @@ select.input option{background:#1a2640;color:#f1f5f9}
     <div id="login-error" class="error-msg" style="display:none"></div>
     <button class="btn btn-primary" onclick="doLogin()" style="margin-top:8px" id="login-btn">เข้าสู่ระบบ</button>
   </div>
-  <div class="login-hint">v3.0 — Branch Edition</div>
+  <div class="login-hint" id="login-version">v3.0 — Branch Edition</div>
 </div>
 
 <!-- MAIN -->
@@ -283,7 +283,7 @@ let selectedRole = 'staff';
 let selectedBranchId = null; // null = ทุกสาขา (Admin/Owner)
 let filterBranchId = null;   // กรองแสดงผล
 
-let APP = { name:'MoneyFlow', logo:'💰', color:'#3b82f6', subtitle:'ระบบจัดการเงินกู้รายวัน' };
+let APP = { name:'MoneyFlow', logo:'💰', color:'#3b82f6', subtitle:'ระบบจัดการเงินกู้รายวัน', version:'v3.0 — Branch Edition' };
 const COLORS = [
   {hex:'#3b82f6',name:'น้ำเงิน'},{hex:'#06b6d4',name:'ฟ้า'},{hex:'#8b5cf6',name:'ม่วง'},
   {hex:'#ec4899',name:'ชมพู'},{hex:'#f59e0b',name:'ทอง'},{hex:'#10b981',name:'เขียว'},
@@ -304,8 +304,12 @@ function applyAppSettings() {
   if(loginIcon) loginIcon.textContent = APP.logo;
   if(loginTitle) loginTitle.textContent = APP.name;
   if(loginSub) loginSub.textContent = APP.subtitle;
+  const loginVer = document.getElementById('login-version');
+  if(loginVer) loginVer.textContent = APP.version||'';
   const topbar = document.getElementById('topbar-title');
   if(topbar && currentUser) topbar.textContent = APP.logo + ' ' + APP.name;
+  // cache ไว้ใน localStorage เพื่อให้หน้า login แสดงถูกต้องหลัง refresh
+  try { localStorage.setItem('mf_app', JSON.stringify({name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version})); } catch(e){}
 }
 
 const TAB_TITLES = {dashboard:'หน้าหลัก',borrowers:'ลูกหนี้',loans:'สัญญากู้',report:'รายงาน',employees:'จัดการพนักงาน',settings:'ตั้งค่าแอป ⚙️'};
@@ -1040,6 +1044,10 @@ function renderSettings() {
         <label>คำอธิบาย</label>
         <input class="input" id="set-sub" value="${APP.subtitle}" oninput="document.getElementById('preview-sub').textContent=this.value">
       </div>
+      <div class="field">
+        <label>ข้อความ Version (ใต้หน้า Login)</label>
+        <input class="input" id="set-ver" value="${APP.version||''}" placeholder="เช่น v3.0 — Branch Edition">
+      </div>
     </div>
   </div>
   <div class="settings-section">
@@ -1074,13 +1082,14 @@ function previewColor(hex) {
 async function saveSettings() {
   APP.name = document.getElementById('set-name').value.trim()||APP.name;
   APP.subtitle = document.getElementById('set-sub').value.trim()||APP.subtitle;
+  APP.version = document.getElementById('set-ver').value.trim();
   showLoading('กำลังบันทึก...');
   try {
     const existing = await sbSelect('app_settings','select=id&limit=1').catch(()=>[]);
     if(existing?.[0]?.id) {
-      await sbUpdate('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle},`id=eq.${existing[0].id}`);
+      await sbUpdate('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version},`id=eq.${existing[0].id}`);
     } else {
-      await sbInsert('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle});
+      await sbInsert('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version});
     }
     applyAppSettings();
     document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
@@ -1092,13 +1101,20 @@ async function saveSettings() {
 
 async function resetSettings() {
   if(!confirm('รีเซ็ตกลับเป็นค่าเริ่มต้น?')) return;
-  APP = {name:'MoneyFlow',logo:'💰',color:'#3b82f6',subtitle:'ระบบจัดการเงินกู้รายวัน'};
+  APP = {name:'MoneyFlow',logo:'💰',color:'#3b82f6',subtitle:'ระบบจัดการเงินกู้รายวัน',version:'v3.0 — Branch Edition'};
   applyAppSettings();
   document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
   renderSettings(); showToast('รีเซ็ตแล้ว');
 }
 
-applyAppSettings();
+// โหลด cache ก่อนเลย ให้หน้า login แสดงโลโก้/ชื่อ/สีที่ตั้งค่าไว้แม้ยัง refresh
+(function(){
+  try {
+    const cached = localStorage.getItem('mf_app');
+    if(cached) { Object.assign(APP, JSON.parse(cached)); }
+  } catch(e){}
+  applyAppSettings();
+})();
 </script>
 
 <!-- ══════════════════════════════════════
