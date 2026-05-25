@@ -295,10 +295,21 @@ const LOGOS = ['💰','🏦','💵','💳','📊','🪙','💹','🤑','🏧','�
 function applyAppSettings() {
   document.title = APP.name;
   document.querySelector('meta[name="apple-mobile-web-app-title"]').content = APP.name;
-  // Apply primary color
+  document.querySelector('meta[name="mobile-web-app-capable"]') || 
+    document.head.insertAdjacentHTML('beforeend','<meta name="mobile-web-app-capable" content="yes">');
+  // Primary color
   document.documentElement.style.setProperty('--primary', APP.color);
-  // Lighten for --primary2
-  document.documentElement.style.setProperty('--primary2', APP.color+'cc');
+  document.documentElement.style.setProperty('--primary2', APP.color+'bb');
+  // Login screen
+  const loginIcon = document.querySelector('.login-logo-icon');
+  const loginTitle = document.querySelector('.login-title');
+  const loginSub = document.querySelector('.login-sub');
+  if(loginIcon) loginIcon.textContent = APP.logo;
+  if(loginTitle) loginTitle.textContent = APP.name;
+  if(loginSub) loginSub.textContent = APP.subtitle;
+  // Topbar (ถ้า login อยู่แล้ว)
+  const topbar = document.getElementById('topbar-title');
+  if(topbar && currentUser) topbar.textContent = APP.logo + ' ' + APP.name;
 }
 
 const TAB_TITLES = {dashboard:'หน้าหลัก',borrowers:'ลูกหนี้',loans:'สัญญากู้',report:'รายงาน',employees:'จัดการพนักงาน',settings:'ตั้งค่าแอป ⚙️'};
@@ -782,6 +793,8 @@ async function saveSettings() {
     document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
     showToast('บันทึกการตั้งค่าแล้ว ✨');
     renderSettings();
+    // re-render dashboard ให้ชื่อ/โลโก้อัปเดตทันที
+    if(document.getElementById('tab-dashboard').style.display !== 'none') renderDashboard();
   } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
   finally{ hideLoading(); }
 }
@@ -833,7 +846,6 @@ function showAddEmployee() {
     <div class="role-row">
       <button class="role-btn active" id="role-staff" onclick="selectRole('staff')">👤 Staff</button>
       <button class="role-btn" id="role-admin" onclick="selectRole('admin')">👑 Admin</button>
-      ${currentUser.role==='owner'?'<button class="role-btn" id="role-owner" onclick="selectRole(\'owner\')">🌟 Owner</button>':''}
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
