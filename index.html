@@ -1,1840 +1,1869 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MoneyFlow">
-<meta name="theme-color" content="#0a0f1a">
-<title>MoneyFlow — ระบบเงินกู้รายวัน</title>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>บ้านวันย่า — ระบบดอกเบี้ยรายวัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Serif+Thai:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-:root {
-  --bg:#080d18; --bg2:#0f1520; --card:#111827; --card2:#162033;
-  --border:rgba(255,255,255,0.06); --border2:rgba(255,255,255,0.1);
-  --primary:#3b82f6; --primary2:#60a5fa;
-  --cyan:#06b6d4; --green:#22c55e; --green2:#4ade80;
-  --red:#ef4444; --red2:#f87171; --yellow:#f59e0b; --yellow2:#fbbf24;
-  --purple:#8b5cf6; --purple2:#a78bfa;
-  --text:#f1f5f9; --text2:#94a3b8; --text3:#4b5a6e;
-  --radius:18px; --radius-sm:12px;
-  --glow-blue:rgba(59,130,246,0.15);
-  --glow-green:rgba(34,197,94,0.15);
+:root{
+  --bg:#07070f;
+  --surface:#0d0d1c;
+  --card:#111126;
+  --card2:#14142e;
+  --border:#1c1c3a;
+  --border2:#252550;
+  --gold:#e8b86d;
+  --gold2:#f5d08a;
+  --gold-dim:rgba(232,184,109,0.12);
+  --purple:#a78bfa;
+  --purple-dim:rgba(167,139,250,0.12);
+  --text:#dde0f0;
+  --text2:#9298c0;
+  --muted:#5a5f90;
+  --dim:#2e2e58;
+  --red:#f87171;
+  --red-dim:rgba(248,113,113,0.12);
+  --green:#34d399;
+  --green-dim:rgba(52,211,153,0.12);
+  --cyan:#22d3ee;
+  --cyan-dim:rgba(34,211,238,0.1);
+  --radius:12px;
+  --radius-lg:18px;
+  --shadow:0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg:0 12px 48px rgba(0,0,0,0.6);
+  --font-th:'Sarabun',sans-serif;
+  --font-serif:'Noto Serif Thai',serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --header-h:60px;
+  --nav-h:56px; /* mobile bottom nav */
 }
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Prompt',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
-#app{width:100%;min-height:100dvh;position:relative;background:var(--bg)}
-.screen{display:none;flex-direction:column;min-height:100dvh}
-.screen.active{display:flex}
-.content{max-width:860px;margin-left:auto;margin-right:auto}
 
-/* ── Login ── */
-#screen-login{background:radial-gradient(ellipse at 15% 15%,rgba(59,130,246,0.14) 0%,transparent 55%),radial-gradient(ellipse at 85% 85%,rgba(6,182,212,0.08) 0%,transparent 55%),radial-gradient(ellipse at 50% 100%,rgba(139,92,246,0.06) 0%,transparent 50%),var(--bg);align-items:center;justify-content:center;padding:24px}
-.login-logo{text-align:center;margin-bottom:36px;animation:fadeUp .6s ease both}
-.login-logo-icon{width:clamp(68px,12vw,96px);height:clamp(68px,12vw,96px);border-radius:28px;background:linear-gradient(135deg,rgba(59,130,246,0.35),rgba(6,182,212,0.2));border:1px solid rgba(59,130,246,0.35);display:flex;align-items:center;justify-content:center;font-size:clamp(30px,6vw,44px);margin:0 auto 16px;box-shadow:0 0 0 6px rgba(59,130,246,0.06),0 12px 40px rgba(59,130,246,0.2)}
-.login-title{font-size:clamp(22px,5vw,32px);font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#f1f5f9,#94a3b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.login-sub{color:var(--text3);font-size:clamp(12px,2vw,14px);margin-top:6px;font-weight:400}
-.login-card{width:100%;max-width:400px;background:rgba(17,24,39,0.85);border:1px solid rgba(59,130,246,0.12);border-radius:28px;padding:clamp(22px,5vw,36px) clamp(18px,4vw,32px);backdrop-filter:blur(24px);box-shadow:0 32px 80px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.05);animation:fadeUp .6s .1s ease both}
-.login-hint{text-align:center;color:var(--text3);font-size:11px;margin-top:14px;animation:fadeUp .6s .2s ease both}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font-th);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.5}
 
-/* ── Topbar ── */
-.topbar{position:sticky;top:0;z-index:50;background:rgba(8,13,24,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0;display:flex;align-items:center;justify-content:space-between;padding-top:0;width:100%}
-.topbar-inner{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:860px;margin:0 auto;padding:14px 20px;padding-top:max(14px,env(safe-area-inset-top))}
-.topbar-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
-.topbar-right{display:flex;gap:8px;align-items:center}
-.logout-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.18);color:var(--red2);border-radius:10px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Prompt',sans-serif;transition:all .2s}
-.logout-btn:active{background:rgba(239,68,68,0.2)}
+/* Ambient background */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%,rgba(167,139,250,0.06) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%,rgba(232,184,109,0.06) 0%,transparent 60%)}
 
-/* ── Bottom Nav ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;width:100%;background:rgba(8,13,24,0.96);backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;justify-content:center;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
-.nav-inner{display:flex;width:100%;max-width:860px}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;cursor:pointer;color:var(--text3);font-size:clamp(9px,1.5vw,11px);font-weight:600;transition:color .25s;border:none;background:none;font-family:'Prompt',sans-serif;position:relative}
-.nav-item.active{color:var(--primary2)}
-.nav-icon{font-size:22px;line-height:1;transition:transform .2s}
-.nav-item.active .nav-icon{transform:scale(1.12)}
-.nav-dot{position:absolute;bottom:4px;width:20px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--primary),var(--cyan));opacity:0;transition:opacity .25s}
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ════════════════════════════════════════
+   LOGIN SCREEN
+════════════════════════════════════════ */
+#login-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#login-screen::before{
+  content:'';position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 20% 10%,rgba(167,139,250,0.1) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%,rgba(232,184,109,0.1) 0%,transparent 60%)
+}
+
+.login-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:24px;padding:44px 36px;
+  width:100%;max-width:400px;
+  box-shadow:var(--shadow-lg);
+  animation:slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+  position:relative;z-index:1;
+}
+
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo-icon{
+  width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,rgba(232,184,109,0.2),rgba(167,139,250,0.1));
+  border:1px solid rgba(232,184,109,0.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;margin:0 auto 14px;
+}
+.login-logo .name{font-family:var(--font-serif);font-size:1.6rem;font-weight:700;color:var(--gold);display:block}
+.login-logo .sub{font-size:0.72rem;color:var(--muted);letter-spacing:0.14em;margin-top:5px;display:block;text-transform:uppercase}
+
+.login-divider{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.login-divider span{font-size:0.8rem;color:var(--muted);white-space:nowrap}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.login-err{
+  background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);
+  color:var(--red);border-radius:10px;padding:10px 14px;
+  font-size:0.82rem;margin-bottom:16px;display:none;
+  display:flex;align-items:center;gap:8px
+}
+.login-err::before{content:'⚠️';flex-shrink:0}
+
+/* ════════════════════════════════════════
+   HEADER
+════════════════════════════════════════ */
+header{
+  position:sticky;top:0;z-index:200;
+  height:var(--header-h);
+  background:rgba(7,7,15,0.92);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 20px;gap:12px;
+}
+
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.logo-icon{
+  width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,rgba(232,184,109,0.25),rgba(167,139,250,0.15));
+  border:1px solid rgba(232,184,109,0.25);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.95rem;
+}
+.logo-text{display:flex;flex-direction:column;line-height:1.1}
+.logo-name{font-family:var(--font-serif);font-size:1rem;font-weight:700;color:var(--gold)}
+.logo-sub{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em}
+
+.header-center{flex:1;display:flex;justify-content:center}
+
+/* Desktop Tab Bar */
+.tab-bar{
+  display:flex;gap:2px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;padding:3px;
+}
+.tab{
+  padding:6px 16px;border-radius:7px;
+  font-size:0.82rem;font-weight:500;
+  cursor:pointer;color:var(--muted);
+  transition:all 0.15s;border:none;
+  background:transparent;font-family:var(--font-th);
+  display:flex;align-items:center;gap:5px;
+  white-space:nowrap;
+}
+.tab.active{background:var(--card2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.tab:hover:not(.active){color:var(--text2)}
+
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+.user-chip{
+  display:flex;align-items:center;gap:6px;
+  padding:5px 10px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);
+  font-size:0.78rem;font-weight:500;
+}
+.role-badge{
+  padding:2px 8px;border-radius:99px;
+  font-size:0.62rem;font-weight:700;letter-spacing:0.06em;
+}
+.role-admin{background:rgba(232,184,109,0.15);color:var(--gold);border:1px solid rgba(232,184,109,0.3)}
+.role-staff{background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid rgba(167,139,250,0.3)}
+
+/* ════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════ */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 16px;border-radius:9px;border:none;
+  cursor:pointer;font-family:var(--font-th);font-size:0.85rem;
+  font-weight:500;transition:all 0.15s;white-space:nowrap;
+  -webkit-user-select:none;user-select:none;
+}
+.btn:active{transform:scale(0.97)}
+
+.btn-gold{background:var(--gold);color:#08080f;font-weight:600}
+.btn-gold:hover{background:var(--gold2);box-shadow:0 0 16px rgba(232,184,109,0.3)}
+
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface)}
+
+.btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25)}
+.btn-green:hover{background:rgba(52,211,153,0.2)}
+
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.25)}
+.btn-red:hover{background:rgba(248,113,113,0.2)}
+
+.btn-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.3)}
+.btn-purple:hover{background:rgba(167,139,250,0.2)}
+
+.btn-sm{padding:5px 12px;font-size:0.78rem;border-radius:7px}
+.btn-xs{padding:3px 9px;font-size:0.72rem;border-radius:6px}
+
+.btn-icon{
+  width:32px;height:32px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:transparent;border:1px solid var(--border);
+  border-radius:7px;cursor:pointer;color:var(--muted);
+  transition:all 0.15s;font-size:0.8rem;flex-shrink:0;
+}
+.btn-icon:hover{color:var(--gold);border-color:rgba(232,184,109,0.4);background:var(--gold-dim)}
+.btn-icon.del:hover{color:var(--red);border-color:rgba(248,113,113,0.4);background:var(--red-dim)}
+
+/* ════════════════════════════════════════
+   FORMS
+════════════════════════════════════════ */
+.form-group{margin-bottom:14px}
+label{display:block;font-size:0.74rem;color:var(--muted);margin-bottom:5px;letter-spacing:0.04em;font-weight:600}
+.field-hint{font-size:0.7rem;color:var(--dim);margin-top:3px}
+
+input,select,textarea{
+  width:100%;background:var(--bg);
+  border:1px solid var(--border);border-radius:9px;
+  padding:10px 13px;color:var(--text);
+  font-family:var(--font-th);font-size:0.88rem;
+  transition:border-color 0.15s,box-shadow 0.15s;outline:none;
+  -webkit-appearance:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:rgba(232,184,109,0.5);
+  box-shadow:0 0 0 3px rgba(232,184,109,0.08);
+}
+input::placeholder,textarea::placeholder{color:var(--dim)}
+select option{background:var(--surface)}
+select{cursor:pointer}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+
+/* Input with icon */
+.input-wrap{position:relative}
+.input-wrap .input-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.input-wrap input{padding-left:36px}
+
+/* ════════════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════════════ */
+main{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:20px 16px}
+.page{display:none}
+.page.active{display:block;animation:fadeIn 0.2s ease}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* ════════════════════════════════════════
+   STATS GRID
+════════════════════════════════════════ */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;margin-bottom:20px;
+}
+.stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px 18px;
+  position:relative;overflow:hidden;
+  transition:border-color 0.2s,transform 0.15s;
+}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.stat-card.purple::before{background:linear-gradient(90deg,#7c3aed,var(--purple))}
+.stat-card.green::before{background:linear-gradient(90deg,#059669,var(--green))}
+.stat-card.red::before{background:linear-gradient(90deg,#dc2626,var(--red))}
+.stat-card.cyan::before{background:linear-gradient(90deg,#0891b2,var(--cyan))}
+
+.stat-label{font-size:0.7rem;color:var(--muted);letter-spacing:0.05em;margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:5px}
+.stat-value{font-size:1.5rem;font-weight:700;font-family:var(--font-serif);line-height:1.1}
+.stat-card.gold .stat-value{color:var(--gold)}
+.stat-card.purple .stat-value{color:var(--purple)}
+.stat-card.green .stat-value{color:var(--green)}
+.stat-card.red .stat-value{color:var(--red)}
+.stat-card.cyan .stat-value{color:var(--cyan)}
+.stat-sub{font-size:0.7rem;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* ════════════════════════════════════════
+   SECTION TITLE
+════════════════════════════════════════ */
+.section-header{
+  display:flex;align-items:center;
+  margin-bottom:14px;gap:10px;
+}
+.section-title{
+  font-family:var(--font-serif);font-size:0.95rem;
+  color:var(--text);font-weight:600;
+  display:flex;align-items:center;gap:7px;
+  white-space:nowrap;
+}
+.section-title .title-icon{color:var(--gold)}
+.section-line{flex:1;height:1px;background:var(--border)}
+.section-meta{font-size:0.75rem;color:var(--muted)}
+
+/* Page title */
+.page-title{
+  font-family:var(--font-serif);font-size:1.05rem;
+  color:var(--text);margin-bottom:18px;
+  display:flex;align-items:center;gap:8px;
+  padding-bottom:14px;border-bottom:1px solid var(--border);
+}
+.page-title .icon{color:var(--gold)}
+
+/* ════════════════════════════════════════
+   DASHBOARD TODAY LIST
+════════════════════════════════════════ */
+.today-section{margin-bottom:24px}
+
+.date-picker-wrap{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:9px;padding:6px 12px;width:fit-content;
+}
+.date-picker-wrap svg{color:var(--muted);flex-shrink:0}
+.date-picker-wrap input[type="date"]{
+  background:transparent;border:none;padding:0;
+  font-family:var(--font-mono);font-size:0.82rem;
+  color:var(--text);cursor:pointer;width:130px;
+  box-shadow:none;
+}
+.date-picker-wrap input[type="date"]:focus{box-shadow:none;border:none}
+
+.today-subsection-label{
+  display:flex;align-items:center;gap:6px;
+  font-size:0.72rem;font-weight:700;letter-spacing:0.07em;
+  margin:14px 0 8px;text-transform:uppercase;
+}
+.today-subsection-label .cnt{
+  font-weight:400;color:var(--muted);
+  font-size:0.68rem;letter-spacing:0;text-transform:none;
+}
+
+.today-list{display:flex;flex-direction:column;gap:6px}
+
+.today-row{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:13px 14px;
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;transition:all 0.15s;
+  border-left-width:3px;
+}
+.today-row:hover{background:var(--card2);border-color:var(--border2);transform:translateX(2px)}
+.today-row.paid{border-left-color:var(--green)}
+.today-row.unpaid{border-left-color:var(--gold)}
+.today-row.overdue-row{border-left-color:var(--red)}
+
+.today-info{flex:1;min-width:0}
+.today-name{font-weight:600;font-size:0.88rem;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.today-house{font-size:0.68rem;color:var(--muted);font-weight:400}
+.today-detail{font-size:0.75rem;color:var(--muted);margin-top:2px}
+
+.today-right{text-align:right;flex-shrink:0}
+.today-amount{font-family:var(--font-mono);font-size:0.9rem;font-weight:600}
+.today-amount.paid-amt{color:var(--green)}
+.today-amount.unpaid-amt{color:var(--gold)}
+.today-label{font-size:0.65rem;color:var(--muted);margin-top:1px}
+
+/* ════════════════════════════════════════
+   BADGES
+════════════════════════════════════════ */
+.badge{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 9px;border-radius:99px;
+  font-size:0.67rem;font-weight:700;letter-spacing:0.04em;
+  white-space:nowrap;
+}
+.badge-paid{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.2)}
+.badge-unpaid{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(232,184,109,0.2)}
+.badge-overdue{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.2)}
+.badge-closed{background:rgba(90,95,144,0.12);color:var(--muted);border:1px solid rgba(90,95,144,0.2)}
+
+/* ════════════════════════════════════════
+   TABLE
+════════════════════════════════════════ */
+.toolbar{
+  display:flex;gap:8px;margin-bottom:12px;
+  flex-wrap:wrap;align-items:center;
+}
+.search-wrap{flex:1;min-width:180px;position:relative}
+.search-wrap input{padding-left:36px}
+.search-icon{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;
+}
+
+.filter-chip{
+  display:flex;gap:2px;background:var(--surface);
+  border:1px solid var(--border);border-radius:8px;padding:3px;
+}
+.filter-chip button{
+  padding:5px 12px;border-radius:6px;font-size:0.78rem;
+  border:none;background:transparent;color:var(--muted);
+  cursor:pointer;font-family:var(--font-th);transition:all 0.12s;
+  font-weight:500;
+}
+.filter-chip button.active{background:var(--card2);color:var(--text)}
+
+.table-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+table{width:100%;border-collapse:collapse;font-size:0.83rem}
+thead{background:var(--surface);border-bottom:1px solid var(--border)}
+th{
+  padding:10px 14px;text-align:left;
+  font-size:0.67rem;font-weight:700;
+  color:var(--muted);letter-spacing:0.08em;
+  white-space:nowrap;text-transform:uppercase;
+}
+td{padding:12px 14px;border-bottom:1px solid rgba(28,28,58,0.7);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background 0.1s;cursor:pointer}
+tbody tr:hover{background:rgba(232,184,109,0.03)}
+
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.text-gold{color:var(--gold)}.text-purple{color:var(--purple)}.text-green{color:var(--green)}
+.text-red{color:var(--red)}.text-muted{color:var(--muted)}.text-cyan{color:var(--cyan)}.fw-600{font-weight:600}
+.text-right{text-align:right}
+
+.rate-chip{
+  display:inline-block;
+  background:var(--purple-dim);color:var(--purple);
+  border:1px solid rgba(167,139,250,0.2);
+  border-radius:99px;padding:2px 9px;
+  font-size:0.7rem;font-family:var(--font-mono);
+}
+
+/* ════════════════════════════════════════
+   CUSTOMER DETAIL
+════════════════════════════════════════ */
+.detail-topbar{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:20px;flex-wrap:wrap;
+}
+.detail-back{
+  display:flex;align-items:center;gap:5px;
+  font-size:0.82rem;color:var(--muted);cursor:pointer;
+  padding:6px 10px;border-radius:7px;border:1px solid var(--border);
+  transition:all 0.15s;flex-shrink:0;background:var(--surface);
+}
+.detail-back:hover{color:var(--text);border-color:var(--border2)}
+.detail-back svg{transition:transform 0.15s}
+.detail-back:hover svg{transform:translateX(-2px)}
+
+.detail-identity{flex:1;min-width:0}
+.detail-name{font-family:var(--font-serif);font-size:1.35rem;font-weight:700;color:var(--gold);line-height:1.2}
+.detail-meta{font-size:0.78rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+.detail-actions{display:flex;gap:6px;flex-shrink:0}
+
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+
+.info-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+}
+.info-card-title{
+  font-size:0.7rem;color:var(--muted);letter-spacing:0.08em;
+  font-weight:700;margin-bottom:14px;
+  display:flex;align-items:center;gap:5px;text-transform:uppercase;
+}
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 0;border-bottom:1px solid rgba(28,28,58,0.5);font-size:0.84rem;
+}
+.info-row:last-child{border-bottom:none}
+.info-key{color:var(--muted)}
+.info-val{font-weight:500;text-align:right;max-width:55%}
+
+/* Payment form */
+.payment-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;margin-bottom:14px;
+}
+.payment-card-title{
+  font-family:var(--font-serif);font-size:0.95rem;color:var(--gold);
+  margin-bottom:18px;display:flex;align-items:center;gap:7px;
+  padding-bottom:12px;border-bottom:1px solid var(--border);
+}
+
+.calc-preview{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:10px;padding:14px;margin:12px 0;
+}
+.calc-title{
+  font-size:0.68rem;color:var(--muted);letter-spacing:0.07em;
+  font-weight:700;margin-bottom:10px;text-transform:uppercase;
+}
+.calc-case{
+  font-size:0.75rem;color:var(--purple);font-weight:600;
+  margin-bottom:8px;letter-spacing:0.03em;
+}
+.calc-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-bottom:1px solid rgba(28,28,58,0.4);
+  font-size:0.8rem;
+}
+.calc-row:last-child{
+  border-bottom:none;font-weight:600;
+  color:var(--gold);padding-top:8px;margin-top:3px;
+}
+
+/* History */
+.history-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;
+}
+.history-card-head{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.history-card-title{font-family:var(--font-serif);font-size:0.9rem;color:var(--text)}
+.history-item{
+  padding:12px 18px;border-bottom:1px solid rgba(28,28,58,0.5);
+  display:flex;align-items:flex-start;gap:12px;font-size:0.82rem;
+}
+.history-item:last-child{border-bottom:none}
+.history-date{
+  font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);
+  min-width:88px;padding-top:2px;flex-shrink:0;
+}
+.history-desc{flex:1;line-height:1.6}
+.history-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);flex-shrink:0;margin-top:6px;
+}
+
+/* ════════════════════════════════════════
+   HOUSE SELECTOR (staff)
+════════════════════════════════════════ */
+.house-selector{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 16px;
+  margin-bottom:14px;flex-wrap:wrap;
+}
+.house-selector label{margin:0;font-size:0.78rem;white-space:nowrap}
+.house-selector select{width:auto;flex:1;min-width:150px}
+
+.house-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:99px;
+  font-size:0.72rem;font-weight:600;
+  background:var(--cyan-dim);color:var(--cyan);
+  border:1px solid rgba(34,211,238,0.2);
+}
+
+/* ════════════════════════════════════════
+   STAFF & HOUSE CARDS
+════════════════════════════════════════ */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+
+.staff-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  display:flex;align-items:center;gap:12px;
+  transition:border-color 0.15s;
+}
+.staff-card:hover{border-color:var(--border2)}
+
+.staff-avatar{
+  width:42px;height:42px;border-radius:11px;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;flex-shrink:0;
+}
+.staff-info{flex:1;min-width:0}
+.staff-name{font-weight:600;font-size:0.88rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.staff-detail{font-size:0.73rem;color:var(--muted);margin-top:2px;line-height:1.5}
+.staff-actions{display:flex;gap:5px;flex-shrink:0}
+
+/* ════════════════════════════════════════
+   MODAL
+════════════════════════════════════════ */
+.overlay{
+  display:none;position:fixed;inset:0;z-index:400;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.overlay.open{display:flex;animation:fadeIn 0.15s ease}
+
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:26px;
+  width:100%;max-width:520px;
+  max-height:92vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+  animation:scaleIn 0.2s cubic-bezier(0.16,1,0.3,1);
+}
+.modal::-webkit-scrollbar{width:3px}
+.modal::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.modal-head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border);
+}
+.modal-title{font-family:var(--font-serif);font-size:1rem;color:var(--text);font-weight:600}
+.modal-close{
+  width:30px;height:30px;border-radius:7px;
+  border:1px solid var(--border);background:transparent;
+  cursor:pointer;color:var(--muted);font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.modal-close:hover{color:var(--text);border-color:var(--border2);background:var(--surface)}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:24px;right:20px;z-index:999;
+  background:var(--card2);border:1px solid var(--border2);
+  border-radius:12px;padding:12px 18px;
+  font-size:0.84rem;display:none;
+  box-shadow:var(--shadow-lg);
+  max-width:280px;animation:slideUp 0.2s ease;
+  display:flex;align-items:center;gap:8px;
+}
+#toast.ok{border-color:rgba(52,211,153,0.4);color:var(--green)}
+#toast.err{border-color:rgba(248,113,113,0.4);color:var(--red)}
+
+/* ════════════════════════════════════════
+   MISC
+════════════════════════════════════════ */
+.spin{
+  display:inline-block;width:16px;height:16px;
+  border:2px solid var(--border);border-top-color:var(--gold);
+  border-radius:50%;animation:rot 0.7s linear infinite;vertical-align:middle;
+}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+.empty{
+  text-align:center;padding:48px 20px;color:var(--muted);
+  font-size:0.85rem;
+}
+.empty-icon{font-size:2rem;margin-bottom:10px;opacity:0.5}
+
+.divider{height:1px;background:var(--border);margin:20px 0}
+
+/* Status dot */
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green)}
+.dot-red{background:var(--red)}
+
+/* ════════════════════════════════════════
+   MOBILE BOTTOM NAV
+════════════════════════════════════════ */
+.mobile-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(10,10,22,0.95);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  padding:8px 0 env(safe-area-inset-bottom,8px);
+}
+.mobile-nav-inner{display:flex;justify-content:space-around;align-items:center}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 20px;border-radius:10px;cursor:pointer;
+  border:none;background:transparent;color:var(--muted);
+  font-family:var(--font-th);font-size:0.65rem;transition:all 0.15s;
+  min-width:64px;
+}
+.nav-item.active{color:var(--gold)}
+.nav-item .nav-icon{font-size:1.25rem;line-height:1}
+.nav-item .nav-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:var(--gold);opacity:0;transition:opacity 0.15s;
+}
 .nav-item.active .nav-dot{opacity:1}
 
-/* ── Content ── */
-.content{flex:1;overflow-y:auto;padding:clamp(14px,3vw,24px) clamp(14px,3vw,24px) 100px;width:100%}
+/* ════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+════════════════════════════════════════ */
 
-/* ── Form ── */
-.field{margin-bottom:16px}
-.field label{display:block;color:var(--text2);font-size:11px;font-weight:700;margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase}
-.input{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:13px 16px;color:var(--text);font-size:15px;font-family:'Prompt',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
-.input:focus{border-color:rgba(59,130,246,0.45);box-shadow:0 0 0 3px rgba(59,130,246,0.08);background:rgba(255,255,255,0.06)}
-.input::placeholder{color:var(--text3)}
-select.input{appearance:none;cursor:pointer}
-select.input option{background:#162033;color:#f1f5f9}
-
-/* ── Buttons ── */
-.btn{width:100%;border:none;border-radius:var(--radius-sm);padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Prompt',sans-serif;transition:all .2s;letter-spacing:.2px}
-.btn-primary{background:linear-gradient(135deg,var(--primary),var(--cyan));color:#fff;box-shadow:0 4px 20px rgba(59,130,246,0.3)}
-.btn-primary:active{transform:scale(0.97);box-shadow:0 2px 10px rgba(59,130,246,0.2)}
-.btn-secondary{background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--text)}
-.btn-secondary:active{background:rgba(255,255,255,0.09)}
-.btn-danger{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--red2)}
-.btn-sm{padding:9px 16px;font-size:13px;width:auto;border-radius:10px}
-.btn-xs{padding:6px 12px;font-size:11px;width:auto;border-radius:8px}
-
-/* ── Cards ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:border-color .25s,box-shadow .25s}
-.card:has(button):hover,.card[onclick]:hover{border-color:rgba(255,255,255,0.1);box-shadow:0 4px 20px rgba(0,0,0,0.2)}
-.card-overdue{border-color:rgba(239,68,68,0.25)!important;background:linear-gradient(135deg,rgba(239,68,68,0.04),var(--card))}
-
-/* ── Badges ── */
-.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.2px}
-.badge-green{background:rgba(34,197,94,0.12);color:var(--green2);border:1px solid rgba(34,197,94,0.15)}
-.badge-red{background:rgba(239,68,68,0.12);color:var(--red2);border:1px solid rgba(239,68,68,0.15)}
-.badge-yellow{background:rgba(245,158,11,0.12);color:var(--yellow2);border:1px solid rgba(245,158,11,0.15)}
-.badge-blue{background:rgba(59,130,246,0.12);color:var(--primary2);border:1px solid rgba(59,130,246,0.15)}
-.badge-purple{background:rgba(139,92,246,0.12);color:var(--purple2);border:1px solid rgba(139,92,246,0.15)}
-
-/* ── Stat Cards ── */
-.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;inset:0;border-radius:var(--radius);opacity:0;transition:opacity .3s}
-.stat-icon{font-size:20px;margin-bottom:8px;line-height:1}
-.stat-label{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
-.stat-value{font-size:20px;font-weight:800;letter-spacing:-.5px}
-
-/* ── Progress ── */
-.progress-bg{height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;margin:10px 0 4px}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--cyan));border-radius:3px;transition:width .6s cubic-bezier(0.34,1.56,0.64,1)}
-.progress-label{font-size:11px;color:var(--text3);font-weight:500}
-
-/* ── Filters ── */
-.filter-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
-.filter-bar::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:7px 16px;border-radius:20px;border:1px solid var(--border2);background:rgba(255,255,255,0.03);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Prompt',sans-serif;transition:all .2s}
-.chip.active{border-color:var(--primary);background:rgba(59,130,246,0.14);color:var(--primary2);box-shadow:0 0 0 1px rgba(59,130,246,0.15)}
-.chip:active{transform:scale(0.97)}
-
-/* ── Section title ── */
-.section-title{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1.2px;margin:20px 0 12px;display:flex;align-items:center;gap:8px}
-.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
-
-/* ── Amount boxes ── */
-.amt-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
-.amt-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:11px;text-align:center}
-.amt-box-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
-.amt-box-val{font-size:13px;font-weight:800}
-
-/* ── Avatar ── */
-.avatar{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(6,182,212,0.1));border:1px solid rgba(59,130,246,0.15)}
-.avatar-admin{background:linear-gradient(135deg,rgba(245,158,11,0.2),rgba(239,68,68,0.1));border-color:rgba(245,158,11,0.15)}
-
-/* ── Action rows ── */
-.action-row{display:flex;gap:8px;margin-top:12px}
-
-/* ── Empty state ── */
-.empty{text-align:center;padding:60px 20px}
-.empty-icon{font-size:52px;margin-bottom:14px;opacity:0.7}
-.empty-text{color:var(--text3);font-size:14px;font-weight:500}
-
-/* ── Misc ── */
-.divider{height:1px;background:var(--border);margin:14px 0}
-.calc-box{background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.14);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px}
-.calc-box p{color:var(--primary2);font-size:13px;margin-bottom:4px;font-weight:500}
-.calc-box p:last-child{margin-bottom:0}
-.error-msg{color:var(--red2);font-size:13px;text-align:center;margin-bottom:10px;font-weight:500}
-.search-row{display:flex;gap:10px;margin-bottom:14px}
-.search-row .input{flex:1}
-.search-row .btn{width:auto;padding:0 20px;border-radius:var(--radius-sm)}
-
-/* ── Report periods ── */
-.period-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
-.period-btn{padding:9px 4px;border-radius:12px;border:1px solid var(--border2);background:rgba(255,255,255,0.03);color:var(--text3);font-size:11px;font-weight:700;cursor:pointer;font-family:'Prompt',sans-serif;transition:all .2s;text-align:center}
-.period-btn.active{border-color:var(--primary);background:rgba(59,130,246,0.14);color:var(--primary2)}
-
-/* ── Summary card ── */
-.summary-card{display:flex;justify-content:space-between;align-items:center;padding:16px 18px}
-.summary-label{color:var(--text2);font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
-.summary-val{font-size:18px;font-weight:800;letter-spacing:-.5px}
-
-/* ── Role buttons ── */
-.role-row{display:flex;gap:10px;margin-bottom:14px}
-.role-btn{flex:1;padding:11px;border-radius:12px;border:1px solid var(--border2);background:rgba(255,255,255,0.03);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Prompt',sans-serif;transition:all .2s}
-.role-btn.active{border-color:var(--primary);background:rgba(59,130,246,0.12);color:var(--primary2)}
-.lock-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
-
-/* ── Settings ── */
-.settings-section{margin-bottom:24px}
-.settings-section-title{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px}
-.settings-row-label{font-size:14px;color:var(--text2)}
-.settings-row-val{font-size:14px;font-weight:700;color:var(--text)}
-.color-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
-.color-swatch{width:100%;aspect-ratio:1;border-radius:14px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative}
-.color-swatch.active{border-color:#fff!important;box-shadow:0 0 0 2px rgba(255,255,255,0.15)}
-.color-swatch.active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:800}
-.emoji-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:8px}
-.emoji-opt{font-size:28px;text-align:center;padding:10px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s}
-.emoji-opt.active{border-color:var(--primary);background:rgba(59,130,246,0.12)}
-
-/* ── Sheet / Overlay ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px)}
-.overlay.show{opacity:1;pointer-events:all}
-.sheet{position:fixed;bottom:0;left:0;right:0;width:100%;max-width:860px;margin:0 auto;max-height:92dvh;background:#0f1722;border-radius:26px 26px 0 0;border-top:1px solid rgba(255,255,255,0.08);z-index:101;transition:transform .35s cubic-bezier(0.32,0.72,0,1);display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);transform:translateY(100%);box-shadow:0 -20px 60px rgba(0,0,0,0.4)}
-.sheet.show{transform:translateY(0)}
-.sheet-handle{width:40px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin:14px auto 4px;flex-shrink:0}
-.sheet-header{display:flex;justify-content:space-between;align-items:center;padding:10px 20px 16px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.sheet-title{font-size:17px;font-weight:800}
-.sheet-close{width:32px;height:32px;background:rgba(255,255,255,0.06);border:1px solid var(--border2);border-radius:9px;color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
-.sheet-close:active{background:rgba(255,255,255,0.12)}
-.sheet-body{overflow-y:auto;padding:20px;flex:1}
-.btn-row{display:flex;gap:10px;margin-top:8px}
-.btn-row .btn{flex:1}
-.btn-row .btn:last-child{flex:2}
-
-/* ── Loading / Toast ── */
-.loading-overlay{position:fixed;inset:0;background:rgba(8,13,24,0.88);z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(10px)}
-.loading-spinner{width:44px;height:44px;border:3px solid rgba(59,130,246,0.15);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
-.loading-text{color:var(--text2);font-size:14px;font-weight:500}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.toast{position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-100px);background:#162033;border:1px solid rgba(59,130,246,0.25);border-radius:14px;padding:12px 22px;font-size:13px;font-weight:600;z-index:300;transition:transform .3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;max-width:90vw;box-shadow:0 8px 30px rgba(0,0,0,0.3)}
-.toast.show{transform:translateX(-50%) translateY(0)}
-.toast.error{background:#1f0f0f;border-color:rgba(239,68,68,0.3);color:var(--red2)}
-.toast.success{background:#0f1f16;border-color:rgba(34,197,94,0.3);color:var(--green2)}
-
-/* ── Branch filter ── */
-.branch-filter{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none;margin-bottom:16px}
-.branch-filter::-webkit-scrollbar{display:none}
-
-/* ── Pay history ── */
-.pay-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
-.pay-item:last-child{border-bottom:none}
-.pay-who{font-size:11px;color:var(--text3);margin-top:3px;font-weight:500}
-
-/* ── Staff activity ── */
-.activity-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
-.activity-row:last-child{border-bottom:none}
-
-/* ── Hero greeting ── */
-.hero-greeting{margin-bottom:20px;padding:20px;background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(6,182,212,0.04));border:1px solid rgba(59,130,246,0.1);border-radius:var(--radius);position:relative;overflow:hidden}
-.hero-greeting::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(59,130,246,0.15),transparent 70%);pointer-events:none}
-.hero-greeting-sub{color:var(--text3);font-size:13px;font-weight:500;margin-bottom:4px}
-.hero-greeting-name{font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:8px}
-
-/* ── Stat card colored variants ── */
-.stat-card-blue{background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(59,130,246,0.04));border-color:rgba(59,130,246,0.15)}
-.stat-card-green{background:linear-gradient(135deg,rgba(34,197,94,0.1),rgba(34,197,94,0.03));border-color:rgba(34,197,94,0.15)}
-.stat-card-cyan{background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(6,182,212,0.03));border-color:rgba(6,182,212,0.15)}
-.stat-card-red{background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.03));border-color:rgba(239,68,68,0.15)}
-
-/* ── Report stat cards ── */
-.report-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
-.report-stat{border-radius:var(--radius);padding:16px;border:1px solid var(--border)}
-.report-stat-icon{font-size:22px;margin-bottom:8px}
-.report-stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.7;margin-bottom:4px}
-.report-stat-val{font-size:18px;font-weight:900;letter-spacing:-.5px}
-
-/* ── Employee card ── */
-.emp-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
-.emp-stat-item{text-align:center}
-.emp-stat-label{font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px}
-.emp-stat-val{font-size:16px;font-weight:800}
-
-@media(min-width:600px){
-  .stat-grid{grid-template-columns:repeat(4,1fr)}
-  .report-stat-grid{grid-template-columns:repeat(4,1fr)}
-  .content{padding:20px clamp(20px,4vw,40px) 100px}
-  .card{padding:20px}
-  .stat-value{font-size:22px}
-  .topbar-title{font-size:20px}
-  .login-card{padding:40px 36px}
+/* Tablet */
+@media(max-width:900px){
+  .stats-grid{grid-template-columns:repeat(3,1fr)}
 }
-@media(min-width:860px){
-  #app{display:flex;flex-direction:column}
-  .content{max-width:860px}
-  .bottom-nav{justify-content:center}
-  .sheet{left:50%;right:auto;transform:translateX(-50%) translateY(100%);width:min(100%,860px)}
-  .sheet.show{transform:translateX(-50%) translateY(0)}
-  .stat-grid{grid-template-columns:repeat(4,1fr)}
-  .emoji-grid{grid-template-columns:repeat(8,1fr)}
+
+/* Mobile */
+@media(max-width:680px){
+  :root{--header-h:54px}
+  main{padding:14px 12px;padding-bottom:calc(var(--nav-h) + 16px)}
+
+  /* Header adjustments */
+  header{padding:0 14px;gap:8px}
+  .header-center{display:none} /* hide desktop tabs */
+  .user-chip{display:none}
+  .logo-sub{display:none}
+
+  /* Show mobile nav */
+  .mobile-nav{display:block}
+
+  /* Stats */
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .stat-value{font-size:1.25rem}
+
+  /* Customer table */
+  .table-wrap{overflow-x:auto}
+  th:nth-child(3),td:nth-child(3),th:nth-child(4),td:nth-child(4){display:none}
+
+  /* Detail */
+  .detail-grid{grid-template-columns:1fr}
+  .detail-topbar{gap:8px}
+  .detail-name{font-size:1.15rem}
+  .detail-actions .btn span{display:none} /* icon only */
+
+  /* Forms */
+  .form-grid{grid-template-columns:1fr}
+
+  /* Modal */
+  .overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-height:88vh;padding:22px 18px}
+
+  /* Cards grid */
+  .cards-grid{grid-template-columns:1fr}
+
+  /* Toast */
+  #toast{bottom:calc(var(--nav-h) + 8px);right:12px;left:12px;max-width:none}
+
+  /* Buttons */
+  .btn-add-main{width:100%;justify-content:center}
+}
+
+@media(max-width:400px){
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-value{font-size:1.1rem}
+}
+
+/* Large screens */
+@media(min-width:1200px){
+  main{padding:24px 20px}
 }
 </style>
 </head>
 <body>
-<div id="app">
 
-<div class="loading-overlay" id="loading" style="display:none">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loading-text">กำลังโหลด...</div>
-</div>
-<div class="toast" id="toast"></div>
-
-<!-- LOGIN -->
-<div id="screen-login" class="screen active">
-  <div class="login-logo">
-    <div class="login-logo-icon" id="login-logo-icon">💰</div>
-    <div class="login-title" id="login-logo-title">MoneyFlow</div>
-    <div class="login-sub" id="login-logo-sub">ระบบจัดการเงินกู้รายวัน</div>
-  </div>
+<!-- ══ LOGIN SCREEN ══ -->
+<div id="login-screen">
   <div class="login-card">
-    <div class="field">
+    <div class="login-logo">
+      <div class="login-logo-icon">🏠</div>
+      <span class="name">บ้านวันย่า</span>
+      <span class="sub">Daily Interest System</span>
+    </div>
+    <div class="login-divider"><span>เข้าสู่ระบบ</span></div>
+    <div class="login-err" id="login-err" style="display:none"></div>
+    <div class="form-group">
       <label>ชื่อผู้ใช้</label>
-      <input id="login-user" class="input" placeholder="username" autocapitalize="none">
+      <div class="input-wrap">
+        <svg class="input-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <input type="text" id="login-user" placeholder="กรอกชื่อผู้ใช้" autocomplete="username"/>
+      </div>
     </div>
-    <div class="field">
+    <div class="form-group">
       <label>รหัสผ่าน</label>
-      <input id="login-pass" class="input" type="password" placeholder="••••••••">
+      <div class="input-wrap">
+        <svg class="input-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="login-pass" placeholder="กรอกรหัสผ่าน" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
     </div>
-    <div id="login-error" class="error-msg" style="display:none"></div>
-    <button class="btn btn-primary" onclick="doLogin()" style="margin-top:8px" id="login-btn">เข้าสู่ระบบ</button>
+    <button class="btn btn-gold" style="width:100%;justify-content:center;padding:12px;font-size:0.92rem;margin-top:4px" onclick="doLogin()" id="login-btn">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      เข้าสู่ระบบ
+    </button>
+    <p style="text-align:center;font-size:0.7rem;color:var(--muted);margin-top:18px;opacity:0.7">Admin เริ่มต้น: admin / admin1234</p>
   </div>
-  <div class="login-hint" id="login-version">v3.0 — Branch Edition</div>
 </div>
 
-<!-- MAIN -->
-<div id="screen-main" class="screen">
-  <div class="topbar" style="padding:0">
-    <div class="topbar-inner">
-    <span class="topbar-title" id="topbar-title">MoneyFlow 💰</span>
-    <div class="topbar-right">
-      <span id="topbar-branch" class="badge badge-purple" style="display:none"></span>
-      <span id="topbar-role" class="badge badge-blue"></span>
-      <button class="logout-btn" onclick="doLogout()">ออก</button>
-    </div>
+<!-- ══ APP ══ -->
+<div id="app" style="display:none">
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <div class="logo-text">
+      <span class="logo-name" id="logo-name">บ้านวันย่า</span>
+      <span class="logo-sub">ระบบดอกเบี้ยรายวัน</span>
     </div>
   </div>
-  <div id="tab-dashboard" class="content"></div>
-  <div id="tab-borrowers" class="content" style="display:none"></div>
-  <div id="tab-loans" class="content" style="display:none"></div>
-  <div id="tab-report" class="content" style="display:none"></div>
-  <div id="tab-employees" class="content" style="display:none"></div>
-  <div id="tab-settings" class="content" style="display:none"></div>
-  <nav class="bottom-nav">
-    <div class="nav-inner">
-    <button class="nav-item active" onclick="switchTab('dashboard',this)"><span class="nav-icon">🏠</span><span>หน้าหลัก</span><span class="nav-dot"></span></button>
-    <button class="nav-item" onclick="switchTab('borrowers',this)"><span class="nav-icon">👥</span><span>ลูกหนี้</span><span class="nav-dot"></span></button>
-    <button class="nav-item" onclick="switchTab('loans',this)"><span class="nav-icon">📄</span><span>สัญญา</span><span class="nav-dot"></span></button>
-    <button class="nav-item" onclick="switchTab('report',this)"><span class="nav-icon">📊</span><span>รายงาน</span><span class="nav-dot"></span></button>
-    <button class="nav-item" id="nav-emp" onclick="switchTab('employees',this)" style="display:none"><span class="nav-icon">👔</span><span>พนักงาน</span><span class="nav-dot"></span></button>
-    <button class="nav-item" id="nav-settings" onclick="switchTab('settings',this)" style="display:none"><span class="nav-icon">⚙️</span><span>ตั้งค่า</span><span class="nav-dot"></span></button>
+
+  <div class="header-center">
+    <div class="tab-bar" id="tab-bar">
+      <button class="tab active" id="tab-dashboard" onclick="showPage('dashboard')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        ภาพรวม
+      </button>
+      <button class="tab" id="tab-customers" onclick="showPage('customers')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        ลูกค้า
+      </button>
+      <button class="tab" id="tab-staff" style="display:none" onclick="showPage('staff')">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        พนักงาน
+      </button>
     </div>
-  </nav>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeSheet()"></div>
-<div class="sheet" id="sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <span class="sheet-title" id="sheet-title"></span>
-    <button class="sheet-close" onclick="closeSheet()">✕</button>
   </div>
-  <div class="sheet-body" id="sheet-body"></div>
+
+  <div class="header-right">
+    <div class="user-chip">
+      <span id="hdr-name" style="font-weight:600"></span>
+      <span id="hdr-role" class="role-badge"></span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()" title="ออกจากระบบ">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      ออก
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+
+  <div class="stats-grid">
+    <div class="stat-card cyan">
+      <div class="stat-label">👥 ลูกค้าทั้งหมด</div>
+      <div class="stat-value" id="s-total-cust">—</div>
+      <div class="stat-sub" id="s-total-sub"></div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">💰 ดอกเบี้ยวันนี้</div>
+      <div class="stat-value" id="s-today-int">—</div>
+      <div class="stat-sub">
+        <span style="color:var(--green)">เก็บได้ <span id="s-int-collected">—</span></span>
+        &nbsp;·&nbsp;
+        <span style="color:var(--gold)">ค้าง <span id="s-int-pending">—</span></span>
+      </div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">✅ จ่ายแล้ว</div>
+      <div class="stat-value" id="s-paid-count">—</div>
+      <div class="stat-sub">
+        <span style="color:var(--red)">ยังไม่จ่าย <span id="s-unpaid-count">—</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="today-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span class="title-icon">📋</span> สถานะรายวัน
+      </div>
+      <div class="date-picker-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <input type="date" id="dash-date-picker" onchange="renderDashboard()"/>
+      </div>
+      <div id="dash-house-filter-wrap" style="display:none">
+        <div class="date-picker-wrap" style="gap:7px">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <select id="dash-filter-house" onchange="renderDashboard()" style="background:transparent;border:none;padding:0;font-size:0.82rem;color:var(--text);cursor:pointer;width:auto;font-family:var(--font-th)">
+            <option value="">ทุกบ้าน</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-line"></div>
+    </div>
+
+    <div style="color:var(--green)" class="today-subsection-label">
+      ✅ จ่ายแล้ว <span class="cnt" id="paid-list-count"></span>
+    </div>
+    <div class="today-list" id="today-list-paid"></div>
+
+    <div style="color:var(--gold)" class="today-subsection-label">
+      ⏳ ยังไม่จ่าย <span class="cnt" id="unpaid-list-count"></span>
+    </div>
+    <div class="today-list" id="today-list-unpaid"></div>
+  </div>
 </div>
 
+<!-- ══ CUSTOMERS LIST ══ -->
+<div class="page" id="page-customers">
+  <div id="admin-house-filter" style="display:none">
+    <div class="house-selector">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--muted);flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <label style="color:var(--muted)">กรองตามบ้าน</label>
+      <select id="filter-house" onchange="filterCustomers()">
+        <option value="">ทุกบ้าน</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="search-input" placeholder="ค้นหาชื่อ, เบอร์โทร..." oninput="filterCustomers()"/>
+    </div>
+    <div class="filter-chip" id="status-filter-chip">
+      <button class="active" onclick="setStatusFilter('',this)">กำลังเปิด</button>
+      <button onclick="setStatusFilter('closed',this)">ปิดแล้ว</button>
+    </div>
+    <button class="btn btn-gold btn-sm" id="btn-add-cust" onclick="openAddCustomer()">
+      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      เพิ่มลูกค้า
+    </button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>#</th>
+        <th>ชื่อ</th>
+        <th>เบอร์</th>
+        <th>อัตราดอก</th>
+        <th class="text-right">ต้นคงเหลือ</th>
+        <th class="text-right">ดอกวันนี้</th>
+        <th class="text-right">ดอกค้าง</th>
+        <th>สถานะ</th>
+        <th id="th-actions"></th>
+      </tr></thead>
+      <tbody id="cust-tbody">
+        <tr><td colspan="9" class="empty"><span class="spin"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ CUSTOMER DETAIL ══ -->
+<div class="page" id="page-detail">
+  <div class="detail-topbar">
+    <button class="detail-back" onclick="showPage('customers')">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      กลับ
+    </button>
+    <div class="detail-identity">
+      <div class="detail-name" id="det-name">—</div>
+      <div class="detail-meta" id="det-meta"></div>
+    </div>
+    <div class="detail-actions" id="det-admin-btns">
+      <button class="btn btn-ghost btn-sm" onclick="editCurrentCustomer()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>แก้ไข</span>
+      </button>
+      <button class="btn btn-red btn-sm" onclick="closeCurrentCustomer()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>ปิดบัญชี</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <div class="info-card">
+      <div class="info-card-title">📁 ข้อมูลบัญชี</div>
+      <div class="info-row"><span class="info-key">ต้นเริ่มต้น</span><span class="info-val mono text-muted" id="det-init-principal">—</span></div>
+      <div class="info-row"><span class="info-key">ต้นคงเหลือ</span><span class="info-val mono text-gold fw-600" id="det-principal">—</span></div>
+      <div class="info-row"><span class="info-key">อัตราดอกเบี้ย</span><span class="info-val" id="det-rate">—</span></div>
+      <div class="info-row"><span class="info-key">วันที่เริ่มกู้</span><span class="info-val mono" id="det-start">—</span></div>
+      <div class="info-row"><span class="info-key">เบอร์โทร</span><span class="info-val" id="det-phone">—</span></div>
+      <div class="info-row"><span class="info-key">หมายเหตุ</span><span class="info-val text-muted" id="det-note">—</span></div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">💳 สรุปวันนี้</div>
+      <div class="info-row"><span class="info-key">ดอกเบี้ยวันนี้</span><span class="info-val mono text-gold" id="det-today-int">—</span></div>
+      <div class="info-row"><span class="info-key">ดอกค้างสะสม</span><span class="info-val mono text-red" id="det-overdue">—</span></div>
+      <div class="info-row"><span class="info-key">ยอดที่ต้องจ่าย</span><span class="info-val mono text-gold fw-600" id="det-total-due">—</span></div>
+      <div class="info-row"><span class="info-key">จ่ายดอกแล้วทั้งหมด</span><span class="info-val mono text-green" id="det-int-paid">—</span></div>
+      <div class="info-row"><span class="info-key">สถานะวันนี้</span><span class="info-val" id="det-today-status">—</span></div>
+    </div>
+  </div>
+
+  <div class="payment-card" id="payment-form-section">
+    <div class="payment-card-title">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      บันทึกรับเงิน
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>วันที่รับเงิน</label>
+        <input type="date" id="pay-date"/>
+      </div>
+      <div class="form-group">
+        <label>จำนวนเงินที่รับ (บาท)</label>
+        <input type="number" id="pay-amount" placeholder="0.00" min="0" oninput="calcPreview()"/>
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ <span style="font-weight:400;opacity:0.6">(ไม่บังคับ)</span></label>
+        <input type="text" id="pay-note" placeholder="บันทึกเพิ่มเติม..."/>
+      </div>
+    </div>
+    <div class="calc-preview" id="calc-preview" style="display:none">
+      <div class="calc-title">📐 ผลการคำนวณ</div>
+      <div class="calc-case" id="calc-case-label"></div>
+      <div id="calc-rows"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-green" onclick="savePayment()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        บันทึกรับเงิน
+      </button>
+    </div>
+  </div>
+
+  <div class="history-card" id="history-wrap">
+    <div class="history-card-head">
+      <span class="history-card-title">📜 ประวัติการจ่ายเงิน</span>
+    </div>
+    <div id="history-list"><div class="empty"><span class="spin"></span></div></div>
+  </div>
+</div>
+
+<!-- ══ STAFF MANAGEMENT ══ -->
+<div class="page" id="page-staff">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+    <div class="page-title" style="margin:0;padding:0;border:none">
+      <span class="icon">👤</span> จัดการพนักงาน
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="openAddHouse()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        เพิ่มบ้าน
+      </button>
+      <button class="btn btn-purple btn-sm" onclick="openAddStaff()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        เพิ่มพนักงาน
+      </button>
+    </div>
+  </div>
+
+  <div style="margin-bottom:24px">
+    <div style="font-size:0.72rem;color:var(--muted);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      บ้านทั้งหมด
+    </div>
+    <div class="cards-grid" id="houses-list"><div class="empty" style="padding:20px"><span class="spin"></span></div></div>
+  </div>
+
+  <div>
+    <div style="font-size:0.72rem;color:var(--muted);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      พนักงานทั้งหมด
+    </div>
+    <div class="cards-grid" id="staff-list"><div class="empty" style="padding:20px"><span class="spin"></span></div></div>
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MOBILE BOTTOM NAV ══ -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="nav-item active" id="mnav-dashboard" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span>ภาพรวม</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-item" id="mnav-customers" onclick="showPage('customers')">
+      <span class="nav-icon">👥</span>
+      <span>ลูกค้า</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-item" id="mnav-add" onclick="openAddCustomer()">
+      <span class="nav-icon" style="background:var(--gold);color:#08080f;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-top:-12px;box-shadow:0 4px 16px rgba(232,184,109,0.4)">+</span>
+      <span>เพิ่ม</span>
+      <span class="nav-dot" style="opacity:0"></span>
+    </button>
+    <button class="nav-item" id="mnav-staff" style="display:none" onclick="showPage('staff')">
+      <span class="nav-icon">👤</span>
+      <span>พนักงาน</span>
+      <span class="nav-dot"></span>
+    </button>
+    <button class="nav-item" id="mnav-logout" onclick="doLogout()">
+      <span class="nav-icon">🚪</span>
+      <span>ออก</span>
+      <span class="nav-dot" style="opacity:0"></span>
+    </button>
+  </div>
+</nav>
+
+</div><!-- #app -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- Add/Edit Customer -->
+<div class="overlay" id="modal-customer">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 class="modal-title" id="modal-title">เพิ่มลูกค้าใหม่</h3>
+      <button class="modal-close" onclick="closeModal('modal-customer')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full" id="modal-house-row" style="display:none">
+        <label>🏠 บ้าน</label>
+        <select id="f-house"></select>
+      </div>
+      <div class="form-group full">
+        <label>ชื่อ - นามสกุล *</label>
+        <input id="f-name" type="text" placeholder="เช่น กาญจนา สุขพิพัฒน์"/>
+      </div>
+      <div class="form-group">
+        <label>เบอร์โทร</label>
+        <input id="f-phone" type="tel" placeholder="08x-xxx-xxxx"/>
+      </div>
+      <div class="form-group">
+        <label>เลขบัตรประชาชน</label>
+        <input id="f-idcard" placeholder="x-xxxx-xxxxx-xx-x" maxlength="20"/>
+      </div>
+      <div class="form-group full">
+        <label>ลิงค์เฟซบุ๊ก</label>
+        <input id="f-fb" type="url" placeholder="https://facebook.com/..."/>
+      </div>
+      <div class="form-group">
+        <label>เงินต้น (บาท) *</label>
+        <input id="f-principal" type="number" placeholder="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>อัตราดอก (% ต่อวัน)</label>
+        <input id="f-rate" type="number" placeholder="20" min="0" step="0.5" value="20"/>
+      </div>
+      <div class="form-group">
+        <label>วันที่เริ่มกู้</label>
+        <input id="f-start" type="date"/>
+      </div>
+      <div class="form-group">
+        <label>สถานะ</label>
+        <select id="f-status">
+          <option value="false">⏳ ยังค้างอยู่</option>
+          <option value="true">✅ ปิดแล้ว</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ</label>
+        <input id="f-note" type="text" placeholder="..."/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-customer')">ยกเลิก</button>
+      <button class="btn btn-gold" onclick="saveCustomer()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        บันทึก
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Staff -->
+<div class="overlay" id="modal-staff">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head">
+      <h3 class="modal-title" id="modal-staff-title">เพิ่มพนักงาน</h3>
+      <button class="modal-close" onclick="closeModal('modal-staff')">✕</button>
+    </div>
+    <div class="form-group"><label>ชื่อแสดง</label><input id="sf-name" type="text" placeholder="เช่น นางสาวมาลี"/></div>
+    <div class="form-group"><label>Username</label><input id="sf-user" type="text" placeholder="ตัวอักษรและตัวเลขเท่านั้น"/></div>
+    <div class="form-group">
+      <label>รหัสผ่าน <span style="color:var(--muted);font-weight:400">(ว่างไว้ = ไม่เปลี่ยน)</span></label>
+      <input id="sf-pass" type="password" placeholder="รหัสผ่านใหม่"/>
+    </div>
+    <div class="form-group">
+      <label>ตำแหน่ง</label>
+      <select id="sf-role">
+        <option value="staff">👤 พนักงาน (Staff)</option>
+        <option value="admin">⭐ ผู้ดูแล (Admin)</option>
+      </select>
+    </div>
+    <div class="form-group" id="sf-house-row">
+      <label>บ้านที่รับผิดชอบ</label>
+      <select id="sf-house"><option value="">— เลือกบ้าน —</option></select>
+    </div>
+    <div class="form-group">
+      <label>สถานะ</label>
+      <select id="sf-active">
+        <option value="true">✅ ใช้งาน</option>
+        <option value="false">🚫 ระงับ</option>
+      </select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-staff')">ยกเลิก</button>
+      <button class="btn btn-gold" onclick="saveStaff()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        บันทึก
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit House -->
+<div class="overlay" id="modal-house">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <h3 class="modal-title" id="modal-house-title">🏠 เพิ่มบ้าน</h3>
+      <button class="modal-close" onclick="closeModal('modal-house')">✕</button>
+    </div>
+    <div class="form-group"><label>ชื่อบ้าน</label><input id="h-name" type="text" placeholder="เช่น บ้านสุโขทัย 2"/></div>
+    <div class="form-group"><label>หมายเหตุ</label><input id="h-note" type="text" placeholder="..."/></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-house')">ยกเลิก</button>
+      <button class="btn btn-gold" onclick="saveHouse()">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        บันทึก
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="modal-settings">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <h3 class="modal-title">⚙️ การตั้งค่า</h3>
+      <button class="modal-close" onclick="closeModal('modal-settings')">✕</button>
+    </div>
+    <div class="info-row">
+      <span class="info-key">สถานะการเชื่อมต่อ</span>
+      <span class="text-green" style="display:flex;align-items:center;gap:5px">
+        <span class="dot dot-green"></span>เชื่อมต่อแล้ว
+      </span>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-settings')">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" style="display:none"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ══════════════════════════════════════
-//  SUPABASE CONFIG
-// ══════════════════════════════════════
-const SB_URL = 'https://ehtocpsupbbihikilton.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVodG9jcHN1cGJiaWhpa2lsdG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzE5OTgsImV4cCI6MjA5NTAwNzk5OH0.xH7sRG4Qsg0SslP7_PCbsNIy_KDTVd7fC8JbxhjzdoI';
-const HDR = { 'Content-Type':'application/json', apikey: SB_KEY, Authorization:`Bearer ${SB_KEY}` };
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+var _sb=null;
+var allCustomers=[], allPayments=[], allHouses=[], allUsers=[];
+var editingId=null, editingStaffId=null, editingHouseId=null, currentCustId=null;
+var currentUser=null;
+var SESSION_KEY='bwanya_v3_session';
+var _statusFilter='';
 
-async function sbSelect(table, params='') {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, { headers: HDR });
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbInsert(table, data) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
-    method:'POST', headers:{...HDR, Prefer:'return=representation'}, body:JSON.stringify(data)
-  });
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbUpdate(table, data, match) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${match}`, {
-    method:'PATCH', headers:{...HDR, Prefer:'return=representation'}, body:JSON.stringify(data)
-  });
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-async function sbDelete(table, match) {
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${match}`, { method:'DELETE', headers: HDR });
-  return r.ok;
-}
+// ══════════════════════════════════════════════
+// SUPABASE INIT
+// ══════════════════════════════════════════════
+var SUPABASE_URL="https://ehtocpsupbbihikilton.supabase.co";
+var SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVodG9jcHN1cGJiaWhpa2lsdG9uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzE5OTgsImV4cCI6MjA5NTAwNzk5OH0.xH7sRG4Qsg0SslP7_PCbsNIy_KDTVd7fC8JbxhjzdoI";
 
-// ══════════════════════════════════════
-//  REALTIME — polling เสมอ + WebSocket เสริม
-// ══════════════════════════════════════
-let realtimeWS = null;
-let realtimeHeartbeat = null;
-let realtimeRef = 1;
-let pollingInterval = null;
+window.addEventListener('load',function(){
+  _sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  var today=new Date();
+  document.getElementById('pay-date').value=toISO(today);
+  document.getElementById('f-start').value=toISO(today);
+  document.getElementById('dash-date-picker').value=toISO(today);
+  var sess=localStorage.getItem(SESSION_KEY);
+  if(sess){
+    try{currentUser=JSON.parse(sess);startApp();return}catch(e){}
+  }
+  showLoginScreen();
+});
 
-// ── Polling ทุก 5 วินาที (ทำงานเสมอหลัง login) ──
-function startPolling() {
-  stopPolling();
-  pollingInterval = setInterval(async () => {
-    if(!currentUser || document.hidden) return;
-    try {
-      const [loans, payments, borrowers] = await Promise.all([
-        sbSelect('loans','select=*&order=created_at.desc'),
-        sbSelect('payments','select=*&order=payment_date.desc,created_at.desc'),
-        sbSelect('borrowers','select=*&order=created_at.desc'),
-      ]);
-      let changed = false;
-      if(JSON.stringify(loans) !== JSON.stringify(LOANS)) { LOANS = loans||[]; changed = true; }
-      if(JSON.stringify(payments) !== JSON.stringify(PAYMENTS)) { PAYMENTS = payments||[]; changed = true; }
-      if(JSON.stringify(borrowers) !== JSON.stringify(BORROWERS)) { BORROWERS = borrowers||[]; changed = true; }
-      if(changed) {
-        const renders = {dashboard:renderDashboard,borrowers:renderBorrowers,loans:renderLoans,report:renderReport,employees:renderEmployees,settings:renderSettings};
-        renders[currentTab]?.();
-      }
-    } catch(e){}
-  }, 5000);
-}
-function stopPolling() { clearInterval(pollingInterval); pollingInterval = null; }
-
-// ── WebSocket (เสริม polling ให้เร็วขึ้น แต่ไม่แทน) ──
-function startRealtime() {
-  startPolling(); // เริ่ม polling เสมอ
-  if(realtimeWS) realtimeWS.close();
-
-  const wsUrl = SB_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SB_KEY + '&vsn=1.0.0';
-  try { realtimeWS = new WebSocket(wsUrl); } catch(e) { return; }
-
-  realtimeWS.onopen = () => {
-    const tables = ['loans','payments','borrowers','employees','branches','app_settings'];
-    tables.forEach(table => {
-      realtimeWS.send(JSON.stringify({
-        topic: `realtime:${table}-changes`,
-        event: 'phx_join',
-        payload: { config: { postgres_changes: [{ event: '*', schema: 'public', table }] } },
-        ref: String(realtimeRef++)
-      }));
-    });
-    realtimeHeartbeat = setInterval(() => {
-      if(realtimeWS?.readyState === WebSocket.OPEN)
-        realtimeWS.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:String(realtimeRef++)}));
-    }, 25000);
-  };
-
-  realtimeWS.onmessage = async (rawE) => {
-    try {
-      const msg = JSON.parse(rawE.data);
-      let ev, table, record, old;
-      if(msg.event === 'postgres_changes') {
-        ev = msg.payload?.data?.type; table = msg.payload?.data?.table;
-        record = msg.payload?.data?.record; old = msg.payload?.data?.old_record;
-      } else if(['INSERT','UPDATE','DELETE'].includes(msg.event)) {
-        ev = msg.event; table = msg.topic?.split(':')?.[2];
-        record = msg.payload?.record; old = msg.payload?.old_record;
-      } else { return; }
-      if(!ev || !table) return;
-
-      if(table === 'app_settings') {
-        if(record) { Object.assign(APP, record); applyAppSettings(); }
-        return;
-      }
-      if(!currentUser) return;
-
-      if(table === 'loans') {
-        if(ev==='INSERT'&&record){if(!LOANS.find(x=>x.id===record.id))LOANS.unshift(record);}
-        else if(ev==='UPDATE'&&record){const i=LOANS.findIndex(x=>x.id===record.id);if(i>=0)LOANS[i]=record;else LOANS.unshift(record);}
-        else if(ev==='DELETE'&&old){LOANS=LOANS.filter(x=>x.id!==old.id);}
-      } else if(table === 'payments') {
-        if(ev==='INSERT'&&record){if(!PAYMENTS.find(x=>x.id===record.id))PAYMENTS.unshift(record);}
-        else if(ev==='UPDATE'&&record){const i=PAYMENTS.findIndex(x=>x.id===record.id);if(i>=0)PAYMENTS[i]=record;else PAYMENTS.unshift(record);}
-        else if(ev==='DELETE'&&old){PAYMENTS=PAYMENTS.filter(x=>x.id!==old.id);}
-      } else if(table === 'borrowers') {
-        if(ev==='INSERT'&&record){if(!BORROWERS.find(x=>x.id===record.id))BORROWERS.unshift(record);}
-        else if(ev==='UPDATE'&&record){const i=BORROWERS.findIndex(x=>x.id===record.id);if(i>=0)BORROWERS[i]=record;else BORROWERS.unshift(record);}
-        else if(ev==='DELETE'&&old){BORROWERS=BORROWERS.filter(x=>x.id!==old.id);}
-      } else if(table === 'employees') {
-        if(ev==='INSERT'&&record){if(!EMPLOYEES.find(x=>x.id===record.id))EMPLOYEES.push(record);}
-        else if(ev==='UPDATE'&&record){const i=EMPLOYEES.findIndex(x=>x.id===record.id);if(i>=0)EMPLOYEES[i]=record;}
-        else if(ev==='DELETE'&&old){EMPLOYEES=EMPLOYEES.filter(x=>x.id!==old.id);}
-      } else if(table === 'branches') {
-        if(ev==='INSERT'&&record){if(!BRANCHES.find(x=>x.id===record.id))BRANCHES.push(record);}
-        else if(ev==='UPDATE'&&record){const i=BRANCHES.findIndex(x=>x.id===record.id);if(i>=0)BRANCHES[i]=record;}
-        else if(ev==='DELETE'&&old){BRANCHES=BRANCHES.filter(x=>x.id!==old.id);}
-      }
-      const renders = {dashboard:renderDashboard,borrowers:renderBorrowers,loans:renderLoans,report:renderReport,employees:renderEmployees,settings:renderSettings};
-      renders[currentTab]?.();
-    } catch(err){}
-  };
-
-  realtimeWS.onclose = () => { clearInterval(realtimeHeartbeat); };
-  realtimeWS.onerror = () => realtimeWS.close();
+// ══════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════
+function showLoginScreen(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
 }
 
-function stopRealtime() {
-  stopPolling();
-  clearInterval(realtimeHeartbeat);
-  if(realtimeWS) { realtimeWS.onclose = null; realtimeWS.close(); realtimeWS = null; }
+async function doLogin(){
+  var username=document.getElementById('login-user').value.trim();
+  var password=document.getElementById('login-pass').value;
+  var errEl=document.getElementById('login-err');
+  errEl.style.display='none';
+  if(!username||!password){errEl.textContent='กรุณากรอก Username และรหัสผ่าน';errEl.style.display='flex';return}
+  var btn=document.getElementById('login-btn');
+  btn.innerHTML='<span class="spin"></span> กำลังตรวจสอบ...';btn.disabled=true;
+  var res=await _sb.from('users').select('*').eq('username',username).eq('password',password).eq('is_active',true).single();
+  btn.innerHTML='<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> เข้าสู่ระบบ';
+  btn.disabled=false;
+  if(res.error||!res.data){
+    errEl.textContent='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง หรือบัญชีถูกระงับ';
+    errEl.style.display='flex';return;
+  }
+  currentUser=res.data;
+  localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+  startApp();
 }
 
-// ══════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════
-let currentUser = null;
-let currentTab = 'dashboard';
-let loanFilter = 'all';
-let loanSearch = '';
-let reportPeriod = 'today';
-let payLoan = null;
-let selectedRole = 'staff';
-let selectedBranchId = null; // null = ทุกสาขา (Admin/Owner)
-let filterBranchId = null;   // กรองแสดงผล
-
-let APP = { name:'MoneyFlow', logo:'💰', color:'#3b82f6', subtitle:'ระบบจัดการเงินกู้รายวัน', version:'v3.0 — Branch Edition' };
-const COLORS = [
-  {hex:'#3b82f6',name:'น้ำเงิน'},{hex:'#06b6d4',name:'ฟ้า'},{hex:'#8b5cf6',name:'ม่วง'},
-  {hex:'#ec4899',name:'ชมพู'},{hex:'#f59e0b',name:'ทอง'},{hex:'#10b981',name:'เขียว'},
-  {hex:'#ef4444',name:'แดง'},{hex:'#f97316',name:'ส้ม'},{hex:'#6366f1',name:'คราม'},
-  {hex:'#14b8a6',name:'เทอร์ควอยซ์'},
-];
-const LOGOS = ['💰','🏦','💵','💳','📊','🪙','💹','🤑','🏧','💎','⭐','🔑'];
-let EMPLOYEES=[], BORROWERS=[], LOANS=[], PAYMENTS=[], BRANCHES=[];
-
-function applyAppSettings() {
-  document.title = APP.name;
-  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = APP.name;
-  document.documentElement.style.setProperty('--primary', APP.color);
-  document.documentElement.style.setProperty('--primary2', APP.color+'bb');
-  // Login screen (by ID — reliable even on fresh load)
-  const loginIcon = document.getElementById('login-logo-icon');
-  const loginTitle = document.getElementById('login-logo-title');
-  const loginSub = document.getElementById('login-logo-sub');
-  if(loginIcon) loginIcon.textContent = APP.logo;
-  if(loginTitle) loginTitle.textContent = APP.name;
-  if(loginSub) loginSub.textContent = APP.subtitle;
-  const loginVer = document.getElementById('login-version');
-  if(loginVer) loginVer.textContent = APP.version||'';
-  const topbar = document.getElementById('topbar-title');
-  if(topbar && currentUser) topbar.textContent = APP.logo + ' ' + APP.name;
-  // cache ใน localStorage
-  try { localStorage.setItem('mf_app', JSON.stringify({name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version})); } catch(e){}
+function doLogout(){
+  localStorage.removeItem(SESSION_KEY);
+  currentUser=null;allCustomers=[];allPayments=[];allHouses=[];allUsers=[];
+  document.getElementById('app').style.display='none';
+  showLoginScreen();
 }
 
-const TAB_TITLES = {dashboard:'หน้าหลัก',borrowers:'ลูกหนี้',loans:'สัญญากู้',report:'รายงาน',employees:'จัดการพนักงาน',settings:'ตั้งค่าแอป ⚙️'};
-
-// ══════════════════════════════════════
-//  UI HELPERS
-// ══════════════════════════════════════
-function showLoading(text='กำลังโหลด...') {
-  document.getElementById('loading-text').textContent = text;
-  document.getElementById('loading').style.display = 'flex';
-}
-function hideLoading() { document.getElementById('loading').style.display = 'none'; }
-
-let toastTimer;
-function showToast(msg, type='success') {
-  const t = document.getElementById('toast');
-  t.textContent = (type==='success'?'✅ ':type==='error'?'❌ ':'ℹ️ ')+msg;
-  t.className = `toast ${type} show`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
-}
-
-// ══════════════════════════════════════
-//  AUTH
-// ══════════════════════════════════════
-async function doLogin() {
-  const u = document.getElementById('login-user').value.trim();
-  const p = document.getElementById('login-pass').value;
-  const err = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-  if(!u||!p){ err.textContent='กรุณากรอกข้อมูลให้ครบ'; err.style.display='block'; return; }
-  btn.textContent='⏳ กำลังเข้าสู่ระบบ...'; btn.disabled=true; err.style.display='none';
-  try {
-    const data = await sbSelect('employees', `username=eq.${encodeURIComponent(u)}&active=eq.true&select=*`);
-    const emp = data.find(e=>e.password===p);
-    if(!emp){ err.textContent='ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'; err.style.display='block'; return; }
-    currentUser = emp;
-    // ตั้งค่า branch filter ตาม role
-    if(emp.role === 'staff') {
-      filterBranchId = emp.branch_id || null;
-    } else {
-      filterBranchId = null; // Admin/Owner เห็นทุกสาขา
-    }
-    await loadAllData();
-    showScreen('main');
-    // รีเซ็ตแท็บกลับ dashboard เสมอเมื่อ login
-    currentTab = 'dashboard';
-    loanSearch = '';
-    reportPeriod = 'today'; // รีเซ็ตรายงานกลับวันนี้เสมอ
-    document.querySelectorAll('.content').forEach(c=>c.style.display='none');
-    document.getElementById('tab-dashboard').style.display='block';
-    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-    document.querySelector('.nav-item[onclick*="dashboard"]')?.classList.add('active');
-    // รีเซ็ตก่อนเสมอ แล้วค่อยเปิดตาม role
-    document.getElementById('nav-emp').style.display='none';
-    document.getElementById('nav-settings').style.display='none';
-    document.getElementById('topbar-role').style.display='inline-flex';
-    document.getElementById('topbar-role').textContent = emp.role==='owner'?'':emp.role==='admin'?'👑 Admin':'👤 Staff';
-    if(emp.role==='owner') document.getElementById('topbar-role').style.display='none';
-    if(emp.role==='admin'||emp.role==='owner') document.getElementById('nav-emp').style.display='flex';
-    if(emp.role==='owner') document.getElementById('nav-settings').style.display='flex';
-    document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
-    // แสดงชื่อสาขาที่ topbar
-    if(emp.role === 'staff' && emp.branch_id) {
-      const br = BRANCHES.find(b=>b.id===emp.branch_id);
-      const bEl = document.getElementById('topbar-branch');
-      if(br) { bEl.textContent='🏠 '+br.name; bEl.style.display='inline-flex'; }
-    }
-    renderDashboard();
-    startRealtime(); // เริ่ม Realtime subscription
-  } catch(e) {
-    err.textContent='เชื่อมต่อ server ไม่ได้ กรุณาลองใหม่';
-    err.style.display='block';
-    console.error(e);
-  } finally { btn.textContent='เข้าสู่ระบบ'; btn.disabled=false; }
-}
-
-async function loadAllData() {
-  showLoading('กำลังโหลดข้อมูล...');
-  try {
-    const [emp,bor,loans,pays,settings,branches] = await Promise.all([
-      sbSelect('employees','select=*&order=created_at.asc'),
-      sbSelect('borrowers','select=*&order=created_at.desc'),
-      sbSelect('loans','select=*&order=created_at.desc'),
-      sbSelect('payments','select=*&order=payment_date.desc,created_at.desc'),
-      sbSelect('app_settings','select=*&limit=1').catch(()=>[]),
-      sbSelect('branches','select=*&order=name.asc').catch(()=>[]),
-    ]);
-    EMPLOYEES=emp||[]; BORROWERS=bor||[]; LOANS=loans||[]; PAYMENTS=pays||[]; BRANCHES=branches||[];
-    if(settings?.[0]) { Object.assign(APP, settings[0]); applyAppSettings(); }
-  } finally { hideLoading(); }
-}
-
-function doLogout() {
-  if(!confirm('ต้องการออกจากระบบ?')) return;
-  stopRealtime(); // หยุด Realtime
-  currentUser=null; EMPLOYEES=[]; BORROWERS=[]; LOANS=[]; PAYMENTS=[]; BRANCHES=[];
-  filterBranchId=null;
-  document.getElementById('login-user').value='';
-  document.getElementById('login-pass').value='';
-  document.getElementById('topbar-branch').style.display='none';
-  document.getElementById('topbar-role').style.display='inline-flex';
-  // รีเซ็ตแท็บที่ซ่อนอยู่
-  document.getElementById('nav-emp').style.display='none';
-  document.getElementById('nav-settings').style.display='none';
-  showScreen('login');
-}
-
-document.getElementById('login-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
-
-// ══════════════════════════════════════
-//  NAVIGATION
-// ══════════════════════════════════════
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+name).classList.add('active');
-}
-function switchTab(tab,btn) {
-  currentTab=tab;
-  document.querySelectorAll('.content').forEach(c=>c.style.display='none');
-  document.getElementById('tab-'+tab).style.display='block';
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  document.getElementById('topbar-title').textContent = tab==='dashboard'?(APP.logo+' '+APP.name):TAB_TITLES[tab];
-  ({dashboard:renderDashboard,borrowers:renderBorrowers,loans:renderLoans,report:renderReport,employees:renderEmployees,settings:renderSettings})[tab]?.();
-}
-
-function openSheet(title,html) {
-  document.getElementById('sheet-title').textContent=title;
-  document.getElementById('sheet-body').innerHTML=html;
-  document.getElementById('overlay').classList.add('show');
-  document.getElementById('sheet').classList.add('show');
-  document.body.style.overflow='hidden';
-}
-function closeSheet() {
-  document.getElementById('overlay').classList.remove('show');
-  document.getElementById('sheet').classList.remove('show');
-  document.body.style.overflow='';
-}
-
-// ══════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════
-const fmt = n => Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2});
-const today = () => new Date().toISOString().split('T')[0];
-const daysDiff = from => Math.max(0,Math.floor((new Date()-new Date(from))/86400000));
-const calcInt = (p,r,d) => (Number(p)*Number(r)*d)/100;
-const getBorrower = id => BORROWERS.find(b=>b.id===id);
-const getLoan = id => LOANS.find(l=>l.id===id);
-const getEmployee = id => EMPLOYEES.find(e=>e.id===id);
-const getBranch = id => BRANCHES.find(b=>b.id===id);
-
-// ── กรองข้อมูลตามสาขา ──
-function filteredBorrowers() {
-  if(!filterBranchId) return BORROWERS;
-  return BORROWERS.filter(b => b.branch_id === filterBranchId);
-}
-function filteredLoans() {
-  if(!filterBranchId) return LOANS;
-  const bIds = new Set(filteredBorrowers().map(b=>b.id));
-  return LOANS.filter(l => bIds.has(l.borrower_id));
-}
-function filteredPayments() {
-  if(!filterBranchId) return PAYMENTS;
-  const lIds = new Set(filteredLoans().map(l=>l.id));
-  return PAYMENTS.filter(p => lIds.has(p.loan_id));
-}
-
-// ── Branch filter bar (Admin/Owner only) ──
-function branchFilterBar(activeBranchId, onClickFn) {
-  if(currentUser.role === 'staff') return '';
-  if(BRANCHES.length === 0) return '';
-  const allBtn = `<button class="chip${!activeBranchId?' active':''}" onclick="${onClickFn}(null)">🌐 ทุกสาขา</button>`;
-  const branchBtns = BRANCHES.map(b=>`<button class="chip${activeBranchId===b.id?' active':''}" onclick="${onClickFn}('${b.id}')">${b.name}</button>`).join('');
-  return `<div class="branch-filter">${allBtn}${branchBtns}</div>`;
-}
-
-// ══════════════════════════════════════
-//  DASHBOARD
-// ══════════════════════════════════════
-function renderDashboard() {
-  const t=today();
-  const loans = filteredLoans();
-  const payments = filteredPayments();
-  const active=loans.filter(l=>l.status==='active');
-  const overdue=loans.filter(l=>l.due_date&&new Date(l.due_date)<new Date()&&l.status==='active');
-  const totalP=loans.reduce((s,l)=>s+Number(l.principal),0);
-  const todayPay=payments.filter(p=>p.payment_date===t).reduce((s,p)=>s+Number(p.amount),0);
-  const recentCards=loans.slice(0,5).map(loan=>{
-    const b=getBorrower(loan.borrower_id);
-    const d=daysDiff(loan.start_date);
-    const interest=calcInt(loan.principal,loan.interest_rate,d);
-    const total=Number(loan.principal)+interest;
-    const rem=total-Number(loan.total_paid);
-    const pct=Math.min(100,(Number(loan.total_paid)/total)*100).toFixed(0);
-    const creator=getEmployee(loan.created_by);
-    return `<div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div><div style="font-weight:700;font-size:15px">${b?.name||'ไม่ระบุ'}</div>
-        <div style="color:var(--text3);font-size:12px;margin-top:3px">฿${fmt(loan.principal)} · ${loan.interest_rate}%/วัน · ${d} วัน</div>
-        ${creator?`<div style="color:var(--text3);font-size:11px;margin-top:2px">👤 รับโดย: ${creator.name}</div>`:''}
-        </div>
-        <div style="text-align:right"><div style="font-weight:800;font-size:15px;color:${rem<=0?'var(--green2)':'var(--yellow2)'};margin-bottom:4px">฿${fmt(rem)}</div>
-        <span class="badge ${loan.status==='active'?'badge-green':loan.status==='overdue'?'badge-red':'badge-yellow'}">${loan.status==='active'?'ใช้งาน':loan.status==='overdue'?'เกินกำหนด':'ปิดแล้ว'}</span></div>
-      </div>
-      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="progress-label">ชำระแล้ว ${pct}%</div>
-    </div>`;
-  }).join('');
-  document.getElementById('tab-dashboard').innerHTML=`
-  ${branchFilterBar(filterBranchId, 'setBranchFilter')}
-  <div class="hero-greeting">
-    <div class="hero-greeting-sub">สวัสดี,</div>
-    <div class="hero-greeting-name">${currentUser.name}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-    ${currentUser.role==='owner'?'':`<span class="badge ${currentUser.role==='admin'?'badge-yellow':'badge-blue'}">${currentUser.role==='admin'?'👑 Admin':'👤 Staff'}</span>`}
-    ${currentUser.role==='staff'&&currentUser.branch_id?`<span class="badge badge-purple">🏠 ${getBranch(currentUser.branch_id)?.name||'ไม่ระบุสาขา'}</span>`:''}
-    </div>
-  </div>
-  <div class="stat-grid">
-    <div class="stat-card stat-card-blue"><div class="stat-icon">📄</div><div class="stat-label">สัญญาใช้งาน</div><div class="stat-value" style="color:var(--primary2)">${active.length}</div></div>
-    <div class="stat-card stat-card-green"><div class="stat-icon">💵</div><div class="stat-label">รับวันนี้</div><div class="stat-value" style="color:var(--green2)">฿${fmt(todayPay)}</div></div>
-    <div class="stat-card stat-card-cyan"><div class="stat-icon">🏦</div><div class="stat-label">เงินต้นรวม</div><div class="stat-value" style="color:var(--cyan);font-size:16px">฿${fmt(totalP)}</div></div>
-    <div class="stat-card ${overdue.length>0?'stat-card-red':''}"><div class="stat-icon">⚠️</div><div class="stat-label">เกินกำหนด</div><div class="stat-value" style="color:${overdue.length>0?'var(--red2)':'var(--text3)'}">${overdue.length}</div></div>
-  </div>
-  <div class="section-title">สัญญาล่าสุด</div>
-  ${recentCards||'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ยังไม่มีสัญญา</div></div>'}`;
-}
-
-// ══════════════════════════════════════
-//  BORROWERS
-// ══════════════════════════════════════
-function renderBorrowers(search='') {
-  const base=filteredBorrowers();
-  const list=base.filter(b=>!search||b.name.includes(search)||(b.phone||'').includes(search));
-  const cards=list.map(b=>{
-    const bLoans=filteredLoans().filter(l=>l.borrower_id===b.id&&l.status==='active');
-    const creator=getEmployee(b.created_by);
-    const br=getBranch(b.branch_id);
-    return `<div class="card" onclick="showBorrowerHistory('${b.id}')" style="cursor:pointer">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="avatar">${b.name[0]}</div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:15px">${b.name}</div>
-          <div style="color:var(--text3);font-size:12px;margin-top:2px">${b.phone||'ไม่มีเบอร์'}</div>
-          ${b.id_card?`<div style="color:var(--text3);font-size:11px;margin-top:1px">🪪 ${b.id_card}</div>`:''}
-          ${creator?`<div style="color:var(--text3);font-size:11px;margin-top:2px">👤 รับโดย: ${creator.name}</div>`:''}
-          ${br?`<div style="color:var(--text3);font-size:11px;margin-top:1px">🏠 ${br.name}</div>`:''}
-        </div>
-        <div style="text-align:right">
-          <span class="badge ${bLoans.length>0?'badge-yellow':'badge-green'}">${bLoans.length} สัญญา</span>
-          <div style="color:var(--text3);font-size:10px;margin-top:6px">แตะดูประวัติ</div>
-        </div>
-      </div>
-      ${b.address?`<div style="color:var(--text3);font-size:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">📍 ${b.address}</div>`:''}
-      ${b.note?`<div style="color:var(--text3);font-size:12px;margin-top:4px">📝 ${b.note}</div>`:''}
-    </div>`;
-  }).join('');
-  document.getElementById('tab-borrowers').innerHTML=`
-  ${branchFilterBar(filterBranchId, 'setBranchFilter')}
-  <div class="search-row">
-    <input class="input" placeholder="🔍 ค้นหาชื่อ / เบอร์โทร" value="${search}" oninput="renderBorrowers(this.value)">
-    <button class="btn btn-primary btn-sm" onclick="showAddBorrower()">+ เพิ่ม</button>
-  </div>
-  ${cards||'<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ยังไม่มีลูกหนี้</div></div>'}`;
-}
-
-function setBranchFilter(id) {
-  filterBranchId = id;
-  // รีเรนเดอร์ให้ตรงกับแท็บที่กำลังเปิดอยู่
-  if(currentTab === 'loans') renderLoans();
-  else if(currentTab === 'report') renderReport();
-  else if(currentTab === 'dashboard') renderDashboard();
-  else renderBorrowers();
-}
-
-// ── โปรไฟล์ลูกค้าแบบเต็ม ──
-function showBorrowerHistory(bid) {
-  const b = getBorrower(bid);
-  if(!b) return;
-  _renderBorrowerProfile(bid);
-}
-
-function _renderBorrowerProfile(bid) {
-  const b = getBorrower(bid);
-  if(!b) return;
-  const bLoans = LOANS.filter(l=>l.borrower_id===bid);
-  const allPays = bLoans.flatMap(l=>PAYMENTS.filter(p=>p.loan_id===l.id).map(p=>({...p,loan:l})));
-  allPays.sort((a,z)=>new Date(z.payment_date)-new Date(a.payment_date));
-  const br=getBranch(b.branch_id);
-  const creator=getEmployee(b.created_by);
-  const activeLoans=bLoans.filter(l=>l.status==='active');
-
-  const loanCards = bLoans.map(l=>{
-    const d=daysDiff(l.start_date);
-    const interest=calcInt(l.principal,l.interest_rate,d);
-    const total=Number(l.principal)+interest;
-    const rem=total-Number(l.total_paid);
-    const pct=Math.min(100,(Number(l.total_paid)/total)*100).toFixed(0);
-    const lPays=PAYMENTS.filter(p=>p.loan_id===l.id);
-    const isOverdue=l.due_date&&new Date(l.due_date)<new Date()&&l.status==='active';
-    const actions=l.status==='active'?`
-      <div class="action-row" style="margin-top:10px">
-        <button class="btn btn-secondary btn-sm" onclick="confirmCloseLoanProfile('${l.id}','${bid}')">🔒 ปิดสัญญา</button>
-        <button class="btn btn-primary btn-sm" style="flex:1" onclick="showPaymentProfile('${l.id}','${bid}')">💵 บันทึกชำระ</button>
-      </div>` : `<div style="color:var(--text3);font-size:12px;margin-top:8px">ชำระแล้ว ${lPays.length} ครั้ง · ปิดแล้ว</div>`;
-    return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isOverdue?'rgba(239,68,68,0.25)':'rgba(255,255,255,0.06)'};border-radius:12px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div>
-          <div style="font-size:13px;font-weight:600">฿${fmt(l.principal)} · ${l.interest_rate}%/วัน</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">เริ่ม ${l.start_date}${l.due_date?' · ครบ '+l.due_date:''} · ${d} วัน</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:15px;font-weight:700;color:${rem<=0?'var(--green2)':'var(--yellow2)'}">฿${fmt(rem)}</div>
-          <span class="badge ${l.status==='active'?(isOverdue?'badge-red':'badge-green'):l.status==='overdue'?'badge-red':'badge-yellow'}" style="font-size:10px">${l.status==='active'?(isOverdue?'เกินกำหนด':'ใช้งาน'):l.status==='overdue'?'เกินกำหนด':'ปิดแล้ว'}</span>
-        </div>
-      </div>
-      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%;${isOverdue?'background:linear-gradient(90deg,var(--red),var(--red2))':''}"></div></div>
-      <div class="progress-label">ชำระแล้ว ${pct}% · ${lPays.length} ครั้ง</div>
-      ${actions}
-    </div>`;
-  }).join('');
-
-  const payHistory = allPays.length===0
-    ? '<div style="color:var(--text3);text-align:center;padding:20px">ยังไม่มีประวัติชำระ</div>'
-    : allPays.slice(0,20).map(p=>{
-        const who=getEmployee(p.created_by);
-        return `<div class="pay-item">
-          <div>
-            <div style="font-size:14px;font-weight:600">${p.payment_date}</div>
-            <div class="pay-who">👤 ${who?.name||'ไม่ระบุ'}${p.note?` · ${p.note}`:''}</div>
-          </div>
-          <div style="color:var(--green2);font-weight:800;font-size:16px">+฿${fmt(p.amount)}</div>
-        </div>`;
-      }).join('');
-
-  openSheet(`${b.name}`,`
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-      <div class="avatar" style="width:50px;height:50px;font-size:22px">${b.name[0]}</div>
-      <div style="flex:1">
-        <div style="font-size:17px;font-weight:700">${b.name}</div>
-        <div style="color:var(--text3);font-size:12px;margin-top:3px">${b.phone||'ไม่มีเบอร์'}${b.id_card?' · 🪪 '+b.id_card:''}</div>
-        ${b.address?`<div style="color:var(--text3);font-size:12px;margin-top:2px">📍 ${b.address}</div>`:''}
-        ${br?`<div style="color:var(--text3);font-size:12px;margin-top:2px">🏠 ${br.name}</div>`:''}
-        ${creator?`<div style="color:var(--text3);font-size:11px;margin-top:2px">👤 รับโดย: ${creator.name}</div>`:''}
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-      <button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px" onclick="showEditBorrower('${b.id}')">✏️<br><span style="font-size:10px;color:var(--text3)">แก้ไข</span></button>
-      ${b.phone?`<a href="tel:${b.phone}" style="text-decoration:none"><button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px;width:100%">📞<br><span style="font-size:10px;color:var(--text3)">โทรหา</span></button></a>`:`<button class="btn btn-secondary btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px;opacity:0.4" disabled>📞<br><span style="font-size:10px;color:var(--text3)">โทรหา</span></button>`}
-      <button class="btn btn-danger btn-sm" style="border-radius:12px;padding:12px 6px;font-size:12px" onclick="showDeleteBorrower('${b.id}','${b.name.replace(/'/g,"\\'")}')">🗑️<br><span style="font-size:10px">ลบ</span></button>
-    </div>
-    <button class="btn btn-primary" style="margin-bottom:14px;border-radius:12px" onclick="showAddLoanForBorrower('${b.id}')">＋ สร้างสัญญากู้ใหม่</button>
-    <div class="section-title">สัญญา (${bLoans.length} รายการ · active ${activeLoans.length})</div>
-    ${loanCards||'<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px">ยังไม่มีสัญญา</div>'}
-    <div class="section-title">ประวัติชำระ (${allPays.length} รายการ)</div>
-    ${payHistory}
-  `);
-}
-
-// ── เพิ่มสัญญาจากหน้า Profile ──
-function showAddLoanForBorrower(bid) {
-  const b = getBorrower(bid);
-  openSheet('สร้างสัญญากู้ใหม่',`
-    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px">
-      <div style="font-size:13px;color:var(--primary2);font-weight:600">👤 ${b?.name}</div>
-    </div>
-    <div class="field"><label>จำนวนเงินกู้ (บาท) *</label><input class="input" id="l-principal" placeholder="5000" inputmode="numeric" oninput="updateCalc()"></div>
-    <div class="field"><label>ดอกเบี้ยรายวัน (%)</label><input class="input" id="l-rate" value="2" inputmode="decimal" oninput="updateCalc()"></div>
-    <div class="field"><label>วันเริ่มกู้</label><input class="input" id="l-start" type="date" value="${today()}"></div>
-    <div class="field"><label>วันครบกำหนด</label><input class="input" id="l-due" type="date"></div>
-    <div class="calc-box" id="l-calc" style="display:none"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
-      <button class="btn btn-primary" id="save-loan-btn" onclick="saveLoanForBorrower('${bid}')">บันทึกสัญญา</button>
-    </div>`);
-}
-
-async function saveLoanForBorrower(bid) {
-  const principal=document.getElementById('l-principal').value;
-  if(!principal||Number(principal)<=0) return showToast('กรุณากรอกจำนวนเงินให้ถูกต้อง','error');
-  const rate=Number(document.getElementById('l-rate').value||2);
-  if(rate<=0||rate>10) return showToast('ดอกเบี้ยต้องอยู่ระหว่าง 0.1–10%','error');
-  const startDate=document.getElementById('l-start').value||today();
-  const dueDate=document.getElementById('l-due').value||null;
-  if(dueDate&&dueDate<=startDate) return showToast('วันครบกำหนดต้องหลังวันเริ่มกู้','error');
-  const btn=document.getElementById('save-loan-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    const rows=await sbInsert('loans',{
-      borrower_id:bid, principal:Number(principal),
-      interest_rate:rate, start_date:startDate,
-      due_date:dueDate, status:'active', total_paid:0, created_by:currentUser.id
-    });
-    LOANS.unshift(rows[0]);
-    showToast('สร้างสัญญาแล้ว');
-    _renderBorrowerProfile(bid);
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึกสัญญา';} }
-  finally{ hideLoading(); }
-}
-
-// ── บันทึกชำระจาก Profile ──
-function showPaymentProfile(lid, bid) {
-  payLoan=getLoan(lid);
-  const b=getBorrower(payLoan.borrower_id);
-  const d=daysDiff(payLoan.start_date);
-  const interest=calcInt(payLoan.principal,payLoan.interest_rate,d);
-  const rem=Number(payLoan.principal)+interest-Number(payLoan.total_paid);
-  openSheet(`บันทึกชำระ — ${b?.name}`,`
-    <div class="calc-box"><p>คงเหลือ: <strong style="color:var(--red2)">฿${fmt(rem)}</strong></p><p style="font-size:12px;margin-top:4px">เงินต้น ฿${fmt(payLoan.principal)} · ${payLoan.interest_rate}%/วัน · ${d} วัน</p></div>
-    <div class="field"><label>จำนวนที่ชำระ (บาท) *</label><input class="input" id="pay-amt" placeholder="500" inputmode="numeric" oninput="_updatePaySummary(${rem})"></div>
-    <div class="field"><label>วันที่ชำระ</label><input class="input" id="pay-date" type="date" value="${today()}"></div>
-    <div class="field"><label>หมายเหตุ</label><input class="input" id="pay-note" placeholder="เช่น ชำระงวด 1"></div>
-    <div id="pay-summary" style="display:none;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--green2)"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
-      <button class="btn btn-primary" id="confirm-pay-btn" onclick="savePaymentProfile('${bid}')" disabled style="opacity:0.5">ยืนยันชำระ</button>
-    </div>`);
-}
-
-function _updatePaySummary(rem) {
-  const amt=Number(document.getElementById('pay-amt')?.value||0);
-  const btn=document.getElementById('confirm-pay-btn');
-  const box=document.getElementById('pay-summary');
-  if(amt>0&&amt<=rem*2) {
-    const date=document.getElementById('pay-date')?.value||today();
-    box.style.display='block';
-    box.innerHTML=`✅ ยืนยันชำระ ฿${fmt(amt)} · วันที่ ${date}<br><span style="font-size:12px;color:var(--text2)">คงเหลือหลังชำระ ฿${fmt(Math.max(0,rem-amt))}</span>`;
-    if(btn){btn.disabled=false;btn.style.opacity='1';}
+// ══════════════════════════════════════════════
+// START APP
+// ══════════════════════════════════════════════
+function startApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('hdr-name').textContent=currentUser.display_name;
+  var roleBadge=document.getElementById('hdr-role');
+  if(currentUser.role==='admin'){
+    roleBadge.textContent='ADMIN';roleBadge.className='role-badge role-admin';
+    document.getElementById('logo-name').textContent='บ้านหลัก';
   } else {
-    box.style.display='none';
-    if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+    roleBadge.textContent='STAFF';roleBadge.className='role-badge role-staff';
   }
+  var isAdmin=currentUser.role==='admin';
+  document.getElementById('tab-staff').style.display=isAdmin?'':'none';
+  document.getElementById('mnav-staff').style.display=isAdmin?'':'none';
+  document.getElementById('btn-add-cust').style.display='';
+  document.getElementById('admin-house-filter').style.display=isAdmin?'block':'none';
+  document.getElementById('dash-house-filter-wrap').style.display=isAdmin?'block':'none';
+  var today=new Date();
+  document.getElementById('dash-date-picker').value=toISO(today);
+  document.getElementById('pay-date').value=toISO(today);
+  document.getElementById('f-start').value=toISO(today);
+  loadAll();
 }
 
-async function savePaymentProfile(bid) {
-  const amt=Number(document.getElementById('pay-amt').value);
-  if(!amt||amt<=0) return showToast('กรุณากรอกจำนวนเงิน','error');
-  const btn=document.getElementById('confirm-pay-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    const newPaid=Number(payLoan.total_paid)+amt;
-    const [payRow]=await Promise.all([
-      sbInsert('payments',{loan_id:payLoan.id,amount:amt,payment_date:document.getElementById('pay-date').value||today(),note:document.getElementById('pay-note').value.trim(),created_by:currentUser.id}),
-      sbUpdate('loans',{total_paid:newPaid},`id=eq.${payLoan.id}`)
-    ]);
-    PAYMENTS.unshift(payRow[0]||{id:'p'+Date.now(),loan_id:payLoan.id,amount:amt,payment_date:today(),created_by:currentUser.id});
-    payLoan.total_paid=newPaid;
-    showToast('บันทึกชำระแล้ว');
-    _renderBorrowerProfile(bid);
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='ยืนยันชำระ';} }
-  finally{ hideLoading(); }
-}
-
-// ── ปิดสัญญาจาก Profile (มียืนยัน) ──
-function confirmCloseLoanProfile(lid, bid) {
-  const l=getLoan(lid);
-  const d=daysDiff(l.start_date);
-  const interest=calcInt(l.principal,l.interest_rate,d);
-  const rem=Number(l.principal)+interest-Number(l.total_paid);
-  openSheet('ยืนยันปิดสัญญา',`
-    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:8px">⚠️ การปิดสัญญาไม่สามารถยกเลิกได้</div>
-      <div style="font-size:13px;color:var(--text2)">เงินต้น: ฿${fmt(l.principal)}</div>
-      <div style="font-size:13px;color:var(--text2)">ดอกเบี้ยสะสม: ฿${fmt(interest)}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--red2);margin-top:8px">ยอดคงเหลือ: ฿${fmt(rem)}</div>
-    </div>
-    <div class="field">
-      <label>พิมพ์ "ยืนยัน" เพื่อปิดสัญญา</label>
-      <input class="input" id="close-confirm-input" placeholder="ยืนยัน" oninput="
-        const ok=this.value==='ยืนยัน';
-        const btn=document.getElementById('close-loan-btn');
-        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
-      ">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
-      <button class="btn btn-danger" id="close-loan-btn" onclick="doCloseLoanProfile('${lid}','${bid}')" disabled style="opacity:0.5">🔒 ปิดสัญญา</button>
-    </div>`);
-}
-
-async function doCloseLoanProfile(lid, bid) {
-  const btn=document.getElementById('close-loan-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังปิด...';}
-  showLoading('กำลังอัปเดต...');
-  try {
-    await sbUpdate('loans',{status:'closed'},`id=eq.${lid}`);
-    const l=getLoan(lid); if(l) l.status='closed';
-    showToast('ปิดสัญญาแล้ว');
-    _renderBorrowerProfile(bid);
-  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); if(btn){btn.disabled=false;btn.textContent='🔒 ปิดสัญญา';} }
-  finally{ hideLoading(); }
-}
-
-// ── แก้ไขข้อมูลลูกค้า ──
-function showEditBorrower(bid) {
-  const b=getBorrower(bid);
-  if(!b) return;
-  const branchOpts = BRANCHES.map(br=>`<option value="${br.id}" ${b.branch_id===br.id?'selected':''}>${br.name}</option>`).join('');
-  const branchField = currentUser.role!=='staff' && BRANCHES.length>0
-    ? `<div class="field"><label>สาขา</label><select class="input" id="eb-branch"><option value="">-- เลือกสาขา --</option>${branchOpts}</select></div>` : '';
-  openSheet('แก้ไขข้อมูลลูกค้า',`
-    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="eb-name" value="${b.name}"></div>
-    <div class="field"><label>เบอร์โทร</label><input class="input" id="eb-phone" value="${b.phone||''}" type="tel"></div>
-    <div class="field"><label>เลขบัตรประชาชน</label><input class="input" id="eb-idcard" value="${b.id_card||''}" maxlength="13" inputmode="numeric"></div>
-    <div class="field"><label>ที่อยู่</label><input class="input" id="eb-addr" value="${b.address||''}"></div>
-    <div class="field"><label>หมายเหตุ</label><input class="input" id="eb-note" value="${b.note||''}"></div>
-    ${branchField}
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
-      <button class="btn btn-primary" id="save-edit-btn" onclick="saveEditBorrower('${bid}')">บันทึก</button>
-    </div>`);
-}
-
-async function saveEditBorrower(bid) {
-  const name=document.getElementById('eb-name').value.trim();
-  if(!name) return showToast('กรุณากรอกชื่อ','error');
-  const btn=document.getElementById('save-edit-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  let branch_id=getBorrower(bid)?.branch_id||null;
-  if(currentUser.role!=='staff'){const s=document.getElementById('eb-branch');if(s)branch_id=s.value||null;}
-  showLoading('กำลังบันทึก...');
-  try {
-    const updated={name,phone:document.getElementById('eb-phone').value.trim(),id_card:document.getElementById('eb-idcard').value.trim(),address:document.getElementById('eb-addr').value.trim(),note:document.getElementById('eb-note').value.trim(),branch_id};
-    await sbUpdate('borrowers',updated,`id=eq.${bid}`);
-    const idx=BORROWERS.findIndex(x=>x.id===bid);
-    if(idx>=0) Object.assign(BORROWERS[idx],updated);
-    showToast('แก้ไขข้อมูลแล้ว');
-    _renderBorrowerProfile(bid);
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
-  finally{ hideLoading(); }
-}
-
-// ── ลบลูกค้า (ต้องพิมพ์ชื่อยืนยัน) ──
-function showDeleteBorrower(bid, bname) {
-  openSheet('ลบลูกค้า',`
-    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:6px">⚠️ คำเตือน: ลบไม่ได้ย้อนกลับ</div>
-      <div style="font-size:13px;color:var(--text2)">การลบจะลบข้อมูลลูกค้า <strong>${bname}</strong> ออกจากระบบ สัญญาและประวัติชำระที่มีอยู่จะยังคงอยู่</div>
-    </div>
-    <div class="field">
-      <label>พิมพ์ชื่อ "<strong>${bname}</strong>" เพื่อยืนยัน</label>
-      <input class="input" id="del-confirm-input" placeholder="${bname}" oninput="
-        const ok=this.value==='${bname.replace(/'/g,"\\'")}';
-        const btn=document.getElementById('del-borrower-btn');
-        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
-      ">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="_renderBorrowerProfile('${bid}')">← ย้อนกลับ</button>
-      <button class="btn btn-danger" id="del-borrower-btn" onclick="doDeleteBorrower('${bid}')" disabled style="opacity:0.5">🗑️ ลบลูกค้า</button>
-    </div>`);
-}
-
-async function doDeleteBorrower(bid) {
-  const btn=document.getElementById('del-borrower-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังลบ...';}
-  showLoading('กำลังลบ...');
-  try {
-    await sbDelete('borrowers',`id=eq.${bid}`);
-    BORROWERS=BORROWERS.filter(x=>x.id!==bid);
-    closeSheet(); renderBorrowers(); showToast('ลบลูกค้าแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='🗑️ ลบลูกค้า';} }
-  finally{ hideLoading(); }
-}
-
-function showAddBorrower() {
-  const branchOpts = BRANCHES.map(b=>`<option value="${b.id}" ${currentUser.branch_id===b.id?'selected':''}>${b.name}</option>`).join('');
-  const branchField = currentUser.role!=='staff' && BRANCHES.length>0
-    ? `<div class="field"><label>สาขา</label><select class="input" id="b-branch"><option value="">-- เลือกสาขา --</option>${branchOpts}</select></div>`
-    : '';
-  openSheet('เพิ่มลูกหนี้ใหม่',`
-    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="b-name" placeholder="ชื่อลูกหนี้"></div>
-    <div class="field"><label>เบอร์โทร</label><input class="input" id="b-phone" placeholder="08x-xxx-xxxx" type="tel"></div>
-    <div class="field"><label>เลขบัตรประชาชน</label><input class="input" id="b-idcard" placeholder="13 หลัก" maxlength="13" inputmode="numeric"></div>
-    <div class="field"><label>ที่อยู่</label><input class="input" id="b-addr" placeholder="ที่อยู่ปัจจุบัน"></div>
-    <div class="field"><label>หมายเหตุ</label><input class="input" id="b-note" placeholder="บันทึกเพิ่มเติม"></div>
-    ${branchField}
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveBorrower()">บันทึก</button>
-    </div>`);
-}
-
-async function saveBorrower() {
-  const name=document.getElementById('b-name').value.trim();
-  if(!name) return showToast('กรุณากรอกชื่อลูกหนี้','error');
-  // branch_id: staff ใช้ branch ของตัวเอง, admin/owner เลือกได้
-  let branch_id = currentUser.branch_id || null;
-  if(currentUser.role!=='staff') {
-    const sel = document.getElementById('b-branch');
-    if(sel) branch_id = sel.value || null;
-  }
-  showLoading('กำลังบันทึก...');
-  try {
-    const rows=await sbInsert('borrowers',{
-      name, phone:document.getElementById('b-phone').value.trim(),
-      id_card:document.getElementById('b-idcard').value.trim(),
-      address:document.getElementById('b-addr').value.trim(),
-      note:document.getElementById('b-note').value.trim(),
-      created_by:currentUser.id,
-      branch_id
-    });
-    BORROWERS.unshift(rows[0]);
-    closeSheet(); renderBorrowers(); showToast('เพิ่มลูกหนี้แล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
-  finally{ hideLoading(); }
-}
-
-// ══════════════════════════════════════
-//  LOANS
-// ══════════════════════════════════════
-function renderLoans(search) {
-  if(search !== undefined) loanSearch = search;
-  const filters=[['all','ทั้งหมด'],['active','✅ ใช้งาน'],['overdue','⚠️ เกิน'],['closed','🔒 ปิด']];
-  const chips=filters.map(([k,l])=>`<button class="chip${loanFilter===k?' active':''}" onclick="setLoanFilter('${k}')">${l}</button>`).join('');
-  const base=filteredLoans();
-  const list=base.filter(l=>{
-    if(loanFilter!=='all'&&l.status!==loanFilter) return false;
-    if(loanSearch) {
-      const b=getBorrower(l.borrower_id);
-      const q=loanSearch.toLowerCase();
-      return (b?.name||'').toLowerCase().includes(q)||(b?.phone||'').includes(q);
-    }
-    return true;
-  });
-  const cards=list.map(loan=>{
-    const b=getBorrower(loan.borrower_id);
-    const d=daysDiff(loan.start_date);
-    const interest=calcInt(loan.principal,loan.interest_rate,d);
-    const total=Number(loan.principal)+interest;
-    const rem=total-Number(loan.total_paid);
-    const pct=Math.min(100,(Number(loan.total_paid)/total)*100).toFixed(0);
-    const lPays=PAYMENTS.filter(p=>p.loan_id===loan.id);
-    const creator=getEmployee(loan.created_by);
-    const lastPay = lPays[0];
-    const lastPayWho = lastPay ? getEmployee(lastPay.created_by) : null;
-    const statusBadge=`<span class="badge ${loan.status==='active'?'badge-green':loan.status==='overdue'?'badge-red':'badge-yellow'}">${loan.status==='active'?'ใช้งาน':loan.status==='overdue'?'เกินกำหนด':'ปิดแล้ว'}</span>`;
-    const actions=loan.status==='active'?`
-      <div class="action-row">
-        <button class="btn btn-secondary btn-sm" onclick="confirmCloseLoan('${loan.id}')">🔒 ปิดสัญญา</button>
-        <button class="btn btn-primary btn-sm" style="flex:1" onclick="showPayment('${loan.id}')">💵 บันทึกชำระ</button>
-      </div>`:
-      `<div style="color:var(--text3);font-size:12px;margin-top:8px">ชำระแล้ว ${lPays.length} ครั้ง</div>`;
-    return `<div class="card${loan.status==='overdue'?' card-overdue':''}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <div><div style="font-weight:700;font-size:16px">${b?.name||'ไม่ระบุ'}</div>
-        <div style="color:var(--text3);font-size:12px;margin-top:3px">เริ่ม ${loan.start_date} · ${d} วัน</div>
-        ${creator?`<div style="color:var(--text3);font-size:11px;margin-top:2px">📋 รับโดย: ${creator.name}</div>`:''}
-        ${lastPayWho?`<div style="color:var(--text3);font-size:11px;margin-top:1px">💵 ชำระล่าสุด: ${lastPayWho.name}</div>`:''}
-        </div>
-        ${statusBadge}
-      </div>
-      <div class="amt-row">
-        <div class="amt-box"><div class="amt-box-label">เงินต้น</div><div class="amt-box-val" style="color:#60a5fa">฿${fmt(loan.principal)}</div></div>
-        <div class="amt-box"><div class="amt-box-label">ดอกเบี้ย</div><div class="amt-box-val" style="color:var(--yellow2)">฿${fmt(interest)}</div></div>
-        <div class="amt-box"><div class="amt-box-label">คงเหลือ</div><div class="amt-box-val" style="color:${rem<=0?'var(--green2)':'var(--red2)'}">฿${fmt(rem)}</div></div>
-      </div>
-      <div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div class="progress-label">ชำระแล้ว ${pct}% · ${lPays.length} ครั้ง</div>
-      ${actions}
-    </div>`;
-  }).join('');
-  document.getElementById('tab-loans').innerHTML=`
-  ${branchFilterBar(filterBranchId, 'setBranchFilter')}
-  <div class="search-row" style="margin-bottom:14px">
-    <input class="input" placeholder="🔍 ค้นหาชื่อ / เบอร์โทร" value="${loanSearch}" oninput="renderLoans(this.value)">
-    <button class="btn btn-primary btn-sm" onclick="showAddLoan()">+ เพิ่ม</button>
-  </div>
-  <div class="filter-bar">${chips}</div>
-  ${cards||'<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">ไม่มีสัญญา</div></div>'}`;
-}
-
-function setLoanFilter(f){ loanFilter=f; renderLoans(); }
-
-function showAddLoan() {
-  const baseBorrowers = filteredBorrowers();
-  const opts=baseBorrowers.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  openSheet('สร้างสัญญากู้ใหม่',`
-    <div class="field"><label>ลูกหนี้ *</label>
-      <select class="input" id="l-bid"><option value="">-- เลือกลูกหนี้ --</option>${opts}</select>
-    </div>
-    <div class="field"><label>จำนวนเงินกู้ (บาท) *</label><input class="input" id="l-principal" placeholder="5000" inputmode="numeric" oninput="updateCalc()"></div>
-    <div class="field"><label>ดอกเบี้ยรายวัน (%)</label><input class="input" id="l-rate" value="2" inputmode="decimal" oninput="updateCalc()"></div>
-    <div class="field"><label>วันเริ่มกู้</label><input class="input" id="l-start" type="date" value="${today()}"></div>
-    <div class="field"><label>วันครบกำหนด</label><input class="input" id="l-due" type="date"></div>
-    <div class="calc-box" id="l-calc" style="display:none"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveLoan()">บันทึกสัญญา</button>
-    </div>`);
-}
-
-function updateCalc() {
-  const p=Number(document.getElementById('l-principal')?.value||0);
-  const r=Number(document.getElementById('l-rate')?.value||0);
-  const box=document.getElementById('l-calc');
-  if(!box) return;
-  if(p>0&&r>0){ const i=calcInt(p,r,30); box.style.display='block'; box.innerHTML=`<p>💡 ดอกเบี้ย 30 วัน = ฿${fmt(i)}</p><p>ยอดรวม 30 วัน = ฿${fmt(p+i)}</p>`; }
-  else box.style.display='none';
-}
-
-async function saveLoan() {
-  const bid=document.getElementById('l-bid').value;
-  const principal=document.getElementById('l-principal').value;
-  if(!bid) return showToast('กรุณาเลือกลูกหนี้','error');
-  if(!principal||Number(principal)<=0) return showToast('กรุณากรอกจำนวนเงินให้ถูกต้อง','error');
-  const rate=Number(document.getElementById('l-rate').value||2);
-  if(rate<=0||rate>10) return showToast('ดอกเบี้ยต้องอยู่ระหว่าง 0.1–10%','error');
-  const startDate=document.getElementById('l-start').value||today();
-  const dueDate=document.getElementById('l-due').value||null;
-  if(dueDate&&dueDate<=startDate) return showToast('วันครบกำหนดต้องหลังวันเริ่มกู้','error');
-  const btn=document.querySelector('#sheet-body .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    const rows=await sbInsert('loans',{
-      borrower_id:bid, principal:Number(principal),
-      interest_rate:rate, start_date:startDate,
-      due_date:dueDate, status:'active', total_paid:0, created_by:currentUser.id
-    });
-    LOANS.unshift(rows[0]);
-    closeSheet(); renderLoans(); showToast('สร้างสัญญาแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึกสัญญา';} }
-  finally{ hideLoading(); }
-}
-
-function confirmCloseLoan(lid) {
-  const l=getLoan(lid);
-  const b=getBorrower(l.borrower_id);
-  const d=daysDiff(l.start_date);
-  const interest=calcInt(l.principal,l.interest_rate,d);
-  const rem=Number(l.principal)+interest-Number(l.total_paid);
-  openSheet('ยืนยันปิดสัญญา',`
-    <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
-      <div style="font-size:13px;color:var(--red2);font-weight:600;margin-bottom:8px">⚠️ การปิดสัญญาไม่สามารถยกเลิกได้</div>
-      <div style="font-size:13px;color:var(--text2)">ลูกค้า: <strong>${b?.name||'ไม่ระบุ'}</strong></div>
-      <div style="font-size:13px;color:var(--text2)">เงินต้น: ฿${fmt(l.principal)} · ดอกเบี้ย: ฿${fmt(interest)}</div>
-      <div style="font-size:14px;font-weight:700;color:var(--red2);margin-top:8px">ยอดคงเหลือ: ฿${fmt(rem)}</div>
-    </div>
-    <div class="field">
-      <label>พิมพ์ "ยืนยัน" เพื่อปิดสัญญา</label>
-      <input class="input" id="close-confirm-input" placeholder="ยืนยัน" oninput="
-        const ok=this.value==='ยืนยัน';
-        const btn=document.getElementById('close-loan-btn');
-        if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.5';}
-      ">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-danger" id="close-loan-btn" onclick="doCloseLoan('${lid}')" disabled style="opacity:0.5">🔒 ปิดสัญญา</button>
-    </div>`);
-}
-
-async function doCloseLoan(lid) {
-  const btn=document.getElementById('close-loan-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังปิด...';}
-  showLoading('กำลังอัปเดต...');
-  try {
-    await sbUpdate('loans',{status:'closed'},`id=eq.${lid}`);
-    const l=getLoan(lid); if(l) l.status='closed';
-    closeSheet(); renderLoans(); showToast('ปิดสัญญาแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='🔒 ปิดสัญญา';} }
-  finally{ hideLoading(); }
-}
-
-function showPayment(lid) {
-  payLoan=getLoan(lid);
-  const b=getBorrower(payLoan.borrower_id);
-  const d=daysDiff(payLoan.start_date);
-  const interest=calcInt(payLoan.principal,payLoan.interest_rate,d);
-  const rem=Number(payLoan.principal)+interest-Number(payLoan.total_paid);
-  openSheet(`บันทึกชำระ — ${b?.name}`,`
-    <div class="calc-box"><p>คงเหลือ: <strong style="color:var(--red2)">฿${fmt(rem)}</strong></p></div>
-    <div class="field"><label>จำนวนที่ชำระ (บาท) *</label><input class="input" id="pay-amt" placeholder="500" inputmode="numeric" oninput="_updatePaySummaryMain(${rem})"></div>
-    <div class="field"><label>วันที่ชำระ</label><input class="input" id="pay-date" type="date" value="${today()}"></div>
-    <div class="field"><label>หมายเหตุ</label><input class="input" id="pay-note" placeholder="เช่น ชำระงวด 1"></div>
-    <div id="pay-summary" style="display:none;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--green2)"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" id="confirm-pay-btn" onclick="savePayment()" disabled style="opacity:0.5">ยืนยันชำระ</button>
-    </div>`);
-}
-
-function _updatePaySummaryMain(rem) {
-  const amt=Number(document.getElementById('pay-amt')?.value||0);
-  const btn=document.getElementById('confirm-pay-btn');
-  const box=document.getElementById('pay-summary');
-  if(amt>0&&amt<=rem*2){
-    const date=document.getElementById('pay-date')?.value||today();
-    box.style.display='block';
-    box.innerHTML=`✅ ยืนยันชำระ ฿${fmt(amt)} · วันที่ ${date}<br><span style="font-size:12px;color:var(--text2)">คงเหลือหลังชำระ ฿${fmt(Math.max(0,rem-amt))}</span>`;
-    if(btn){btn.disabled=false;btn.style.opacity='1';}
+// ══════════════════════════════════════════════
+// LOAD ALL DATA
+// ══════════════════════════════════════════════
+async function loadAll(){
+  var queries=[
+    _sb.from('houses').select('*').order('id',{ascending:true}),
+    _sb.from('payments').select('*').order('paid_date',{ascending:true})
+  ];
+  if(currentUser.role==='staff'&&currentUser.house_id){
+    queries.push(_sb.from('customers').select('*').eq('house_id',currentUser.house_id).order('created_at',{ascending:true}));
   } else {
-    box.style.display='none';
-    if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+    queries.push(_sb.from('customers').select('*').order('created_at',{ascending:true}));
   }
+  if(currentUser.role==='admin'){
+    queries.push(_sb.from('users').select('*').order('id',{ascending:true}));
+  }
+  var results=await Promise.all(queries);
+  var rh=results[0],rp=results[1],rc=results[2];
+  if(rh.error){toast('โหลดบ้านล้มเหลว: '+rh.error.message,'err');return}
+  if(rp.error){toast('โหลดการชำระล้มเหลว: '+rp.error.message,'err');return}
+  if(rc.error){toast('โหลดลูกค้าล้มเหลว: '+rc.error.message,'err');return}
+  allHouses=rh.data||[];allPayments=rp.data||[];allCustomers=rc.data||[];
+  if(currentUser.role==='admin'&&results[3]) allUsers=results[3].data||[];
+  if(currentUser.role==='staff'){
+    var myHouse=allHouses.find(function(h){return h.id===currentUser.house_id});
+    if(myHouse) document.getElementById('logo-name').textContent=myHouse.name;
+  }
+  populateHouseSelects();
+  renderDashboard();
+  filterCustomers();
+  if(currentUser.role==='admin') renderStaffPage();
 }
 
-async function savePayment() {
-  const amt=Number(document.getElementById('pay-amt').value);
-  if(!amt||amt<=0) return showToast('กรุณากรอกจำนวนเงิน','error');
-  const btn=document.getElementById('confirm-pay-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    const newPaid=Number(payLoan.total_paid)+amt;
-    const [payRow]=await Promise.all([
-      sbInsert('payments',{loan_id:payLoan.id,amount:amt,payment_date:document.getElementById('pay-date').value||today(),note:document.getElementById('pay-note').value.trim(),created_by:currentUser.id}),
-      sbUpdate('loans',{total_paid:newPaid},`id=eq.${payLoan.id}`)
-    ]);
-    PAYMENTS.unshift(payRow[0]||{id:'p'+Date.now(),loan_id:payLoan.id,amount:amt,payment_date:today(),created_by:currentUser.id});
-    payLoan.total_paid=newPaid;
-    closeSheet(); renderLoans(); showToast('บันทึกชำระแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error');
-    const btn=document.getElementById('confirm-pay-btn');
-    if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='ยืนยันชำระ';}
-  }
-  finally{ hideLoading(); }
+function populateHouseSelects(){
+  var fh=document.getElementById('filter-house');
+  var val=fh.value;
+  fh.innerHTML='<option value="">ทุกบ้าน</option>';
+  allHouses.forEach(function(h){fh.insertAdjacentHTML('beforeend','<option value="'+h.id+'">'+esc(h.name)+'</option>')});
+  if(val) fh.value=val;
+  var dfh=document.getElementById('dash-filter-house');
+  var dval=dfh?dfh.value:'';
+  if(dfh){dfh.innerHTML='<option value="">ทุกบ้าน</option>';allHouses.forEach(function(h){dfh.insertAdjacentHTML('beforeend','<option value="'+h.id+'">'+esc(h.name)+'</option>')});if(dval) dfh.value=dval;}
+  var mh=document.getElementById('f-house');
+  mh.innerHTML='';
+  allHouses.forEach(function(h){mh.insertAdjacentHTML('beforeend','<option value="'+h.id+'">'+esc(h.name)+'</option>')});
+  var sh=document.getElementById('sf-house');
+  sh.innerHTML='<option value="">— ไม่ระบุ —</option>';
+  allHouses.forEach(function(h){sh.insertAdjacentHTML('beforeend','<option value="'+h.id+'">'+esc(h.name)+'</option>')});
 }
 
-// ══════════════════════════════════════
-//  REPORT
-// ══════════════════════════════════════
-function renderReport() {
-  const now=new Date(); const t=today();
-  const basePays = filteredPayments();
-  const fp=basePays.filter(p=>{
-    const d=new Date(p.payment_date);
-    if(reportPeriod==='today') return p.payment_date===t;
-    if(reportPeriod==='week') return (now-d)/86400000<=7;
-    if(reportPeriod==='month') return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
-    return true;
+// ══════════════════════════════════════════════
+// INTEREST CALCULATION
+// ══════════════════════════════════════════════
+function calcState(cust,dateStr){
+  if(!dateStr) dateStr=toISO(new Date());
+  var payments=allPayments.filter(function(p){return p.customer_id===cust.id&&p.paid_date<=dateStr}).sort(function(a,b){return a.paid_date.localeCompare(b.paid_date)});
+  var principal=parseFloat(cust.principal)||0;
+  var rate=(parseFloat(cust.interest_rate)||20)/100;
+  var overdue=0;var lastDate=cust.start_date||dateStr;var paidToday=false;
+  payments.forEach(function(p){
+    if(p.paid_date===dateStr) paidToday=true;
+    principal=parseFloat(p.remaining_principal)||principal;
+    overdue=parseFloat(p.overdue_carried)||0;
+    lastDate=p.paid_date;
   });
-  const baseLoans = filteredLoans();
-  const totalCollected=fp.reduce((s,p)=>s+Number(p.amount),0);
-  const totalP=baseLoans.reduce((s,l)=>s+Number(l.principal),0);
-  const totalInt=baseLoans.reduce((s,l)=>s+calcInt(l.principal,l.interest_rate,daysDiff(l.start_date)),0);
-  const totalPaid=baseLoans.reduce((s,l)=>s+Number(l.total_paid),0);
-  const outstanding=totalP+totalInt-totalPaid;
-  const periods=[['today','วันนี้'],['week','สัปดาห์'],['month','เดือนนี้'],['all','ทั้งหมด']];
-  const periodBtns=periods.map(([k,l])=>`<button class="period-btn${reportPeriod===k?' active':''}" onclick="setReportPeriod('${k}')">${l}</button>`).join('');
-
-  // แสดง "ใครกดรับชำระ" ในรายการ
-  const payRows=fp.slice(0,50).map(p=>{
-    const loan=getLoan(p.loan_id); const b=getBorrower(loan?.borrower_id);
-    const who=getEmployee(p.created_by);
-    return `<div class="card" style="padding:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-weight:700;font-size:14px">${b?.name||'ไม่ระบุ'}</div>
-          <div style="color:var(--text3);font-size:12px;margin-top:3px">📅 ${p.payment_date}${p.note?` · ${p.note}`:''}</div>
-          <div style="color:var(--text3);font-size:11px;margin-top:2px">👤 ${who?.name||'ไม่ระบุ'}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="color:var(--green2);font-weight:900;font-size:18px">+฿${fmt(p.amount)}</div>
-        </div>
-      </div></div>`;
-  }).join('');
-  document.getElementById('tab-report').innerHTML=`
-  ${branchFilterBar(filterBranchId, 'setReportBranchFilter')}
-  <div class="period-row">${periodBtns}</div>
-  <div class="report-stat-grid">
-    <div class="report-stat stat-card-green"><div class="report-stat-icon">💰</div><div class="report-stat-label" style="color:var(--green2)">รับชำระ</div><div class="report-stat-val" style="color:var(--green2)">฿${fmt(totalCollected)}</div></div>
-    <div class="report-stat stat-card-red"><div class="report-stat-icon">📊</div><div class="report-stat-label" style="color:var(--red2)">ยอดคงค้าง</div><div class="report-stat-val" style="color:var(--red2)">฿${fmt(outstanding)}</div></div>
-    <div class="report-stat stat-card-blue"><div class="report-stat-icon">🏦</div><div class="report-stat-label" style="color:var(--primary2)">เงินต้นรวม</div><div class="report-stat-val" style="color:var(--primary2)">฿${fmt(totalP)}</div></div>
-    <div class="report-stat stat-card-cyan"><div class="report-stat-icon">📈</div><div class="report-stat-label" style="color:var(--cyan)">ดอกเบี้ยสะสม</div><div class="report-stat-val" style="color:var(--cyan)">฿${fmt(totalInt)}</div></div>
-  </div>
-  <div class="section-title">ประวัติการชำระ (${fp.length} รายการ)</div>
-  ${payRows||'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่มีรายการ</div></div>'}`;
+  var days=daysBetween(lastDate,dateStr);
+  if(paidToday) days=0;
+  var todayInt=Math.round(principal*rate*Math.max(days,paidToday?0:1));
+  if(paidToday) todayInt=0;
+  return{principal:principal,rate:rate,todayInterest:todayInt,overdueInterest:overdue,totalDue:todayInt+overdue,lastPayDate:lastDate,paidToday:paidToday,daysSinceLastPay:days};
 }
 
-function setReportPeriod(p){ reportPeriod=p; renderReport(); }
-function setReportBranchFilter(id){ filterBranchId=id; renderReport(); }
+function calcPaymentResult(cust,amountReceived){
+  var s=calcState(cust);
+  var principal=s.principal,rate=s.rate,overdue=s.overdueInterest;
+  var days=daysBetween(s.lastPayDate,document.getElementById('pay-date').value||toISO(new Date()));
+  var intDue=Math.round(principal*rate*Math.max(days,1));
+  var totalDue=intDue+overdue;var amt=parseFloat(amountReceived)||0;
+  var result={days:days,intDue:intDue,overdue:overdue,totalDue:totalDue,amtReceived:amt,principalDeducted:0,newPrincipal:principal,newOverdue:0,caseLabel:'',notes:[]};
+  if(amt===totalDue){
+    result.caseLabel='เคส 2.1 — จ่ายพอดี';result.newOverdue=0;
+    result.notes=['ดอกค้างเดิม: '+fmt(overdue),'ดอกวันนี้: '+fmt(intDue),'จ่ายพอดี ไม่มีส่วนเกิน','ต้นคงเดิม: '+fmt(principal)];
+  } else if(amt>totalDue){
+    var extra=amt-totalDue;
+    result.caseLabel='เคส 2.2 — จ่ายเกิน หักต้น';
+    result.principalDeducted=extra;result.newPrincipal=Math.max(0,principal-extra);result.newOverdue=0;
+    result.notes=['ดอกครบ: '+fmt(totalDue),'เงินเกิน: '+fmt(extra)+' → หักต้น','ต้นใหม่: '+fmt(result.newPrincipal)];
+    if(result.newPrincipal<=0){result.notes.push('⭐ ปิดบัญชีได้');result.closeable=true}
+  } else if(amt>=intDue){
+    result.caseLabel='เคส 2.3 — ดอกได้ แต่ค้างบางส่วน';
+    var overpaid=amt-intDue;result.newOverdue=Math.max(0,overdue-overpaid);
+    result.notes=['ดอกวันนี้: '+fmt(intDue)+' ✅','ดอกค้างเดิม: '+fmt(overdue),'จ่ายสู่ดอกค้าง: '+fmt(overpaid),'ดอกค้างเหลือ: '+fmt(result.newOverdue)];
+  } else {
+    result.caseLabel='เคส 2.4 — จ่ายน้อย ดอกค้างเพิ่ม';
+    var short=intDue-amt;result.newOverdue=overdue+short;
+    result.notes=['ดอกวันนี้: '+fmt(intDue),'ได้รับ: '+fmt(amt),'ขาด: '+fmt(short)+' → บวกดอกค้าง','ดอกค้างใหม่: '+fmt(result.newOverdue)];
+  }
+  result.newPrincipal=result.principalDeducted>0?Math.max(0,principal-result.principalDeducted):principal;
+  return result;
+}
 
-// ══════════════════════════════════════
-//  EMPLOYEES (Admin/Owner) + Activity
-// ══════════════════════════════════════
-function renderEmployees() {
-  if(currentUser.role!=='admin' && currentUser.role!=='owner'){
-    document.getElementById('tab-employees').innerHTML=`<div class="lock-screen"><div style="font-size:48px">🔒</div><div style="color:var(--text3);font-size:16px">ไม่มีสิทธิ์เข้าถึงหน้านี้</div></div>`;
+// ══════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════
+function renderDashboard(){
+  var picker=document.getElementById('dash-date-picker');
+  if(!picker.value) picker.value=toISO(new Date());
+  var selDate=picker.value;
+  var dashHouseEl=document.getElementById('dash-filter-house');
+  var dashHouseId=dashHouseEl?dashHouseEl.value:'';
+  var allFiltered=dashHouseId?allCustomers.filter(function(c){return String(c.house_id)===String(dashHouseId)}):allCustomers;
+  var openCusts=allFiltered.filter(function(c){return!c.is_closed});
+  var totalInt=0,intCollected=0,intPending=0,paidCount=0,unpaidCount=0;
+  var rows=openCusts.map(function(c){
+    var s=calcState(c,selDate);
+    var rawInt=Math.round(s.principal*s.rate*1);
+    totalInt+=(s.paidToday?rawInt:s.todayInterest);
+    if(s.paidToday){intCollected+=rawInt;paidCount++;}else{intPending+=s.todayInterest;unpaidCount++;}
+    return{c:c,s:s};
+  });
+  var totalCusts=allFiltered.length;
+  var closedCount=totalCusts-openCusts.length;
+  document.getElementById('s-total-cust').textContent=totalCusts+' คน';
+  document.getElementById('s-total-sub').textContent='เปิด '+openCusts.length+' · ปิดแล้ว '+closedCount+' บัญชี';
+  document.getElementById('s-today-int').textContent=fmt(totalInt);
+  document.getElementById('s-int-collected').textContent=fmt(intCollected);
+  document.getElementById('s-int-pending').textContent=fmt(intPending);
+  document.getElementById('s-paid-count').textContent=paidCount+' คน';
+  document.getElementById('s-unpaid-count').textContent=unpaidCount+' คน';
+  var paidRows=rows.filter(function(r){return r.s.paidToday});
+  var unpaidRows=rows.filter(function(r){return !r.s.paidToday});
+  document.getElementById('paid-list-count').textContent='('+paidRows.length+' คน)';
+  document.getElementById('unpaid-list-count').textContent='('+unpaidRows.length+' คน)';
+
+  function renderRows(arr){
+    if(!arr.length) return '<div class="empty" style="padding:16px 0;font-size:0.8rem">ไม่มีรายการ</div>';
+    return arr.map(function(item){
+      var c=item.c,s=item.s;
+      var house=allHouses.find(function(h){return h.id===c.house_id});
+      var badge=s.paidToday?'<span class="badge badge-paid">✅ จ่ายแล้ว</span>':
+        (s.overdueInterest>0?'<span class="badge badge-overdue">⚠️ มีดอกค้าง</span>':'<span class="badge badge-unpaid">⏳ รอจ่าย</span>');
+      var rawInt=Math.round(s.principal*s.rate*1);
+      var displayAmt=s.paidToday?rawInt:s.totalDue;
+      var rowClass='today-row '+(s.paidToday?'paid':'unpaid')+(s.overdueInterest>0&&!s.paidToday?' overdue-row':'');
+      return '<div class="'+rowClass+'" onclick="openDetail('+c.id+')">'+
+        '<div class="today-info">'+
+          '<div class="today-name">'+esc(c.name)+
+            (house&&currentUser.role==='admin'?'<span class="today-house">'+esc(house.name)+'</span>':'')+
+            badge+
+          '</div>'+
+          '<div class="today-detail">ต้น '+fmt(s.principal)+' · ดอก '+fmt(rawInt)+'/วัน'+(s.overdueInterest>0?' · ค้าง <span style="color:var(--red)">'+fmt(s.overdueInterest)+'</span>':'')+' </div>'+
+        '</div>'+
+        '<div class="today-right">'+
+          '<div class="today-amount '+(s.paidToday?'paid-amt':'unpaid-amt')+'">'+fmt(displayAmt)+'</div>'+
+          '<div class="today-label">'+(s.paidToday?'จ่ายครบ':'ต้องจ่าย')+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+  document.getElementById('today-list-paid').innerHTML=renderRows(paidRows);
+  document.getElementById('today-list-unpaid').innerHTML=renderRows(unpaidRows);
+}
+
+// ══════════════════════════════════════════════
+// CUSTOMERS TABLE
+// ══════════════════════════════════════════════
+var _statusFilterVal='';
+
+function setStatusFilter(val,btn){
+  _statusFilterVal=val;
+  document.querySelectorAll('#status-filter-chip button').forEach(function(b){b.classList.remove('active')});
+  btn.classList.add('active');
+  filterCustomers();
+}
+
+function renderCustomersTable(custs){
+  var isAdmin=currentUser.role==='admin';
+  var tbody=document.getElementById('cust-tbody');
+  document.getElementById('th-actions').textContent=isAdmin?'':'';
+  if(!custs.length){
+    tbody.innerHTML='<tr><td colspan="9"><div class="empty"><div class="empty-icon">👥</div>ยังไม่มีข้อมูลลูกค้า</div></td></tr>';
     return;
   }
-  const visibleEmps = EMPLOYEES.filter(e => e.role !== 'owner');
+  tbody.innerHTML=custs.map(function(c,i){
+    var s=calcState(c);
+    var statusBadge=c.is_closed?'<span class="badge badge-closed">🔒 ปิดแล้ว</span>':
+      (s.paidToday?'<span class="badge badge-paid">✅ จ่ายแล้ว</span>':'<span class="badge badge-unpaid">⏳ ค้าง</span>');
+    var actionBtns=isAdmin?
+      '<td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">'+
+        '<button class="btn-icon" onclick="openEditCustomer('+c.id+')" title="แก้ไข">✏️</button>'+
+        '<button class="btn-icon del" onclick="deleteCustomer('+c.id+',\''+esc(c.name)+'\')" title="ลบ">🗑️</button>'+
+      '</div></td>':'<td></td>';
+    return '<tr onclick="openDetail('+c.id+')">'+
+      '<td class="text-muted" style="font-size:0.75rem">'+(i+1)+'</td>'+
+      '<td class="fw-600">'+esc(c.name)+'</td>'+
+      '<td class="text-muted">'+esc(c.phone||'—')+'</td>'+
+      '<td><span class="rate-chip">'+(c.interest_rate||20)+'%</span></td>'+
+      '<td class="mono text-gold text-right">'+fmt(s.principal)+'</td>'+
+      '<td class="mono text-right" style="color:var(--purple)">'+(c.is_closed?'—':fmt(s.todayInterest))+'</td>'+
+      '<td class="mono text-right '+(s.overdueInterest>0?'text-red':'text-muted')+'">'+fmt(s.overdueInterest)+'</td>'+
+      '<td>'+statusBadge+'</td>'+
+      actionBtns+
+    '</tr>';
+  }).join('');
+}
 
-  // กิจกรรมพนักงาน: นับการสร้างสัญญา + รับชำระ
-  const empStats = visibleEmps.map(e=>{
-    const loansCreated = LOANS.filter(l=>l.created_by===e.id).length;
-    const borrowersCreated = BORROWERS.filter(b=>b.created_by===e.id).length;
-    const paysProcessed = PAYMENTS.filter(p=>p.created_by===e.id).length;
-    const todayPays = PAYMENTS.filter(p=>p.created_by===e.id&&p.payment_date===today()).length;
-    const br=getBranch(e.branch_id);
-    return {e, loansCreated, borrowersCreated, paysProcessed, todayPays, br};
+function filterCustomers(){
+  var q=(document.getElementById('search-input').value||'').toLowerCase();
+  var hid=document.getElementById('filter-house').value;
+  var f=allCustomers.filter(function(c){
+    var m=(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q);
+    if(!m)return false;
+    if(_statusFilterVal==='closed')return c.is_closed;
+    // default (ทั้งหมด) and 'open' both hide closed accounts
+    return !c.is_closed;
   });
-
-  const cards=empStats.map(({e,loansCreated,borrowersCreated,paysProcessed,todayPays,br})=>`
-    <div class="card" style="opacity:${e.active?1:0.45}">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div class="avatar${e.role==='admin'?' avatar-admin':''}" style="width:50px;height:50px;font-size:22px">${e.role==='admin'?'👑':'👤'}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="font-weight:800;font-size:15px">${e.name}</span>
-            <span class="badge ${e.role==='admin'?'badge-yellow':'badge-blue'}">${e.role==='admin'?'Admin':'Staff'}</span>
-            ${br?`<span class="badge badge-purple">🏠 ${br.name}</span>`:''}
-            ${!e.active?`<span class="badge badge-red">ปิดใช้งาน</span>`:''}
-          </div>
-          <div style="color:var(--text3);font-size:12px;font-weight:500">@${e.username}${e.phone?` · ${e.phone}`:''}</div>
-        </div>
-      </div>
-      <div class="emp-stat-row">
-        <div class="emp-stat-item"><div class="emp-stat-label">รับลูกค้า</div><div class="emp-stat-val" style="color:var(--primary2)">${borrowersCreated}</div></div>
-        <div class="emp-stat-item"><div class="emp-stat-label">สัญญา</div><div class="emp-stat-val" style="color:var(--cyan)">${loansCreated}</div></div>
-        <div class="emp-stat-item"><div class="emp-stat-label">รับชำระ</div><div class="emp-stat-val" style="color:var(--green2)">${paysProcessed}</div></div>
-        <div class="emp-stat-item"><div class="emp-stat-label">วันนี้</div><div class="emp-stat-val" style="color:var(--yellow2)">${todayPays}</div></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-        <button class="btn btn-xs btn-secondary" style="flex:1" onclick="showEditEmployee('${e.id}')">✏️ แก้ไข</button>
-        <button class="btn btn-xs" style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.18);color:var(--yellow2)" onclick="showChangePassword('${e.id}','${e.name.replace(/'/g,"\\'")}')">🔑 รหัส</button>
-        ${e.id!==currentUser.id?`<button class="btn btn-xs" style="flex:1;color:${e.active?'var(--red2)':'var(--green2)'};border:1px solid ${e.active?'rgba(239,68,68,0.25)':'rgba(34,197,94,0.25)'};background:transparent" onclick="toggleEmp('${e.id}','${e.active}')">${e.active?'🚫 ปิด':'✅ เปิด'}</button>`:''}
-      </div>
-    </div>`).join('');
-
-  document.getElementById('tab-employees').innerHTML=`
-  <div style="display:flex;gap:10px;margin-bottom:16px">
-    <button class="btn btn-primary" onclick="showAddEmployee()" style="flex:2">＋ เพิ่มพนักงาน</button>
-    ${(currentUser.role==='owner'||currentUser.role==='admin')?`<button class="btn btn-secondary" onclick="showBranchManager()" style="flex:1">🏠 สาขา</button>`:''}
-  </div>
-  <div class="section-title">ทีมงาน (${visibleEmps.length} คน)</div>
-  ${cards||'<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ยังไม่มีพนักงาน</div></div>'}`;
+  if(hid) f=f.filter(function(c){return String(c.house_id)===String(hid)});
+  renderCustomersTable(f);
 }
 
-// ══════════════════════════════════════
-//  BRANCH MANAGER (Owner only)
-// ══════════════════════════════════════
-function showBranchManager() {
-  const branchList = BRANCHES.map(b=>`
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:8px">
-      <span style="font-weight:600">🏠 ${b.name}</span>
-      <button class="btn btn-xs btn-danger" onclick="deleteBranch('${b.id}','${b.name}')">ลบ</button>
-    </div>`).join('');
-  openSheet('จัดการสาขา',`
-    <div style="margin-bottom:16px">
-      ${branchList||'<div style="color:var(--text3);text-align:center;padding:16px">ยังไม่มีสาขา</div>'}
-    </div>
-    <div class="field"><label>ชื่อสาขาใหม่</label><input class="input" id="new-branch-name" placeholder="เช่น สาขาลาดพร้าว"></div>
-    <button class="btn btn-primary" onclick="addBranch()">+ เพิ่มสาขา</button>
-  `);
+// ══════════════════════════════════════════════
+// CUSTOMER DETAIL
+// ══════════════════════════════════════════════
+function openDetail(id){
+  currentCustId=id;
+  var c=allCustomers.find(function(x){return x.id===id});
+  if(!c)return;
+  var s=calcState(c);
+  var isAdmin=currentUser.role==='admin';
+  document.getElementById('det-admin-btns').style.display=isAdmin?'flex':'none';
+  document.getElementById('det-name').textContent=c.name;
+  var meta=[];
+  if(c.phone) meta.push('📞 '+c.phone);
+  if(c.id_card) meta.push('🪪 '+c.id_card);
+  document.getElementById('det-meta').innerHTML=meta.join(' <span style="opacity:0.3">|</span> ');
+  document.getElementById('det-init-principal').textContent=fmt(c.principal);
+  document.getElementById('det-principal').textContent=fmt(s.principal);
+  document.getElementById('det-rate').innerHTML='<span class="rate-chip">'+(c.interest_rate||20)+'% / วัน</span>';
+  document.getElementById('det-start').textContent=c.start_date||'—';
+  document.getElementById('det-phone').textContent=c.phone||'—';
+  document.getElementById('det-note').textContent=c.note||'—';
+  document.getElementById('det-today-int').textContent=fmt(s.todayInterest);
+  document.getElementById('det-overdue').textContent=fmt(s.overdueInterest);
+  document.getElementById('det-total-due').textContent=fmt(s.totalDue);
+  document.getElementById('det-today-status').innerHTML=s.paidToday?
+    '<span class="badge badge-paid">✅ จ่ายแล้ว</span>':'<span class="badge badge-unpaid">⏳ ยังไม่จ่าย</span>';
+  var intPaid=allPayments.filter(function(p){return p.customer_id===id}).reduce(function(sum,p){return sum+(parseFloat(p.interest_amount)||0)},0);
+  document.getElementById('det-int-paid').textContent=fmt(intPaid);
+  document.getElementById('payment-form-section').style.display=c.is_closed?'none':'block';
+  document.getElementById('pay-amount').value='';
+  document.getElementById('pay-note').value='';
+  document.getElementById('calc-preview').style.display='none';
+  renderHistory(id);
+  showPage('detail');
 }
 
-async function addBranch() {
-  const name=document.getElementById('new-branch-name').value.trim();
-  if(!name) return showToast('กรุณากรอกชื่อสาขา','error');
-  showLoading('กำลังบันทึก...');
-  try {
-    const rows=await sbInsert('branches',{name});
-    BRANCHES.push(rows[0]);
-    showToast('เพิ่มสาขาแล้ว');
-    showBranchManager();
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
-  finally{ hideLoading(); }
+function renderHistory(custId){
+  var pays=allPayments.filter(function(p){return p.customer_id===custId}).sort(function(a,b){return b.paid_date.localeCompare(a.paid_date)});
+  var el=document.getElementById('history-list');
+  if(!pays.length){el.innerHTML='<div class="empty">ยังไม่มีประวัติการจ่าย</div>';return}
+  el.innerHTML=pays.map(function(p){
+    var desc='รับ <span class="mono text-gold fw-600">'+fmt(p.amount_received)+'</span> บาท';
+    if(p.interest_amount) desc+=' &nbsp;·&nbsp; ดอก '+fmt(p.interest_amount);
+    if(p.principal_deducted>0) desc+=' &nbsp;·&nbsp; หักต้น <span class="text-green">'+fmt(p.principal_deducted)+'</span>';
+    if(p.overdue_carried>0) desc+=' &nbsp;·&nbsp; ดอกค้างคงเหลือ <span class="text-red">'+fmt(p.overdue_carried)+'</span>';
+    if(p.note) desc+=' &nbsp;<span class="text-muted">— '+esc(p.note)+'</span>';
+    return '<div class="history-item">'+
+      '<span class="history-date">'+p.paid_date+'</span>'+
+      '<div class="history-dot"></div>'+
+      '<div class="history-desc">'+desc+'</div>'+
+    '</div>';
+  }).join('');
 }
 
-async function deleteBranch(id, name) {
-  if(!confirm(`ลบสาขา "${name}"?`)) return;
-  showLoading('กำลังลบ...');
-  try {
-    await sbDelete('branches',`id=eq.${id}`);
-    BRANCHES=BRANCHES.filter(b=>b.id!==id);
-    showToast('ลบสาขาแล้ว');
-    showBranchManager();
-  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); }
-  finally{ hideLoading(); }
+// ══════════════════════════════════════════════
+// PAYMENT
+// ══════════════════════════════════════════════
+function calcPreview(){
+  var amt=parseFloat(document.getElementById('pay-amount').value)||0;
+  var c=allCustomers.find(function(x){return x.id===currentCustId});
+  if(!c||amt<=0){document.getElementById('calc-preview').style.display='none';return}
+  var r=calcPaymentResult(c,amt);
+  var prev=document.getElementById('calc-preview');
+  prev.style.display='block';
+  document.getElementById('calc-case-label').textContent=r.caseLabel;
+  var html=r.notes.map(function(n){return'<div class="calc-row"><span>'+n+'</span></div>'}).join('');
+  html+='<div class="calc-row"><span>ต้นคงเหลือหลังจ่าย</span><span class="text-gold mono">'+fmt(r.newPrincipal)+'</span></div>';
+  document.getElementById('calc-rows').innerHTML=html;
 }
 
-function showAddEmployee() {
-  selectedRole='staff';
-  const branchOpts = BRANCHES.map(b=>`<option value="${b.id}">${b.name}</option>`).join('');
-  const branchField = BRANCHES.length>0
-    ? `<div class="field"><label>สาขา</label><select class="input" id="e-branch"><option value="">-- ไม่ระบุสาขา --</option>${branchOpts}</select></div>`
-    : '';
-  openSheet('เพิ่มพนักงานใหม่',`
-    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="e-name" placeholder="ชื่อพนักงาน"></div>
-    <div class="field"><label>ชื่อผู้ใช้ *</label><input class="input" id="e-user" placeholder="username" autocapitalize="none"></div>
-    <div class="field"><label>รหัสผ่าน *</label><input class="input" id="e-pass" type="password" placeholder="••••••••"></div>
-    <div class="field"><label>เบอร์โทร</label><input class="input" id="e-phone" placeholder="08x-xxx-xxxx" type="tel"></div>
-    ${branchField}
-    <div class="field"><label>บทบาท</label></div>
-    <div class="role-row">
-      <button class="role-btn active" id="role-staff" onclick="selectRole('staff')">👤 Staff</button>
-      <button class="role-btn" id="role-admin" onclick="selectRole('admin')">👑 Admin</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveEmployee()">บันทึก</button>
-    </div>`);
-}
-
-function selectRole(r) {
-  selectedRole=r;
-  ['staff','admin','owner'].forEach(x=>{
-    const el=document.getElementById('role-'+x);
-    if(el) el.className='role-btn'+(r===x?' active':'');
-  });
-}
-
-async function saveEmployee() {
-  const name=document.getElementById('e-name').value.trim();
-  const username=document.getElementById('e-user').value.trim();
-  const password=document.getElementById('e-pass').value;
-  if(!name||!username||!password) return showToast('กรุณากรอกข้อมูลให้ครบ','error');
-  if(password.length<4) return showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
-  if(EMPLOYEES.find(e=>e.username===username)) return showToast('ชื่อผู้ใช้นี้มีอยู่แล้ว','error');
-  const branchSel=document.getElementById('e-branch');
-  const branch_id=branchSel?branchSel.value||null:null;
-  const btn=document.querySelector('#sheet-body .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    const rows=await sbInsert('employees',{name,username,password,role:selectedRole,phone:document.getElementById('e-phone').value.trim(),active:true,branch_id});
-    EMPLOYEES.push(rows[0]);
-    closeSheet(); renderEmployees(); showToast('เพิ่มพนักงานแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
-  finally{ hideLoading(); }
-}
-
-async function toggleEmp(id, active) {
-  showLoading('กำลังอัปเดต...');
-  try {
-    const newActive = active==='true'?false:true;
-    await sbUpdate('employees',{active:newActive},`id=eq.${id}`);
-    const e=EMPLOYEES.find(x=>x.id===id); if(e) e.active=newActive;
-    renderEmployees(); showToast(newActive?'เปิดบัญชีแล้ว':'ปิดบัญชีแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด','error'); }
-  finally{ hideLoading(); }
-}
-
-function showEditEmployee(eid) {
-  const e=EMPLOYEES.find(x=>x.id===eid);
-  if(!e) return;
-  const branchOpts=BRANCHES.map(b=>`<option value="${b.id}" ${e.branch_id===b.id?'selected':''}>${b.name}</option>`).join('');
-  const branchField=BRANCHES.length>0
-    ?`<div class="field"><label>สาขา</label><select class="input" id="ee-branch"><option value="">-- ไม่ระบุสาขา --</option>${branchOpts}</select></div>`:'' ;
-  openSheet('แก้ไขข้อมูลพนักงาน',`
-    <div class="field"><label>ชื่อ-นามสกุล *</label><input class="input" id="ee-name" value="${e.name}"></div>
-    <div class="field"><label>ชื่อผู้ใช้ *</label><input class="input" id="ee-user" value="${e.username}" autocapitalize="none"></div>
-    <div class="field"><label>เบอร์โทร</label><input class="input" id="ee-phone" value="${e.phone||''}" type="tel"></div>
-    ${branchField}
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" id="save-emp-btn" onclick="saveEditEmployee('${eid}')">บันทึก</button>
-    </div>`);
-}
-
-async function saveEditEmployee(eid) {
-  const name=document.getElementById('ee-name').value.trim();
-  const username=document.getElementById('ee-user').value.trim();
-  if(!name||!username) return showToast('กรุณากรอกข้อมูลให้ครบ','error');
-  const existing=EMPLOYEES.find(x=>x.username===username&&x.id!==eid);
-  if(existing) return showToast('ชื่อผู้ใช้นี้มีอยู่แล้ว','error');
-  const btn=document.getElementById('save-emp-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  const branchSel=document.getElementById('ee-branch');
-  const branch_id=branchSel?branchSel.value||null:EMPLOYEES.find(x=>x.id===eid)?.branch_id||null;
-  showLoading('กำลังบันทึก...');
-  try {
-    const updated={name,username,phone:document.getElementById('ee-phone').value.trim(),branch_id};
-    await sbUpdate('employees',updated,`id=eq.${eid}`);
-    const idx=EMPLOYEES.findIndex(x=>x.id===eid);
-    if(idx>=0) Object.assign(EMPLOYEES[idx],updated);
-    closeSheet(); renderEmployees(); showToast('แก้ไขข้อมูลพนักงานแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='บันทึก';} }
-  finally{ hideLoading(); }
-}
-
-function showChangePassword(eid, ename) {
-  openSheet(`เปลี่ยนรหัสผ่าน — ${ename}`,`
-    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--yellow2)">
-      🔑 เปลี่ยนรหัสผ่านให้ <strong>${ename}</strong>
-    </div>
-    <div class="field"><label>รหัสผ่านใหม่ *</label><input class="input" id="new-pass" type="password" placeholder="••••••••" oninput="_checkPassMatch()"></div>
-    <div class="field"><label>ยืนยันรหัสผ่านใหม่ *</label><input class="input" id="confirm-pass" type="password" placeholder="••••••••" oninput="_checkPassMatch()"></div>
-    <div id="pass-match-msg" style="font-size:13px;margin-bottom:12px;display:none"></div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="closeSheet()">ยกเลิก</button>
-      <button class="btn btn-primary" id="save-pass-btn" onclick="saveChangePassword('${eid}')" disabled style="opacity:0.5">🔑 บันทึกรหัสผ่าน</button>
-    </div>`);
-}
-
-function _checkPassMatch() {
-  const p1=document.getElementById('new-pass')?.value||'';
-  const p2=document.getElementById('confirm-pass')?.value||'';
-  const msg=document.getElementById('pass-match-msg');
-  const btn=document.getElementById('save-pass-btn');
-  if(!p1){msg.style.display='none';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
-  if(p1.length<4){msg.style.display='block';msg.style.color='var(--red2)';msg.textContent='❌ รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
-  if(p2&&p1!==p2){msg.style.display='block';msg.style.color='var(--red2)';msg.textContent='❌ รหัสผ่านไม่ตรงกัน';if(btn){btn.disabled=true;btn.style.opacity='0.5';}return;}
-  if(p1===p2&&p1.length>=4){msg.style.display='block';msg.style.color='var(--green2)';msg.textContent='✅ รหัสผ่านตรงกัน';if(btn){btn.disabled=false;btn.style.opacity='1';}return;}
-  msg.style.display='none';if(btn){btn.disabled=true;btn.style.opacity='0.5';}
-}
-
-async function saveChangePassword(eid) {
-  const pass=document.getElementById('new-pass').value;
-  const confirm=document.getElementById('confirm-pass').value;
-  if(!pass||pass.length<4) return showToast('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร','error');
-  if(pass!==confirm) return showToast('รหัสผ่านไม่ตรงกัน','error');
-  const btn=document.getElementById('save-pass-btn');
-  if(btn){btn.disabled=true;btn.textContent='กำลังบันทึก...';}
-  showLoading('กำลังบันทึก...');
-  try {
-    await sbUpdate('employees',{password:pass},`id=eq.${eid}`);
-    const emp=EMPLOYEES.find(x=>x.id===eid); if(emp) emp.password=pass;
-    closeSheet(); renderEmployees(); showToast('เปลี่ยนรหัสผ่านแล้ว');
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); if(btn){btn.disabled=false;btn.textContent='🔑 บันทึกรหัสผ่าน';} }
-  finally{ hideLoading(); }
-}
-
-// ══════════════════════════════════════
-//  SETTINGS (Owner only)
-// ══════════════════════════════════════
-function renderSettings() {
-  if(currentUser.role!=='owner') {
-    document.getElementById('tab-settings').innerHTML=`<div class="lock-screen"><div style="font-size:48px">🔒</div><div style="color:var(--text3);font-size:16px">เฉพาะ Owner เท่านั้น</div></div>`;
-    return;
+async function savePayment(){
+  var c=allCustomers.find(function(x){return x.id===currentCustId});
+  if(!c)return;
+  var amt=parseFloat(document.getElementById('pay-amount').value)||0;
+  if(amt<=0){toast('กรุณากรอกจำนวนเงิน','err');return}
+  var payDate=document.getElementById('pay-date').value||toISO(new Date());
+  var r=calcPaymentResult(c,amt);
+  var payload={customer_id:c.id,paid_date:payDate,amount_received:amt,days_interest:r.days,interest_amount:r.intDue,principal_deducted:r.principalDeducted,remaining_principal:r.newPrincipal,overdue_carried:r.newOverdue,note:document.getElementById('pay-note').value.trim()};
+  var res=await _sb.from('payments').insert(payload);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  if(r.principalDeducted>0){
+    await _sb.from('customers').update({principal:r.newPrincipal}).eq('id',c.id);
+    c.principal=r.newPrincipal;
   }
-  const colorSwatches = COLORS.map(c=>`
-    <div class="color-swatch" style="background:${c.hex};border-color:${APP.color===c.hex?'#fff':'transparent'}" 
-      onclick="previewColor('${c.hex}')" title="${c.name}" ${APP.color===c.hex?'class="color-swatch active"':''}></div>`).join('');
-  const emojiOpts = LOGOS.map(e=>`
-    <div class="emoji-opt${APP.logo===e?' active':''}" onclick="previewLogo('${e}')">${e}</div>`).join('');
-
-  document.getElementById('tab-settings').innerHTML=`
-  <div class="settings-section">
-    <div class="settings-section-title">ข้อมูลแอป</div>
-    <div class="card" style="padding:20px">
-      <div style="text-align:center;margin-bottom:20px">
-        <div id="preview-logo" style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,${APP.color}44,${APP.color}22);border:2px solid ${APP.color}55;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">${APP.logo}</div>
-        <div id="preview-name" style="font-size:20px;font-weight:800">${APP.name}</div>
-        <div id="preview-sub" style="color:var(--text3);font-size:13px;margin-top:4px">${APP.subtitle}</div>
-      </div>
-      <div class="field">
-        <label>ชื่อแอป</label>
-        <input class="input" id="set-name" value="${APP.name}" oninput="document.getElementById('preview-name').textContent=this.value">
-      </div>
-      <div class="field">
-        <label>คำอธิบาย</label>
-        <input class="input" id="set-sub" value="${APP.subtitle}" oninput="document.getElementById('preview-sub').textContent=this.value">
-      </div>
-      <div class="field">
-        <label>ข้อความ Version (ใต้หน้า Login)</label>
-        <input class="input" id="set-ver" value="${APP.version||''}" placeholder="เช่น v3.0 — Branch Edition">
-      </div>
-    </div>
-  </div>
-  <div class="settings-section">
-    <div class="settings-section-title">โลโก้</div>
-    <div class="card" style="padding:16px"><div class="emoji-grid">${emojiOpts}</div></div>
-  </div>
-  <div class="settings-section">
-    <div class="settings-section-title">สีหลัก</div>
-    <div class="card" style="padding:16px"><div class="color-grid">${colorSwatches}</div></div>
-  </div>
-  <button class="btn btn-primary" onclick="saveSettings()" style="margin-bottom:8px">💾 บันทึกการตั้งค่า</button>
-  <button class="btn btn-secondary" onclick="resetSettings()">↩️ รีเซ็ตเป็นค่าเริ่มต้น</button>`;
-}
-
-function previewLogo(emoji) {
-  APP.logo = emoji;
-  document.getElementById('preview-logo').textContent = emoji;
-  document.querySelectorAll('.emoji-opt').forEach(el=>{ el.className='emoji-opt'+(el.textContent===emoji?' active':''); });
-}
-
-function previewColor(hex) {
-  APP.color = hex;
-  document.getElementById('preview-logo').style.background = `linear-gradient(135deg,${hex}44,${hex}22)`;
-  document.getElementById('preview-logo').style.borderColor = hex+'55';
-  document.documentElement.style.setProperty('--primary', hex);
-  document.querySelectorAll('.color-swatch').forEach(el=>{
-    el.style.borderColor = el.getAttribute('onclick')===`previewColor('${hex}')`?'#fff':'transparent';
-  });
-  renderSettings();
-}
-
-async function saveSettings() {
-  APP.name = document.getElementById('set-name').value.trim()||APP.name;
-  APP.subtitle = document.getElementById('set-sub').value.trim()||APP.subtitle;
-  APP.version = document.getElementById('set-ver').value.trim();
-  showLoading('กำลังบันทึก...');
-  try {
-    const existing = await sbSelect('app_settings','select=id&limit=1').catch(()=>[]);
-    if(existing?.[0]?.id) {
-      await sbUpdate('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version},`id=eq.${existing[0].id}`);
-    } else {
-      await sbInsert('app_settings',{name:APP.name,logo:APP.logo,color:APP.color,subtitle:APP.subtitle,version:APP.version});
+  if(r.closeable){
+    if(confirm('ต้นหมดแล้ว ต้องการปิดบัญชีลูกค้านี้?')){
+      await _sb.from('customers').update({is_closed:true}).eq('id',c.id);
+      c.is_closed=true;
     }
-    applyAppSettings();
-    document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
-    showToast('บันทึกการตั้งค่าแล้ว ✨');
-    renderSettings();
-  } catch(e){ showToast('เกิดข้อผิดพลาด: '+e.message,'error'); }
-  finally{ hideLoading(); }
+  }
+  toast('✅ บันทึกรับเงินเรียบร้อย','ok');
+  await loadAll();openDetail(currentCustId);
 }
 
-async function resetSettings() {
-  if(!confirm('รีเซ็ตกลับเป็นค่าเริ่มต้น?')) return;
-  APP = {name:'MoneyFlow',logo:'💰',color:'#3b82f6',subtitle:'ระบบจัดการเงินกู้รายวัน',version:'v3.0 — Branch Edition'};
-  applyAppSettings();
-  document.getElementById('topbar-title').textContent = APP.logo+' '+APP.name;
-  renderSettings(); showToast('รีเซ็ตแล้ว');
+// ══════════════════════════════════════════════
+// ADD / EDIT CUSTOMER
+// ══════════════════════════════════════════════
+function openAddCustomer(){
+  editingId=null;
+  document.getElementById('modal-title').textContent='เพิ่มลูกค้าใหม่';
+  document.getElementById('f-name').value='';document.getElementById('f-phone').value='';
+  document.getElementById('f-idcard').value='';document.getElementById('f-fb').value='';
+  document.getElementById('f-principal').value='';document.getElementById('f-rate').value='20';
+  document.getElementById('f-start').value=toISO(new Date());
+  document.getElementById('f-status').value='false';document.getElementById('f-note').value='';
+  var isAdmin=currentUser.role==='admin';
+  document.getElementById('modal-house-row').style.display=isAdmin?'block':'none';
+  if(isAdmin&&allHouses.length>0) document.getElementById('f-house').value=allHouses[0].id;
+  document.getElementById('modal-customer').classList.add('open');
 }
 
-// โหลด cache ก่อนเลย ให้หน้า login แสดงโลโก้/ชื่อ/สีที่ตั้งค่าไว้แม้ยัง refresh
-(async function(){
-  try {
-    const cached = localStorage.getItem('mf_app');
-    if(cached) { Object.assign(APP, JSON.parse(cached)); }
-  } catch(e){}
-  applyAppSettings(); // แสดงจาก cache ก่อนเพื่อความเร็ว
+function openEditCustomer(id){
+  if(currentUser.role!=='admin'){return}
+  editingId=id;
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  document.getElementById('modal-title').textContent='แก้ไขข้อมูลลูกค้า';
+  document.getElementById('f-name').value=c.name||'';document.getElementById('f-phone').value=c.phone||'';
+  document.getElementById('f-idcard').value=c.id_card||'';document.getElementById('f-fb').value=c.facebook_link||'';
+  document.getElementById('f-principal').value=c.principal||'';document.getElementById('f-rate').value=c.interest_rate||20;
+  document.getElementById('f-start').value=c.start_date||toISO(new Date());
+  document.getElementById('f-status').value=c.is_closed?'true':'false';
+  document.getElementById('f-note').value=c.note||'';
+  document.getElementById('modal-house-row').style.display='block';
+  if(c.house_id) document.getElementById('f-house').value=c.house_id;
+  document.getElementById('modal-customer').classList.add('open');
+}
 
-  // ดึงค่าล่าสุดจาก Supabase เลย (ไม่ต้อง login)
-  try {
-    const settings = await sbSelect('app_settings','select=*&limit=1');
-    if(settings?.[0]) {
-      Object.assign(APP, settings[0]);
-      applyAppSettings(); // อัปเดตหน้า login ด้วยค่าจริงจาก DB
-    }
-  } catch(e){ /* ไม่มี internet หรือ table ยังไม่ได้สร้าง ใช้ cache แทน */ }
-})();
+function editCurrentCustomer(){if(currentCustId)openEditCustomer(currentCustId)}
+
+async function closeCurrentCustomer(){
+  if(currentUser.role!=='admin'){toast('เฉพาะ Admin เท่านั้น','err');return}
+  if(!currentCustId)return;
+  var c=allCustomers.find(function(x){return x.id===currentCustId});
+  if(!c||!confirm('ยืนยันปิดบัญชี "'+c.name+'" ?'))return;
+  var res=await _sb.from('customers').update({is_closed:true}).eq('id',currentCustId);
+  if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  toast('🔒 ปิดบัญชีเรียบร้อย','ok');await loadAll();showPage('customers');
+}
+
+async function saveCustomer(){
+  var name=document.getElementById('f-name').value.trim();
+  if(!name){toast('กรุณากรอกชื่อ','err');return}
+  var houseId=parseInt(document.getElementById('f-house').value)||null;
+  if(!houseId&&currentUser.role==='staff') houseId=currentUser.house_id;
+  var payload={name:name,phone:document.getElementById('f-phone').value.trim(),id_card:document.getElementById('f-idcard').value.trim(),facebook_link:document.getElementById('f-fb').value.trim(),principal:parseFloat(document.getElementById('f-principal').value)||0,interest_rate:parseFloat(document.getElementById('f-rate').value)||20,start_date:document.getElementById('f-start').value||toISO(new Date()),is_closed:document.getElementById('f-status').value==='true',note:document.getElementById('f-note').value.trim(),house_id:houseId};
+  var res=editingId?await _sb.from('customers').update(payload).eq('id',editingId):await _sb.from('customers').insert(payload);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  toast(editingId?'✅ อัพเดตเรียบร้อย':'✅ เพิ่มลูกค้าแล้ว','ok');
+  closeModal('modal-customer');await loadAll();
+}
+
+async function deleteCustomer(id,name){
+  if(currentUser.role!=='admin'){toast('เฉพาะ Admin เท่านั้น','err');return}
+  if(!confirm('ยืนยันลบ "'+name+'" และประวัติทั้งหมด?'))return;
+  var res=await _sb.from('customers').delete().eq('id',id);
+  if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  toast('🗑️ ลบเรียบร้อย','ok');await loadAll();
+}
+
+// ══════════════════════════════════════════════
+// STAFF & HOUSES MANAGEMENT
+// ══════════════════════════════════════════════
+function renderStaffPage(){
+  var hList=document.getElementById('houses-list');
+  if(!allHouses.length){hList.innerHTML='<div class="empty"><div class="empty-icon">🏠</div>ยังไม่มีบ้าน</div>';return}
+  hList.innerHTML=allHouses.map(function(h){
+    var staffCount=allUsers.filter(function(u){return u.house_id===h.id}).length;
+    var custCount=allCustomers.filter(function(c){return c.house_id===h.id}).length;
+    return '<div class="staff-card">'+
+      '<div class="staff-avatar">🏠</div>'+
+      '<div class="staff-info">'+
+        '<div class="staff-name">'+esc(h.name)+'</div>'+
+        '<div class="staff-detail">พนักงาน '+staffCount+' คน · ลูกค้า '+custCount+' บัญชี'+(h.note?' · '+esc(h.note):'')+'</div>'+
+      '</div>'+
+      '<div class="staff-actions">'+
+        '<button class="btn-icon" onclick="openEditHouse('+h.id+')" title="แก้ไข">✏️</button>'+
+        '<button class="btn-icon del" onclick="deleteHouse('+h.id+',\''+esc(h.name)+'\')" title="ลบ">🗑️</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  var sList=document.getElementById('staff-list');
+  if(!allUsers.length){sList.innerHTML='<div class="empty"><div class="empty-icon">👤</div>ยังไม่มีพนักงาน</div>';return}
+  sList.innerHTML=allUsers.map(function(u){
+    var house=allHouses.find(function(h){return h.id===u.house_id});
+    var roleLabel=u.role==='admin'?'<span class="role-badge role-admin">ADMIN</span>':'<span class="role-badge role-staff">STAFF</span>';
+    var activeLabel=u.is_active?
+      '<span style="color:var(--green);font-size:0.7rem;display:flex;align-items:center;gap:3px"><span class="dot dot-green"></span>ใช้งาน</span>':
+      '<span style="color:var(--red);font-size:0.7rem;display:flex;align-items:center;gap:3px"><span class="dot dot-red"></span>ระงับ</span>';
+    return '<div class="staff-card">'+
+      '<div class="staff-avatar">'+(u.role==='admin'?'⭐':'👤')+'</div>'+
+      '<div class="staff-info">'+
+        '<div class="staff-name">'+esc(u.display_name)+' '+roleLabel+'</div>'+
+        '<div class="staff-detail" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">@'+esc(u.username)+(house?' · 🏠 '+esc(house.name):'')+' '+activeLabel+'</div>'+
+      '</div>'+
+      '<div class="staff-actions">'+
+        '<button class="btn-icon" onclick="openEditStaff('+u.id+')" title="แก้ไข">✏️</button>'+
+        (u.id!==currentUser.id?'<button class="btn-icon del" onclick="deleteStaff('+u.id+',\''+esc(u.display_name)+'\')" title="ลบ">🗑️</button>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function openAddStaff(){
+  editingStaffId=null;
+  document.getElementById('modal-staff-title').textContent='เพิ่มพนักงาน';
+  document.getElementById('sf-name').value='';document.getElementById('sf-user').value='';
+  document.getElementById('sf-pass').value='';document.getElementById('sf-role').value='staff';
+  document.getElementById('sf-house').value='';document.getElementById('sf-active').value='true';
+  document.getElementById('modal-staff').classList.add('open');
+}
+
+function openEditStaff(id){
+  editingStaffId=id;
+  var u=allUsers.find(function(x){return x.id===id});if(!u)return;
+  document.getElementById('modal-staff-title').textContent='แก้ไขพนักงาน';
+  document.getElementById('sf-name').value=u.display_name||'';
+  document.getElementById('sf-user').value=u.username||'';
+  document.getElementById('sf-pass').value='';
+  document.getElementById('sf-role').value=u.role||'staff';
+  document.getElementById('sf-house').value=u.house_id||'';
+  document.getElementById('sf-active').value=u.is_active?'true':'false';
+  document.getElementById('modal-staff').classList.add('open');
+}
+
+async function saveStaff(){
+  var name=document.getElementById('sf-name').value.trim();
+  var user=document.getElementById('sf-user').value.trim();
+  var pass=document.getElementById('sf-pass').value;
+  if(!name||!user){toast('กรุณากรอกชื่อและ Username','err');return}
+  if(!editingStaffId&&!pass){toast('กรุณากรอกรหัสผ่าน','err');return}
+  var houseId=parseInt(document.getElementById('sf-house').value)||null;
+  var payload={display_name:name,username:user,role:document.getElementById('sf-role').value,house_id:houseId,is_active:document.getElementById('sf-active').value==='true'};
+  if(pass) payload.password=pass;
+  var res=editingStaffId?await _sb.from('users').update(payload).eq('id',editingStaffId):await _sb.from('users').insert(payload);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  toast(editingStaffId?'✅ อัพเดตพนักงานแล้ว':'✅ เพิ่มพนักงานแล้ว','ok');
+  closeModal('modal-staff');await loadAll();
+}
+
+async function deleteStaff(id,name){
+  if(!confirm('ยืนยันลบพนักงาน "'+name+'" ?'))return;
+  var res=await _sb.from('users').delete().eq('id',id);
+  if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  toast('🗑️ ลบพนักงานเรียบร้อย','ok');await loadAll();
+}
+
+function openAddHouse(){
+  editingHouseId=null;
+  document.getElementById('modal-house-title').textContent='🏠 เพิ่มบ้าน';
+  document.getElementById('h-name').value='';document.getElementById('h-note').value='';
+  document.getElementById('modal-house').classList.add('open');
+}
+
+function openEditHouse(id){
+  editingHouseId=id;
+  var h=allHouses.find(function(x){return x.id===id});if(!h)return;
+  document.getElementById('modal-house-title').textContent='✏️ แก้ไขบ้าน';
+  document.getElementById('h-name').value=h.name||'';
+  document.getElementById('h-note').value=h.note||'';
+  document.getElementById('modal-house').classList.add('open');
+}
+
+async function deleteHouse(id,name){
+  if(!confirm('ยืนยันลบบ้าน "'+name+'" ?'))return;
+  var res=await _sb.from('houses').delete().eq('id',id);
+  if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  toast('🗑️ ลบบ้านเรียบร้อย','ok');await loadAll();
+}
+
+async function saveHouse(){
+  var name=document.getElementById('h-name').value.trim();
+  if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
+  var payload={name:name,note:document.getElementById('h-note').value.trim()};
+  var res=editingHouseId?await _sb.from('houses').update(payload).eq('id',editingHouseId):await _sb.from('houses').insert(payload);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  toast(editingHouseId?'✅ อัพเดตบ้านแล้ว':'🏠 เพิ่มบ้านแล้ว','ok');
+  closeModal('modal-house');await loadAll();
+}
+
+// ══════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════
+function showPage(name){
+  document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active')});
+  document.getElementById('page-'+name).classList.add('active');
+
+  // desktop tabs
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  var tmap={dashboard:'tab-dashboard',customers:'tab-customers',staff:'tab-staff',detail:'tab-customers'};
+  var tabId=tmap[name];
+  if(tabId) document.getElementById(tabId).classList.add('active');
+
+  // mobile nav
+  document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active')});
+  var nmap={dashboard:'mnav-dashboard',customers:'mnav-customers',staff:'mnav-staff',detail:'mnav-customers'};
+  var navId=nmap[name];
+  if(navId && document.getElementById(navId)) document.getElementById(navId).classList.add('active');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+function toast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className=type||'ok';
+  t.style.display='flex';
+  clearTimeout(t._to);
+  t._to=setTimeout(function(){t.style.display='none'},3000);
+}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function toISO(d){return d.toISOString().split('T')[0]}
+function daysBetween(a,b){return Math.max(0,Math.round((new Date(b)-new Date(a))/(1000*60*60*24)))}
+function fmt(n){return(parseFloat(n)||0).toLocaleString('th-TH')}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// Close modals on overlay click
+['modal-customer','modal-settings','modal-staff','modal-house'].forEach(function(id){
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id)});
+});
+
+// Close on ESC key
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    ['modal-customer','modal-settings','modal-staff','modal-house'].forEach(function(id){
+      document.getElementById(id).classList.remove('open');
+    });
+  }
+});
 </script>
-
-<!-- ══════════════════════════════════════
-     SQL SCHEMA v3.0 — วาง SQL นี้ใน Supabase SQL Editor
-     Dashboard → SQL Editor → New Query → วางแล้วกด Run
-══════════════════════════════════════
-
--- สาขา
-create table if not exists branches (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  created_at timestamptz default now()
-);
-
-create table if not exists employees (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  username text unique not null,
-  password text not null,
-  role text default 'staff',
-  phone text,
-  active boolean default true,
-  branch_id uuid references branches(id),
-  created_at timestamptz default now()
-);
-
-create table if not exists borrowers (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  phone text,
-  id_card text,
-  address text,
-  note text,
-  created_by uuid references employees(id),
-  branch_id uuid references branches(id),
-  created_at timestamptz default now()
-);
-
-create table if not exists loans (
-  id uuid primary key default gen_random_uuid(),
-  borrower_id uuid references borrowers(id),
-  principal numeric not null,
-  interest_rate numeric not null,
-  start_date date not null,
-  due_date date,
-  status text default 'active',
-  total_paid numeric default 0,
-  created_by uuid references employees(id),
-  created_at timestamptz default now()
-);
-
-create table if not exists payments (
-  id uuid primary key default gen_random_uuid(),
-  loan_id uuid references loans(id),
-  amount numeric not null,
-  payment_date date not null,
-  note text,
-  created_by uuid references employees(id),
-  created_at timestamptz default now()
-);
-
-create table if not exists app_settings (
-  id uuid primary key default gen_random_uuid(),
-  name text default 'MoneyFlow',
-  logo text default '💰',
-  color text default '#3b82f6',
-  subtitle text default 'ระบบจัดการเงินกู้รายวัน',
-  updated_at timestamptz default now()
-);
-
--- สร้าง owner account
-insert into employees (name, username, password, role)
-values ('เจ้าของระบบ', 'owner', 'owner1234', 'owner')
-on conflict (username) do nothing;
-
--- Seed admin account
-insert into employees (name, username, password, role)
-values ('ผู้ดูแลระบบ', 'admin', 'admin1234', 'admin')
-on conflict (username) do nothing;
-
--- Disable RLS
-alter table branches disable row level security;
-alter table employees disable row level security;
-alter table borrowers disable row level security;
-alter table loans disable row level security;
-alter table payments disable row level security;
-alter table app_settings disable row level security;
-
--- Migration: เพิ่ม branch_id ให้ตารางเดิม (ถ้ามีอยู่แล้ว)
--- alter table employees add column if not exists branch_id uuid references branches(id);
--- alter table borrowers add column if not exists branch_id uuid references branches(id);
-
--->
 </body>
 </html>
