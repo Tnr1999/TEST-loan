@@ -177,8 +177,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .tr-right{text-align:right}
 
 /* ═══ CUSTOMER CARD (มือถือ) ═══ */
-.ccard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.ccard:active{background:var(--surface)}
+.ccard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;-webkit-tap-highlight-color:transparent}
+.ccard-actions{display:flex;gap:8px;margin-top:3px}
+.ccard-actions .btn{flex:1}
 .ccard-top{display:flex;align-items:center;gap:8px}
 .ccard-seq{font-family:ui-monospace,monospace;color:var(--muted);font-size:0.78rem;flex-shrink:0}
 .ccard-name{font-weight:600;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1041,7 +1042,10 @@ function renderCustomers(){
   document.getElementById('cust-list-cards').innerHTML=
     list.map(function(c){
       var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
-      return '<div class="ccard" onclick="openDetail(\''+c.id+'\')">'+
+      var actions='<div class="ccard-actions">';
+      if(c.status!=='closed')actions+='<button class="btn btn-gold btn-sm" onclick="openPayment(\''+c.id+'\',todayISO())">💵 รับเงิน</button>';
+      actions+='<button class="btn btn-ghost btn-sm" onclick="openDetail(\''+c.id+'\')">ดูข้อมูล</button></div>';
+      return '<div class="ccard">'+
         '<div class="ccard-top">'+
           '<span class="ccard-seq">#'+c.seq+'</span>'+
           '<span class="ccard-name">'+esc(c.full_name)+'</span>'+
@@ -1051,8 +1055,8 @@ function renderCustomers(){
           '<span>'+esc(branchName(c.branch_id))+'</span><span>'+ival+'</span></div>'+
         '<div class="ccard-bot">'+
           '<span class="ccard-rem">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b></span>'+
-          '<span class="ccard-go">ดู ›</span>'+
-        '</div></div>';
+        '</div>'+
+        actions+'</div>';
     }).join('');
 }
 
