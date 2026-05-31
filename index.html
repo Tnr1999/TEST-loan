@@ -180,6 +180,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .ccard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;-webkit-tap-highlight-color:transparent}
 .ccard-actions{display:flex;gap:8px;margin-top:3px}
 .ccard-actions .btn{flex:1}
+.ccard-today{font-size:0.72rem;font-weight:600;padding:2px 8px;border-radius:99px}
+.ccard-today.t-paid{color:var(--green);background:var(--green-dim)}
+.ccard-today.t-due{color:var(--amber);background:var(--amber-dim)}
 .ccard-top{display:flex;align-items:center;gap:8px}
 .ccard-seq{font-family:ui-monospace,monospace;color:var(--muted);font-size:0.78rem;flex-shrink:0}
 .ccard-name{font-weight:600;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -379,28 +382,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
         </div>
         <div id="dash-main"></div>
       </div>
-    </div>
-
-    <!-- ═══ PAYMENTS ═══ -->
-    <div class="page" id="page-payments">
-      <div class="page-head">
-        <div>
-          <div class="page-title">บันทึกการชำระ</div>
-          <div class="page-sub" id="pay-date-label">—</div>
-        </div>
-        <div class="row-flex">
-          <input type="date" class="inp btn-sm" id="pay-date-picker" onchange="renderPayments()" style="width:auto;padding:7px 12px"/>
-        </div>
-      </div>
-      <div class="filter-row">
-        <div class="search-box">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input class="inp" id="pay-search" placeholder="ค้นหาชื่อหรือลำดับ..." oninput="renderPayments()"/>
-        </div>
-        <select class="inp" id="pay-filter-group" onchange="onPayGroup()" style="width:auto"></select>
-        <select class="inp" id="pay-filter-branch" onchange="renderPayments()" style="width:auto"></select>
-      </div>
-      <div id="pay-list" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
 
     <!-- ═══ CUSTOMERS ═══ -->
@@ -670,7 +651,6 @@ function startApp(){
   document.getElementById('page-users').style.display=canManageUsers()?'':'none';
   var t=todayISO();
   document.getElementById('dash-date-picker').value=t;
-  document.getElementById('pay-date-picker').value=t;
   initCalendar();
   loadAll();
 }
@@ -712,7 +692,6 @@ async function loadAll(){
   await autoUpdateOverdue();
   populateFilters();
   renderDashboard();
-  renderPayments();
   renderCustomers();
   if(canManageGroups()) renderGroups();
   if(canEdit()) renderBranches();
@@ -751,14 +730,13 @@ function accessibleGroups(){
 function populateFilters(){
   var groups=accessibleGroups();
   var gopts='<option value="">ทุกกอง</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('');
-  ['dash-filter-group','pay-filter-group','cust-filter-group'].forEach(function(id){
+  ['dash-filter-group','cust-filter-group'].forEach(function(id){
     var el=document.getElementById(id);if(!el)return;var v=el.value;el.innerHTML=gopts;if(groups.some(function(g){return g.id===v}))el.value=v;
   });
   // ซ่อนตัวกรองกองถ้ามี ≤1 กอง
   var hideG=groups.length<=1;
   var pg=document.getElementById('dash-group-wrap');if(pg)pg.style.display=hideG?'none':'';
   populateBranchOptions('dash-filter-group','dash-filter-branch');
-  populateBranchOptions('pay-filter-group','pay-filter-branch');
   populateBranchOptions('cust-filter-group','cust-filter-branch');
   // ซ่อนตัวกรองบ้านบนแดชบอร์ดถ้ามี ≤1 บ้าน
   var nb=allBranches.filter(function(b){return canAccessBranch(b.id)}).length;
@@ -775,7 +753,6 @@ function populateBranchOptions(groupSelId,branchSelId){
   if(bs.some(function(b){return b.id===v}))bsel.value=v;else bsel.value='';
 }
 function onDashGroup(){populateBranchOptions('dash-filter-group','dash-filter-branch');renderDashboard()}
-function onPayGroup(){populateBranchOptions('pay-filter-group','pay-filter-branch');renderPayments()}
 function onCustGroup(){populateBranchOptions('cust-filter-group','cust-filter-branch');renderCustomers()}
 // แปลง branch_id → ชื่อกอง / ชื่อบ้าน
 function branchName(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'—'}
@@ -869,54 +846,6 @@ function stat(label,value,accent,sub){
 /* ═══════════════════════════════════════════════
    PAYMENTS
 ═══════════════════════════════════════════════ */
-function renderPayments(){
-  var date=document.getElementById('pay-date-picker').value||todayISO();
-  document.getElementById('pay-date-label').textContent=thDate(date);
-  var fg=document.getElementById('pay-filter-group')?document.getElementById('pay-filter-group').value:'';
-  var fb=document.getElementById('pay-filter-branch').value;
-  var search=(document.getElementById('pay-search').value||'').toLowerCase();
-  var bids=myBranchIds();
-  if(fg)bids=allBranches.filter(function(b){return b.group_id===fg&&bids.indexOf(b.id)>=0}).map(function(b){return b.id});
-  if(fb)bids=[fb];
-
-  var custs=allCustomers.filter(function(c){
-    return c.status!=='closed' && bids.indexOf(c.branch_id)>=0;
-  });
-  var recsToday={};allRecords.forEach(function(r){if(r.record_date===date)recsToday[r.customer_id]=r});
-
-  var enriched=custs.map(function(c){return{c:c,rec:recsToday[c.id],due:isPaymentDueToday(c,date)}});
-  enriched.sort(function(a,b){
-    if(a.due!==b.due)return a.due?-1:1;
-    return a.c.seq-b.c.seq;
-  });
-  var filtered=enriched.filter(function(e){
-    return !search||e.c.full_name.toLowerCase().indexOf(search)>=0||String(e.c.seq).indexOf(search)>=0;
-  });
-
-  if(!filtered.length){document.getElementById('pay-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';return}
-
-  document.getElementById('pay-list').innerHTML=filtered.map(function(e){
-    var c=e.c,rec=e.rec,due=interestDue(c);
-    var paid=rec&&rec.payment_status!=='unpaid';
-    var cls='pay-card';
-    if(paid)cls+=' paid';else if(due&&e.due)cls+=' due';
-    if(c.status==='overdue')cls+=' overdue';if(c.status==='lost')cls+=' lost';
-    var meta='<span>ต้น ฿'+fmt(c.remaining_principal)+'</span>';
-    if(e.due)meta+='<span style="color:var(--amber)">ดอก ฿'+fmt(due)+'</span>';
-    meta+='<span>'+(c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+' วัน')+'</span>';
-    var recLine='';
-    if(rec){
-      if(paid)recLine='<div style="font-size:0.74rem;color:var(--green);margin-top:5px">✓ จ่าย ฿'+fmt(rec.amount_paid)+(rec.principal_reduced>0?' · หักต้น ฿'+fmt(rec.principal_reduced):'')+'</div>';
-      else recLine='<div style="font-size:0.74rem;color:var(--muted);margin-top:5px">บันทึกแล้ว (ไม่จ่าย)</div>';
-    } else if(e.due){recLine='<div style="font-size:0.74rem;color:var(--amber);margin-top:5px">⏰ ถึงเวลาชำระวันนี้</div>'}
-    var stBadge=c.status!=='normal'?' <span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>':'';
-    return '<div class="'+cls+'"><div style="flex:1;min-width:0">'+
-      '<div class="row-flex" style="gap:7px;flex-wrap:wrap"><span class="pc-seq">#'+c.seq+'</span><span class="pc-name">'+esc(c.full_name)+'</span>'+stBadge+'</div>'+
-      '<div class="pc-meta">'+meta+'</div>'+recLine+'</div>'+
-      '<button class="btn btn-sm '+(paid?'btn-ghost':(e.due?'btn-gold':'btn-ghost'))+'" onclick="openPayment(\''+c.id+'\',\''+date+'\')">'+(paid?'แก้ไข':'บันทึก')+'</button>'+
-      '</div>';
-  }).join('');
-}
 
 function openPayment(custId,date){
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
@@ -924,6 +853,7 @@ function openPayment(custId,date){
   var due=interestDue(c);
   document.getElementById('modal-payment-title').textContent='💵 #'+c.seq+' '+c.full_name;
   document.getElementById('modal-payment-body').innerHTML=
+    '<div class="field"><label>วันที่ชำระ'+(existing?' <span style="color:var(--green)">· มีบันทึกแล้ว (แก้ไข)</span>':'')+'</label><input class="inp" id="pay-date" type="date" max="'+todayISO()+'" value="'+date+'" onchange="openPayment(\''+custId+'\',this.value)"/></div>'+
     '<div style="display:flex;gap:10px;margin-bottom:14px">'+
       '<div class="stat" style="flex:1"><span class="label">เงินต้นคงเหลือ</span><span class="value" style="font-size:1.1rem">฿'+fmt(c.remaining_principal)+'</span></div>'+
       '<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">ดอกที่ต้องจ่าย</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(due)+'</span></div>'+
@@ -985,6 +915,8 @@ async function savePayment(custId,date,recId){
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');
   closeModal('modal-payment');
   await loadAll();
+  // ถ้าเปิดหน้ารายละเอียดอยู่ ให้รีเฟรชเนื้อหา
+  if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
 }
 
 /* ═══════════════════════════════════════════════
@@ -1036,11 +968,19 @@ function renderCustomers(){
       '<td><span class="link-gold" style="font-size:0.78rem">ดู ›</span></td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ด (มือถือ)
+  var today=todayISO();
   document.getElementById('cust-list-cards').innerHTML=
     list.map(function(c){
       var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
+      // สถานะการชำระ "วันนี้"
+      var recToday=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===today});
+      var paidToday=recToday&&recToday.payment_status!=='unpaid';
+      var dueToday=c.status!=='closed'&&isPaymentDueToday(c,today);
+      var todayTag='';
+      if(paidToday)todayTag='<span class="ccard-today t-paid">✓ จ่ายแล้ว ฿'+fmt(recToday.amount_paid)+'</span>';
+      else if(dueToday)todayTag='<span class="ccard-today t-due">⏰ ถึงกำหนดวันนี้</span>';
       var actions='<div class="ccard-actions">';
-      if(c.status!=='closed')actions+='<button class="btn btn-gold btn-sm" onclick="openPayment(\''+c.id+'\',todayISO())">💵 รับเงิน</button>';
+      if(c.status!=='closed')actions+='<button class="btn '+(paidToday?'btn-ghost':'btn-gold')+' btn-sm" onclick="openPayment(\''+c.id+'\',\''+today+'\')">'+(paidToday?'✏️ แก้ไขยอด':'💵 รับเงิน')+'</button>';
       actions+='<button class="btn btn-ghost btn-sm" onclick="openDetail(\''+c.id+'\')">ดูข้อมูล</button></div>';
       return '<div class="ccard">'+
         '<div class="ccard-top">'+
@@ -1052,6 +992,7 @@ function renderCustomers(){
           '<span>'+esc(branchName(c.branch_id))+'</span><span>'+ival+'</span></div>'+
         '<div class="ccard-bot">'+
           '<span class="ccard-rem">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b></span>'+
+          todayTag+
         '</div>'+
         actions+'</div>';
     }).join('');
@@ -1100,6 +1041,11 @@ function openDetail(id){
       '<div style="font-size:1.3rem;font-weight:700;font-family:var(--font-mono);color:var(--gold)">฿'+fmt(ca)+'</div></div>';
   } else if(c.close_amount){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
+  }
+
+  // บันทึกการชำระ (รับเงิน / จ่ายย้อนวัน)
+  if(c.status!=='closed'){
+    h+='<button class="btn btn-gold btn-block" style="margin-bottom:14px" onclick="openPayment(\''+id+'\',todayISO())">💵 บันทึกการชำระ / จ่ายย้อนวัน</button>';
   }
 
   // actions (manager/owner)
