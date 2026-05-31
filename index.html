@@ -739,15 +739,6 @@ function renderDashboard(){
     if(r.payment_status!=='unpaid')a.paid++;return a;
   },{collected:0,interest:0,wage:0,principal:0,paid:0});
 
-  // monthly
-  var ym=date.substring(0,7);
-  var mrecs=allRecords.filter(function(r){
-    if(r.record_date.substring(0,7)!==ym)return false;
-    var c=allCustomers.find(function(x){return x.id===r.customer_id});
-    return c&&bids.indexOf(c.branch_id)>=0;
-  });
-  var msum=mrecs.reduce(function(a,r){a.collected+=+r.amount_paid;a.interest+=+r.interest_collected;a.wage+=+r.wage;return a},{collected:0,interest:0,wage:0});
-
   // due today & alerts
   var activeCusts=custs.filter(function(c){return c.status==='normal'||c.status==='overdue'});
   var dueToday=activeCusts.filter(function(c){return isPaymentDueToday(c,date)});
@@ -783,21 +774,23 @@ function renderDashboard(){
 
   // daily stats
   h+='<div class="section-label">รายวัน — '+thDate(date)+'</div>';
-  h+='<div class="stat-grid cols-4">'+
-    stat('เงินที่เก็บได้ทั้งหมด','฿'+fmt(sum.collected),'accent-gold')+
+  h+='<div class="stat-grid cols-3">'+
+    stat('ยอดที่เก็บได้วันนี้','฿'+fmt(sum.collected),'accent-gold')+
     stat('ดอกที่เก็บได้','฿'+fmt(sum.interest),'accent-green')+
     stat('ค่าแรง (20%)','฿'+fmt(sum.wage),'accent-purple')+
-    stat('จ่ายแล้ว / ต้องจ่าย',sum.paid+' / '+dueToday.length,'',unpaidToday.length?('ยังไม่จ่าย '+unpaidToday.length+' ราย'):'ครบแล้ว ✓')+
     '</div>';
 
-  // monthly
-  var mName=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'][parseInt(date.substring(5,7))-1];
-  h+='<div class="section-label">รายเดือน — '+mName+' '+(parseInt(date.substring(0,4))+543)+'</div>';
-  h+='<div class="stat-grid cols-3">'+
-    stat('เงินที่เก็บได้รวม','฿'+fmt(msum.collected),'accent-gold')+
-    stat('ดอกรวมเดือนนี้','฿'+fmt(msum.interest),'accent-green')+
-    stat('ค่าแรงรวม','฿'+fmt(msum.wage),'accent-purple')+
-    '</div>';
+  // รายชื่อลูกค้าที่ต้องจ่ายวันนี้ (เขียว=จ่ายแล้ว, เหลือง=ยังไม่จ่าย)
+  if(dueToday.length){
+    h+='<div class="section-label">สถานะการจ่ายวันนี้ ('+sum.paid+' / '+dueToday.length+')</div><div class="chip-list">'+
+      dueToday.map(function(c){
+        var paid=recordedAny[c.id];
+        var color=paid?'var(--green)':'var(--amber)';
+        var bg=paid?'var(--green-dim)':'var(--amber-dim)';
+        var icon=paid?'✓ ':'⏰ ';
+        return '<span class="chip" onclick="openDetail(\''+c.id+'\')" style="color:'+color+';background:'+bg+';border-color:'+color+'">'+icon+esc(c.full_name)+'</span>';
+      }).join('')+'</div>';
+  }
 
   // by branch
   if(byBranch.length>1){
