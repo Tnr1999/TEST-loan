@@ -105,6 +105,7 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .role-badge{padding:2px 8px;border-radius:99px;font-size:0.6rem;font-weight:700;letter-spacing:0.06em}
 .role-owner{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(129,140,248,0.35)}
 .role-manager{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.35)}
+.role-head{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.35)}
 .role-staff{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(192,132,252,0.35)}
 
 /* ═══ MOBILE BOTTOM NAV ═══ */
@@ -314,7 +315,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
         <button class="tab active" id="tab-dashboard" onclick="showPage('dashboard')">📊 ภาพรวม</button>
         <button class="tab" id="tab-payments" onclick="showPage('payments')">💵 บันทึกชำระ</button>
         <button class="tab" id="tab-customers" onclick="showPage('customers')">👥 ลูกค้า</button>
-        <button class="tab" id="tab-branches" onclick="showPage('branches')">🏢 สาขา</button>
+        <button class="tab" id="tab-groups" onclick="showPage('groups')">🗂️ กอง</button>
+        <button class="tab" id="tab-branches" onclick="showPage('branches')">🏠 บ้าน</button>
         <button class="tab" id="tab-users" onclick="showPage('users')">⚙️ ผู้ใช้</button>
       </div>
     </div>
@@ -335,8 +337,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
           <div class="page-title">ภาพรวม</div>
           <div class="page-sub">สรุปการดำเนินงานรายวัน</div>
         </div>
-        <div class="row-flex" id="dash-branch-wrap">
-          <select class="inp btn-sm" id="dash-filter-branch" onchange="renderDashboard()" style="width:auto;padding:7px 30px 7px 12px"></select>
+        <div class="row-flex" style="gap:8px">
+          <span id="dash-group-wrap"><select class="inp btn-sm" id="dash-filter-group" onchange="onDashGroup()" style="width:auto;padding:7px 30px 7px 12px"></select></span>
+          <span id="dash-branch-wrap"><select class="inp btn-sm" id="dash-filter-branch" onchange="renderDashboard()" style="width:auto;padding:7px 30px 7px 12px"></select></span>
         </div>
       </div>
 
@@ -381,6 +384,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input class="inp" id="pay-search" placeholder="ค้นหาชื่อหรือลำดับ..." oninput="renderPayments()"/>
         </div>
+        <select class="inp" id="pay-filter-group" onchange="onPayGroup()" style="width:auto"></select>
         <select class="inp" id="pay-filter-branch" onchange="renderPayments()" style="width:auto"></select>
       </div>
       <div id="pay-list" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -400,6 +404,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input class="inp" id="cust-search" placeholder="ค้นหาชื่อ, เบอร์, ลำดับ..." oninput="renderCustomers()"/>
         </div>
+        <select class="inp" id="cust-filter-group" onchange="onCustGroup()" style="width:auto"></select>
         <select class="inp" id="cust-filter-branch" onchange="renderCustomers()" style="width:auto"></select>
         <select class="inp" id="cust-filter-status" onchange="renderCustomers()" style="width:auto">
           <option value="">ทุกสถานะ</option>
@@ -421,14 +426,26 @@ table.tbl tbody tr:hover{background:var(--surface)}
       <div id="detail-content"></div>
     </div>
 
-    <!-- ═══ BRANCHES ═══ -->
+    <!-- ═══ GROUPS (กอง) ═══ -->
+    <div class="page" id="page-groups">
+      <div class="page-head">
+        <div>
+          <div class="page-title">กอง</div>
+          <div class="page-sub">จัดการกอง (กลุ่มของบ้าน)</div>
+        </div>
+        <button class="btn btn-gold" onclick="openAddGroup()">+ เพิ่มกอง</button>
+      </div>
+      <div id="group-list" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+
+    <!-- ═══ BRANCHES (บ้าน) ═══ -->
     <div class="page" id="page-branches">
       <div class="page-head">
         <div>
-          <div class="page-title">สาขา</div>
-          <div class="page-sub">จัดการสาขาและค่าธรรมเนียม</div>
+          <div class="page-title">บ้าน</div>
+          <div class="page-sub">จัดการบ้านและค่าธรรมเนียม</div>
         </div>
-        <button class="btn btn-gold" onclick="openAddBranch()">+ เพิ่มสาขา</button>
+        <button class="btn btn-gold" onclick="openAddBranch()">+ เพิ่มบ้าน</button>
       </div>
       <div id="branch-list" style="display:flex;flex-direction:column;gap:12px"></div>
     </div>
@@ -460,9 +477,13 @@ table.tbl tbody tr:hover{background:var(--surface)}
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
       ลูกค้า
     </button>
+    <button class="nav-item" id="mnav-groups" onclick="showPage('groups')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H3z"/></svg>
+      กอง
+    </button>
     <button class="nav-item" id="mnav-branches" onclick="showPage('branches')">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
-      สาขา
+      บ้าน
     </button>
     <button class="nav-item" id="mnav-users" onclick="showPage('users')">
       <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
@@ -486,8 +507,14 @@ table.tbl tbody tr:hover{background:var(--surface)}
 </div>
 <div class="modal-overlay" id="modal-branch">
   <div class="modal">
-    <div class="modal-head"><h3 id="modal-branch-title">เพิ่มสาขา</h3><button class="modal-x" onclick="closeModal('modal-branch')">×</button></div>
+    <div class="modal-head"><h3 id="modal-branch-title">เพิ่มบ้าน</h3><button class="modal-x" onclick="closeModal('modal-branch')">×</button></div>
     <div class="modal-body" id="modal-branch-body"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-group">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modal-group-title">เพิ่มกอง</h3><button class="modal-x" onclick="closeModal('modal-group')">×</button></div>
+    <div class="modal-body" id="modal-group-body"></div>
   </div>
 </div>
 <div class="modal-overlay" id="modal-user">
@@ -526,6 +553,7 @@ var SESSION_KEY = 'loan_session_v1';
 /* ═══ STATE ═══ */
 var currentUser = null;
 var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUserBranches = [];
+var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
 var currentDetailId = null;
 
 /* ═══ UTILS ═══ */
@@ -539,16 +567,27 @@ function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=[
 
 var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'หายติดต่อ',closed:'ปิดแล้ว'};
 var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)'};
-var ROLE_LABEL={owner:'OWNER',manager:'MANAGER',staff:'STAFF'};
+var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',manager:'หัวหน้ากอง',staff:'STAFF'};
 
 /* ═══ PERMISSION ═══ */
 function isOwner(){return currentUser&&currentUser.role==='owner'}
-function isManager(){return currentUser&&currentUser.role==='manager'}
+function isHead(){return currentUser&&(currentUser.role==='head'||currentUser.role==='manager')}
 function isStaff(){return currentUser&&currentUser.role==='staff'}
-function canEdit(){return isOwner()||isManager()}      // แก้/ลบลูกค้า, ปิดสินเชื่อ, จัดการสาขา
+function canEdit(){return isOwner()||isHead()}      // แก้/ลบลูกค้า, ปิดสินเชื่อ, จัดการบ้าน
 function canManageUsers(){return isOwner()}
+function canManageGroups(){return isOwner()}
+function myGroupIds(){
+  if(isOwner()) return allGroups.map(function(g){return g.id});
+  return allUserGroups.filter(function(ug){return ug.user_id===currentUser.id}).map(function(ug){return ug.group_id});
+}
 function myBranchIds(){
-  if(isOwner()||isManager()) return allBranches.map(function(b){return b.id});
+  if(isOwner()) return allBranches.map(function(b){return b.id});
+  if(isHead()){
+    var gids=myGroupIds();
+    // หัวหน้ากองที่ยังไม่ถูกผูกกอง → เห็นทุกบ้าน (ช่วงเปลี่ยนผ่าน)
+    if(!gids.length) return allBranches.map(function(b){return b.id});
+    return allBranches.filter(function(b){return gids.indexOf(b.group_id)>=0}).map(function(b){return b.id});
+  }
   return allUserBranches.filter(function(ub){return ub.user_id===currentUser.id}).map(function(ub){return ub.branch_id});
 }
 function canAccessBranch(bid){return myBranchIds().indexOf(bid)>=0}
@@ -604,10 +643,10 @@ document.getElementById('confirm-cancel-btn').onclick=function(){document.getEle
 /* ═══ MODAL HELPERS ═══ */
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-['modal-customer','modal-payment','modal-branch','modal-user','confirm-overlay'].forEach(function(id){
+['modal-customer','modal-payment','modal-branch','modal-group','modal-user','confirm-overlay'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-user','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
 
 /* ═══ LOGIN ═══ */
 function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none'}
@@ -628,6 +667,7 @@ async function doLogin(){
 function doLogout(){
   localStorage.removeItem(SESSION_KEY);currentUser=null;
   allBranches=[];allCustomers=[];allRecords=[];allUsers=[];allUserBranches=[];
+  allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];
   showLoginScreen();
 }
 
@@ -639,8 +679,10 @@ function startApp(){
   var rb=document.getElementById('hdr-role');
   rb.textContent=ROLE_LABEL[currentUser.role];rb.className='role-badge role-'+currentUser.role;
   // permission-based UI
+  document.getElementById('tab-groups').style.display=canManageGroups()?'':'none';
   document.getElementById('tab-branches').style.display=canEdit()?'':'none';
   document.getElementById('tab-users').style.display=canManageUsers()?'':'none';
+  document.getElementById('mnav-groups').style.display=canManageGroups()?'':'none';
   document.getElementById('mnav-branches').style.display=canEdit()?'':'none';
   document.getElementById('mnav-users').style.display=canManageUsers()?'':'none';
   var t=todayISO();
@@ -653,33 +695,57 @@ function startApp(){
 /* ═══ LOAD DATA ═══ */
 async function loadAll(){
   var q=[
+    _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),
-    _sb.from('customers').select('*').order('seq'),
+    _sb.from('persons').select('*'),
+    _sb.from('loans').select('*').order('seq'),
     _sb.from('daily_records').select('*').order('record_date'),
-    _sb.from('user_branches').select('*')
+    _sb.from('user_branches').select('*'),
+    _sb.from('user_groups').select('*')
   ];
   if(canManageUsers()) q.push(_sb.from('users').select('id,username,full_name,role,is_active,created_at').order('created_at'));
   var r=await Promise.all(q);
   for(var i=0;i<r.length;i++){if(r[i].error){toast('โหลดข้อมูลล้มเหลว: '+r[i].error.message,'err');return}}
-  allBranches=r[0].data||[];
-  allCustomers=r[1].data||[];
-  allRecords=r[2].data||[];
-  allUserBranches=r[3].data||[];
-  if(canManageUsers()&&r[4]) allUsers=r[4].data||[];
+  allGroups=r[0].data||[];
+  allBranches=r[1].data||[];
+  allPersons=r[2].data||[];
+  allLoans=r[3].data||[];
+  allRecords=r[4].data||[];
+  allUserBranches=r[5].data||[];
+  allUserGroups=r[6].data||[];
+  if(canManageUsers()&&r[7]) allUsers=r[7].data||[];
 
-  // filter customers by branch access (staff)
-  if(isStaff()){
+  // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
+  allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});
+  // ประกอบ allCustomers = สัญญา (loan) + ข้อมูลคน (person)
+  buildCustomers();
+
+  // filter customers by branch access (staff/head)
+  if(!isOwner()){
     var bids=myBranchIds();
     allCustomers=allCustomers.filter(function(c){return bids.indexOf(c.branch_id)>=0});
   }
 
   await autoUpdateOverdue();
-  populateBranchSelects();
+  populateFilters();
   renderDashboard();
   renderPayments();
   renderCustomers();
+  if(canManageGroups()) renderGroups();
   if(canEdit()) renderBranches();
   if(canManageUsers()) renderUsers();
+}
+
+// ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons
+function buildCustomers(){
+  allCustomers=allLoans.map(function(l){
+    var p=allPersons.find(function(x){return x.id===l.person_id})||{};
+    return Object.assign({},l,{
+      person_id:l.person_id,
+      full_name:p.full_name||'(ไม่ทราบชื่อ)',
+      phone:p.phone||null,id_card:p.id_card||null,facebook_url:p.facebook_url||null
+    });
+  });
 }
 
 /* ═══ AUTO OVERDUE ═══ */
@@ -689,19 +755,48 @@ async function autoUpdateOverdue(){
     if(c.status==='normal'&&isOverdue(c,t)){c.status='overdue';toFlag.push(c.id);}
   });
   if(toFlag.length){
-    await _sb.from('customers').update({status:'overdue'}).in('id',toFlag);
+    await _sb.from('loans').update({status:'overdue'}).in('id',toFlag);
   }
 }
 
-function populateBranchSelects(){
-  var bs=allBranches.filter(function(b){return canAccessBranch(b.id)});
-  var opts='<option value="">ทุกสาขา</option>'+bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('');
-  ['dash-filter-branch','pay-filter-branch','cust-filter-branch'].forEach(function(id){
-    var el=document.getElementById(id);if(!el)return;var v=el.value;el.innerHTML=opts;el.value=v;
-  });
-  // hide branch filter if only 1 branch
-  if(bs.length<=1){document.getElementById('dash-branch-wrap').style.display='none';}
+// กองที่เข้าถึงได้ = กองที่มีบ้านที่เราเห็น
+function accessibleGroups(){
+  var bids=myBranchIds(),gset={};
+  allBranches.forEach(function(b){if(bids.indexOf(b.id)>=0&&b.group_id)gset[b.group_id]=true});
+  return allGroups.filter(function(g){return gset[g.id]});
 }
+function populateFilters(){
+  var groups=accessibleGroups();
+  var gopts='<option value="">ทุกกอง</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('');
+  ['dash-filter-group','pay-filter-group','cust-filter-group'].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;var v=el.value;el.innerHTML=gopts;if(groups.some(function(g){return g.id===v}))el.value=v;
+  });
+  // ซ่อนตัวกรองกองถ้ามี ≤1 กอง
+  var hideG=groups.length<=1;
+  var pg=document.getElementById('dash-group-wrap');if(pg)pg.style.display=hideG?'none':'';
+  populateBranchOptions('dash-filter-group','dash-filter-branch');
+  populateBranchOptions('pay-filter-group','pay-filter-branch');
+  populateBranchOptions('cust-filter-group','cust-filter-branch');
+  // ซ่อนตัวกรองบ้านบนแดชบอร์ดถ้ามี ≤1 บ้าน
+  var nb=allBranches.filter(function(b){return canAccessBranch(b.id)}).length;
+  var bw=document.getElementById('dash-branch-wrap');if(bw)bw.style.display=nb<=1?'none':'';
+}
+// เติม dropdown บ้าน ตามกองที่เลือก
+function populateBranchOptions(groupSelId,branchSelId){
+  var bsel=document.getElementById(branchSelId);if(!bsel)return;
+  var gEl=document.getElementById(groupSelId),gid=gEl?gEl.value:'';
+  var bids=myBranchIds();
+  var bs=allBranches.filter(function(b){return bids.indexOf(b.id)>=0&&(!gid||b.group_id===gid)});
+  var v=bsel.value;
+  bsel.innerHTML='<option value="">ทุกบ้าน</option>'+bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('');
+  if(bs.some(function(b){return b.id===v}))bsel.value=v;else bsel.value='';
+}
+function onDashGroup(){populateBranchOptions('dash-filter-group','dash-filter-branch');renderDashboard()}
+function onPayGroup(){populateBranchOptions('pay-filter-group','pay-filter-branch');renderPayments()}
+function onCustGroup(){populateBranchOptions('cust-filter-group','cust-filter-branch');renderCustomers()}
+// แปลง branch_id → ชื่อกอง / ชื่อบ้าน
+function branchName(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'—'}
+function groupNameOfBranch(id){var b=allBranches.find(function(x){return x.id===id});if(!b||!b.group_id)return '—';var g=allGroups.find(function(x){return x.id===b.group_id});return g?g.name:'—'}
 
 /* ═══════════════════════════════════════════════
    PAGE NAV
@@ -709,7 +804,7 @@ function populateBranchSelects(){
 function showPage(name){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.getElementById('page-'+name).classList.add('active');
-  var tmap={dashboard:'dashboard',payments:'payments',customers:'customers',detail:'customers',branches:'branches',users:'users'};
+  var tmap={dashboard:'dashboard',payments:'payments',customers:'customers',detail:'customers',groups:'groups',branches:'branches',users:'users'};
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
   document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active')});
   var key=tmap[name];
@@ -723,8 +818,10 @@ function showPage(name){
 ═══════════════════════════════════════════════ */
 function renderDashboard(){
   var date=document.getElementById('dash-date-picker').value||todayISO();
+  var fg=document.getElementById('dash-filter-group')?document.getElementById('dash-filter-group').value:'';
   var fb=document.getElementById('dash-filter-branch').value;
   var bids=myBranchIds();
+  if(fg) bids=allBranches.filter(function(b){return b.group_id===fg&&bids.indexOf(b.id)>=0}).map(function(b){return b.id});
   if(fb) bids=[fb];
 
   var custs=allCustomers.filter(function(c){return bids.indexOf(c.branch_id)>=0});
@@ -795,7 +892,7 @@ function renderDashboard(){
 
   // by branch
   if(byBranch.length>1){
-    h+='<div class="section-label">แยกตามสาขา</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>สาขา</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
+    h+='<div class="section-label">แยกตามบ้าน</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>บ้าน</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
       byBranch.map(function(b){return '<tr><td style="font-weight:500">'+esc(b.name)+'</td><td class="tr-right" style="color:var(--green)">฿'+fmt(b.interest)+'</td><td class="tr-right" style="color:var(--purple)">฿'+fmt(b.wage)+'</td><td class="tr-right">'+b.paid+' ราย</td></tr>'}).join('')+
       '</tbody></table></div></div>';
   }
@@ -811,9 +908,12 @@ function stat(label,value,accent,sub){
 function renderPayments(){
   var date=document.getElementById('pay-date-picker').value||todayISO();
   document.getElementById('pay-date-label').textContent=thDate(date);
+  var fg=document.getElementById('pay-filter-group')?document.getElementById('pay-filter-group').value:'';
   var fb=document.getElementById('pay-filter-branch').value;
   var search=(document.getElementById('pay-search').value||'').toLowerCase();
-  var bids=myBranchIds();if(fb)bids=[fb];
+  var bids=myBranchIds();
+  if(fg)bids=allBranches.filter(function(b){return b.group_id===fg&&bids.indexOf(b.id)>=0}).map(function(b){return b.id});
+  if(fb)bids=[fb];
 
   var custs=allCustomers.filter(function(c){
     return c.status!=='closed' && bids.indexOf(c.branch_id)>=0;
@@ -909,7 +1009,7 @@ async function savePayment(custId,date,recId){
     baseC=Object.assign({},c,{remaining_principal:c.remaining_principal + (old?+old.principal_reduced:0)});
   }
   var calc=calcPayment(baseC,amt);
-  var payload={customer_id:custId,record_date:date,interest_due:calc.interest_due,amount_paid:amt,
+  var payload={loan_id:custId,record_date:date,interest_due:calc.interest_due,amount_paid:amt,
     interest_collected:calc.interest_collected,principal_reduced:calc.principal_reduced,
     remaining_principal:calc.remaining_principal,wage:calc.wage,payment_status:calc.payment_status,
     recorded_by:currentUser.id};
@@ -921,7 +1021,7 @@ async function savePayment(custId,date,recId){
   if(amt>0){upd.last_collection_date=date;upd.status='normal';}
   // lost + จ่ายเงิน → ปิดสินเชื่อทันที (ตามที่ตกลง)
   if(c.status==='lost'&&amt>0){upd.status='closed';upd.close_amount=closeAmount(Object.assign({},c,{remaining_principal:calc.remaining_principal}));}
-  await _sb.from('customers').update(upd).eq('id',custId);
+  await _sb.from('loans').update(upd).eq('id',custId);
 
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');
   closeModal('modal-payment');
@@ -933,10 +1033,13 @@ async function savePayment(custId,date,recId){
 ═══════════════════════════════════════════════ */
 function renderCustomers(){
   var search=(document.getElementById('cust-search').value||'').toLowerCase();
+  var fg=document.getElementById('cust-filter-group')?document.getElementById('cust-filter-group').value:'';
   var fb=document.getElementById('cust-filter-branch').value;
   var fs=document.getElementById('cust-filter-status').value;
+  var grpBids=fg?allBranches.filter(function(b){return b.group_id===fg}).map(function(b){return b.id}):null;
   var list=allCustomers.filter(function(c){
     if(fb&&c.branch_id!==fb)return false;
+    if(grpBids&&grpBids.indexOf(c.branch_id)<0)return false;
     if(fs&&c.status!==fs)return false;
     if(search){
       var hit=c.full_name.toLowerCase().indexOf(search)>=0
@@ -955,12 +1058,12 @@ function renderCustomers(){
   document.getElementById('cust-summary').innerHTML=sc;
 
   if(!list.length){document.getElementById('cust-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';return}
-  var branchName=function(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'—'};
   document.getElementById('cust-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>สาขา</th><th class="tr-right">ต้นเริ่ม</th><th class="tr-right">ต้นคงเหลือ</th><th>ระยะ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นเริ่ม</th><th class="tr-right">ต้นคงเหลือ</th><th>ระยะ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     list.map(function(c){return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'</td>'+
+      '<td style="color:var(--text2)">'+esc(groupNameOfBranch(c.branch_id))+'</td>'+
       '<td style="color:var(--text2)">'+esc(branchName(c.branch_id))+'</td>'+
       '<td class="tr-right mono">฿'+fmt(c.principal)+'</td>'+
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
@@ -981,7 +1084,7 @@ function openDetail(id){
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">#'+c.seq+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></div>'+
-    '<div class="page-sub">'+esc(b?b.name:'—')+'</div></div>';
+    '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
   if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">✏️ แก้ไข</button>';
   h+='</div>';
 
@@ -1000,7 +1103,7 @@ function openDetail(id){
   h+=dt('เลขบัตรประชาชน',c.id_card?esc(c.id_card):'—');
   h+=dt('วันปล่อยสินเชื่อ',thDate(c.start_date));
   h+=dt('เก็บล่าสุด',c.last_collection_date?thDate(c.last_collection_date):'—');
-  h+=dt('ค่าธรรมเนียมสาขา','฿'+fmt0(c.branch_fee));
+  h+=dt('ค่าธรรมเนียมบ้าน','฿'+fmt0(c.branch_fee));
   h+='</div></div>';
 
   // close amount
@@ -1046,7 +1149,7 @@ async function changeStatus(id,status){
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'👻',title:'เปลี่ยนสถานะ',msg:'เปลี่ยน "'+c.full_name+'" เป็น "หายติดต่อไม่ได้"?',okText:'ยืนยัน',okClass:'btn-amber'});
   if(!ok)return;
-  var res=await _sb.from('customers').update({status:status}).eq('id',id);
+  var res=await _sb.from('loans').update({status:status}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
 }
@@ -1054,7 +1157,7 @@ async function doCloseLoan(id){
   var c=allCustomers.find(function(x){return x.id===id});var ca=closeAmount(c);
   var ok=await showConfirm({icon:'✓',title:'ปิดสินเชื่อ',msg:'ยอดปิดสินเชื่อ ฿'+fmt(ca)+'\nการปิดไม่สามารถยกเลิกได้',okText:'ปิดสินเชื่อ',okClass:'btn-green'});
   if(!ok)return;
-  var res=await _sb.from('customers').update({status:'closed',close_amount:ca}).eq('id',id);
+  var res=await _sb.from('loans').update({status:'closed',close_amount:ca}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ ปิดสินเชื่อสำเร็จ ยอด ฿'+fmt(ca),'ok');await loadAll();openDetail(id);
 }
@@ -1062,8 +1165,13 @@ async function doDeleteCustomer(id){
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'🗑',title:'ลบลูกค้า',msg:'ลบ "'+c.full_name+'" และประวัติทั้งหมด?\nไม่สามารถกู้คืนได้',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
-  var res=await _sb.from('customers').delete().eq('id',id);
+  var personId=c.person_id;
+  var res=await _sb.from('loans').delete().eq('id',id);
   if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  // ถ้าคนนี้ไม่มีสัญญาอื่นเหลือแล้ว → ลบข้อมูลคนทิ้งด้วย
+  if(personId&&!allLoans.some(function(l){return l.person_id===personId&&l.id!==id})){
+    await _sb.from('persons').delete().eq('id',personId);
+  }
   toast('✅ ลบลูกค้าแล้ว','ok');await loadAll();showPage('customers');
 }
 
@@ -1071,11 +1179,13 @@ async function doDeleteCustomer(id){
 var editingCustId=null;
 function openAddCustomer(){
   editingCustId=null;
-  var bs=allBranches.filter(function(b){return canAccessBranch(b.id)});
+  var groups=accessibleGroups();
+  if(!groups.length){toast('กรุณาสร้างกองและผูกบ้านเข้ากองก่อน','err');return}
   document.getElementById('modal-customer-title').textContent='+ เพิ่มลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
-    '<div class="field"><label>สาขา <span class="req">*</span></label><select class="inp" id="f-branch">'+
-      bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="f-group" onchange="custFormBranches()">'+
+      groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
     '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><input class="inp mono" id="f-principal" type="number" min="1" step="0.01" placeholder="0.00"/><div class="field-err"></div></div>'+
     '<div class="field"><label>อัตราดอกรายวัน</label><select class="inp" id="f-rate"><option value="0.10">10% (ค่าเริ่มต้น)</option><option value="0.08">8%</option><option value="0.05">5%</option></select></div>'+
@@ -1092,7 +1202,32 @@ function openAddCustomer(){
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="cust-save-btn" onclick="saveCustomer()">เพิ่มลูกค้า</button></div>';
   document.getElementById('modal-customer-body')._interval=1;
+  custFormBranches();
   openModal('modal-customer');
+}
+// เติมรายการบ้านในฟอร์มเพิ่มลูกค้า ตามกองที่เลือก
+function custFormBranches(){
+  var gEl=document.getElementById('f-group');if(!gEl)return;
+  var gid=gEl.value,bids=myBranchIds();
+  var bs=allBranches.filter(function(b){return bids.indexOf(b.id)>=0&&b.group_id===gid});
+  document.getElementById('f-branch').innerHTML=bs.length
+    ?bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('')
+    :'<option value="">— ยังไม่มีบ้านในกองนี้ —</option>';
+}
+// ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
+function loanRuleError(personId,branchId){
+  if(!personId)return null; // คนใหม่ ยังไม่มีสัญญา
+  var nb=allBranches.find(function(b){return b.id===branchId}),ng=nb?nb.group_id:null;
+  var active=allLoans.filter(function(l){return l.person_id===personId&&l.status!=='closed'});
+  var gset={};
+  for(var i=0;i<active.length;i++){
+    var br=allBranches.find(function(b){return b.id===active[i].branch_id});
+    var g=br?br.group_id:null;
+    if(g)gset[g]=true;
+    if(g&&ng&&g===ng)return 'ลูกค้านี้มีสัญญาที่ยังไม่ปิดในกองนี้อยู่แล้ว (1 กอง กู้ได้ 1 บ้าน)';
+  }
+  if(ng&&!gset[ng]&&Object.keys(gset).length>=2)return 'ลูกค้านี้กู้ครบ 2 กองแล้ว กู้เพิ่มไม่ได้';
+  return null;
 }
 function openEditCustomer(id){
   editingCustId=id;
@@ -1117,13 +1252,14 @@ async function saveCustomer(){
   var name=document.getElementById('f-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อ','err');return}
   var btn=document.getElementById('cust-save-btn');
+  var phone=document.getElementById('f-phone').value.trim()||null;
+  var fb=document.getElementById('f-fb').value.trim()||null;
+  var idcard=document.getElementById('f-idcard').value.trim()||null;
 
+  // โหมดแก้ไข → แก้ที่ตาราง persons (ตัวตนของคน)
   if(editingCustId){
-    var res=await _sb.from('customers').update({
-      full_name:name,phone:document.getElementById('f-phone').value.trim()||null,
-      facebook_url:document.getElementById('f-fb').value.trim()||null,
-      id_card:document.getElementById('f-idcard').value.trim()||null
-    }).eq('id',editingCustId);
+    var cc=allCustomers.find(function(x){return x.id===editingCustId});
+    var res=await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,id_card:idcard}).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
     toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(editingCustId);return;
   }
@@ -1131,16 +1267,29 @@ async function saveCustomer(){
   var principal=parseFloat(document.getElementById('f-principal').value);
   if(isNaN(principal)||principal<=0){toast('กรุณากรอกวงเงิน','err');return}
   var branchId=document.getElementById('f-branch').value;
+  if(!branchId){toast('กรุณาเลือกบ้าน','err');return}
   var branch=allBranches.find(function(b){return b.id===branchId});
   var interval=document.getElementById('modal-customer-body')._interval||1;
-  // next seq
-  var maxSeq=allCustomers.filter(function(c){return c.branch_id===branchId}).reduce(function(m,c){return Math.max(m,c.seq)},0);
+
+  // หา person เดิมจากเลขบัตร (ถ้ากรอก) เพื่อบังคับกฎกู้หลายที่
+  var existing=idcard?allPersons.find(function(p){return p.id_card===idcard}):null;
+  var ruleErr=loanRuleError(existing?existing.id:null,branchId);
+  if(ruleErr){toast(ruleErr,'err');return}
+
   if(btn){btn.innerHTML='<span class="spin"></span>';btn.disabled=true}
-  var res=await _sb.from('customers').insert({
-    branch_id:branchId,seq:maxSeq+1,full_name:name,
-    facebook_url:document.getElementById('f-fb').value.trim()||null,
-    phone:document.getElementById('f-phone').value.trim()||null,
-    id_card:document.getElementById('f-idcard').value.trim()||null,
+
+  // ใช้ person เดิม หรือสร้างใหม่
+  var personId;
+  if(existing){personId=existing.id;}
+  else{
+    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb}).select().single();
+    if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
+    personId=pres.data.id;
+  }
+
+  // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)
+  var res=await _sb.from('loans').insert({
+    person_id:personId,branch_id:branchId,
     principal:principal,daily_interest_rate:parseFloat(document.getElementById('f-rate').value),
     collection_interval:interval,start_date:document.getElementById('f-start').value,
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0
@@ -1153,23 +1302,35 @@ async function saveCustomer(){
    BRANCHES
 ═══════════════════════════════════════════════ */
 function renderBranches(){
-  if(!allBranches.length){document.getElementById('branch-list').innerHTML='<div class="empty">ยังไม่มีสาขา</div>';return}
-  document.getElementById('branch-list').innerHTML=allBranches.map(function(b){
+  if(!allBranches.length){document.getElementById('branch-list').innerHTML='<div class="empty">ยังไม่มีบ้าน</div>';return}
+  var renderCard=function(b){
     var custCount=allCustomers.filter(function(c){return c.branch_id===b.id}).length;
     return '<div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
       '<div><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+'</div>'+
       '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">ค่าธรรมเนียม ฿'+fmt0(b.fee_per_person)+' / คน · ลูกค้า '+custCount+' ราย</div></div>'+
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditBranch(\''+b.id+'\')">แก้ไข</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteBranch(\''+b.id+'\')">ลบ</button></div></div>';
-  }).join('');
+  };
+  var html='';
+  allGroups.forEach(function(g){
+    var bs=allBranches.filter(function(b){return b.group_id===g.id});
+    if(!bs.length)return;
+    html+='<div class="section-label">🗂️ '+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+bs.map(renderCard).join('');
+  });
+  var ungrouped=allBranches.filter(function(b){return !b.group_id});
+  if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+ungrouped.map(renderCard).join('');
+  document.getElementById('branch-list').innerHTML=html;
 }
 var editingBranchId=null;
-function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มสาขา','','')}
-function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขสาขา',b.name,b.fee_per_person)}
-function branchForm(title,name,fee){
+function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','')}
+function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.fee_per_person,b.group_id||'')}
+function branchForm(title,name,fee,groupId){
   document.getElementById('modal-branch-title').textContent=title;
   document.getElementById('modal-branch-body').innerHTML=
-    '<div class="field"><label>ชื่อสาขา <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
+    '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="b-group">'+
+      '<option value="">— เลือกกอง —</option>'+
+      allGroups.map(function(g){return '<option value="'+g.id+'" '+(g.id===groupId?'selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
+    '<div class="field"><label>ชื่อบ้าน <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-branch\')">ยกเลิก</button>'+
@@ -1178,21 +1339,67 @@ function branchForm(title,name,fee){
 }
 async function saveBranch(){
   var name=document.getElementById('b-name').value.trim();
-  if(!name){toast('กรุณากรอกชื่อสาขา','err');return}
-  var payload={name:name,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0};
+  if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
+  var payload={name:name,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,group_id:document.getElementById('b-group').value||null};
   var res=editingBranchId?await _sb.from('branches').update(payload).eq('id',editingBranchId):await _sb.from('branches').insert(payload);
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
-  toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มสาขาสำเร็จ','ok');closeModal('modal-branch');await loadAll();
+  toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
 }
 async function doDeleteBranch(id){
   var b=allBranches.find(function(x){return x.id===id});
   var n=allCustomers.filter(function(c){return c.branch_id===id&&c.status!=='closed'}).length;
   if(n){toast('ลบไม่ได้ มีลูกค้าใช้งานอยู่ '+n+' ราย','err');return}
-  var ok=await showConfirm({icon:'🏢',title:'ลบสาขา',msg:'ลบสาขา "'+b.name+'"?',okText:'ลบ',okClass:'btn-red'});
+  var ok=await showConfirm({icon:'🏠',title:'ลบบ้าน',msg:'ลบบ้าน "'+b.name+'"?',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
   var res=await _sb.from('branches').delete().eq('id',id);
   if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
-  toast('✅ ลบสาขาแล้ว','ok');await loadAll();
+  toast('✅ ลบบ้านแล้ว','ok');await loadAll();
+}
+
+/* ═══════════════════════════════════════════════
+   GROUPS (กอง) — owner only
+═══════════════════════════════════════════════ */
+function renderGroups(){
+  var el=document.getElementById('group-list');if(!el)return;
+  if(!allGroups.length){el.innerHTML='<div class="empty">ยังไม่มีกอง</div>';return}
+  el.innerHTML=allGroups.map(function(g){
+    var nBranch=allBranches.filter(function(b){return b.group_id===g.id}).length;
+    var nCust=allCustomers.filter(function(c){var b=allBranches.find(function(x){return x.id===c.branch_id});return b&&b.group_id===g.id}).length;
+    return '<div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
+      '<div><div style="font-weight:600;font-size:0.95rem">🗂️ '+esc(g.name)+'</div>'+
+      '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">'+nBranch+' บ้าน · ลูกค้า '+nCust+' ราย</div></div>'+
+      '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditGroup(\''+g.id+'\')">แก้ไข</button>'+
+      '<button class="btn btn-red btn-sm" onclick="doDeleteGroup(\''+g.id+'\')">ลบ</button></div></div>';
+  }).join('');
+}
+var editingGroupId=null;
+function openAddGroup(){editingGroupId=null;groupForm('+ เพิ่มกอง','')}
+function openEditGroup(id){var g=allGroups.find(function(x){return x.id===id});editingGroupId=id;groupForm('✏️ แก้ไขกอง',g.name)}
+function groupForm(title,name){
+  document.getElementById('modal-group-title').textContent=title;
+  document.getElementById('modal-group-body').innerHTML=
+    '<div class="field"><label>ชื่อกอง <span class="req">*</span></label><input class="inp" id="g-name" value="'+esc(name)+'"/></div>'+
+    '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
+      '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-group\')">ยกเลิก</button>'+
+      '<button class="btn btn-gold btn-block" onclick="saveGroup()">บันทึก</button></div>';
+  openModal('modal-group');
+}
+async function saveGroup(){
+  var name=document.getElementById('g-name').value.trim();
+  if(!name){toast('กรุณากรอกชื่อกอง','err');return}
+  var res=editingGroupId?await _sb.from('groups').update({name:name}).eq('id',editingGroupId):await _sb.from('groups').insert({name:name});
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  toast(editingGroupId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มกองสำเร็จ','ok');closeModal('modal-group');await loadAll();
+}
+async function doDeleteGroup(id){
+  var g=allGroups.find(function(x){return x.id===id});
+  var n=allBranches.filter(function(b){return b.group_id===id}).length;
+  if(n){toast('ลบไม่ได้ มีบ้านอยู่ในกองนี้ '+n+' บ้าน (ย้ายบ้านออกก่อน)','err');return}
+  var ok=await showConfirm({icon:'🗂️',title:'ลบกอง',msg:'ลบกอง "'+g.name+'"?',okText:'ลบ',okClass:'btn-red'});
+  if(!ok)return;
+  var res=await _sb.from('groups').delete().eq('id',id);
+  if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  toast('✅ ลบกองแล้ว','ok');await loadAll();
 }
 
 /* ═══════════════════════════════════════════════
@@ -1201,11 +1408,15 @@ async function doDeleteBranch(id){
 function renderUsers(){
   if(!allUsers.length){document.getElementById('user-list').innerHTML='<div class="empty">ยังไม่มีผู้ใช้</div>';return}
   var ubByUser={};allUserBranches.forEach(function(ub){(ubByUser[ub.user_id]=ubByUser[ub.user_id]||[]).push(ub.branch_id)});
+  var ugByUser={};allUserGroups.forEach(function(ug){(ugByUser[ug.user_id]=ugByUser[ug.user_id]||[]).push(ug.group_id)});
   var bName=function(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'?'};
+  var gName=function(id){var g=allGroups.find(function(x){return x.id===id});return g?g.name:'?'};
   document.getElementById('user-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>สาขา</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    '<table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     allUsers.map(function(u){
-      var branches=u.role==='staff'?((ubByUser[u.id]||[]).map(bName).join(', ')||'—'):'ทุกสาขา';
+      var branches=u.role==='owner'?'ทุกกอง'
+        :u.role==='staff'?('บ้าน: '+((ubByUser[u.id]||[]).map(bName).join(', ')||'—'))
+        :('กอง: '+((ugByUser[u.id]||[]).map(gName).join(', ')||'— (เห็นทุกบ้าน)'));
       return '<tr style="'+(u.is_active?'':'opacity:0.5')+'">'+
         '<td style="font-weight:500">'+esc(u.full_name)+'</td>'+
         '<td class="mono" style="color:var(--text2)">'+esc(u.username)+'</td>'+
@@ -1221,51 +1432,67 @@ function openAddUser(){editingUserId=null;userForm(null)}
 function openEditUser(id){editingUserId=id;userForm(allUsers.find(function(x){return x.id===id}))}
 function userForm(u){
   var ubByUser={};allUserBranches.forEach(function(ub){(ubByUser[ub.user_id]=ubByUser[ub.user_id]||[]).push(ub.branch_id)});
+  var ugByUser={};allUserGroups.forEach(function(ug){(ugByUser[ug.user_id]=ugByUser[ug.user_id]||[]).push(ug.group_id)});
   var myBr=u?(ubByUser[u.id]||[]):[];
+  var myGr=u?(ugByUser[u.id]||[]):[];
+  var role0=u?(u.role==='manager'?'head':u.role):'staff';   // map manager เดิม → head
   document.getElementById('modal-user-title').textContent=u?'✏️ แก้ไขผู้ใช้':'+ เพิ่มผู้ใช้';
   document.getElementById('modal-user-body').innerHTML=
     (u?'':'<div class="field"><label>Username <span class="req">*</span></label><input class="inp" id="u-username"/></div>')+
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u?u.full_name:'')+'"/></div>'+
     '<div class="field"><label>'+(u?'เปลี่ยนรหัสผ่าน (เว้นว่างถ้าไม่เปลี่ยน)':'รหัสผ่าน *')+'</label><input class="inp" id="u-pass" type="text"/></div>'+
     '<div class="field"><label>Role</label><div class="seg" id="u-role">'+
-      ['owner','manager','staff'].map(function(r){return '<button data-v="'+r+'" class="'+((u?u.role:'staff')===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
-    '<div class="field" id="u-branch-wrap" style="'+((u?u.role:'staff')==='staff'?'':'display:none')+'"><label>สาขาที่รับผิดชอบ</label>'+
-      allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+'</label>'}).join('')+'</div>'+
+      ['owner','head','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
+    '<div class="field" id="u-group-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>กองที่รับผิดชอบ</label>'+
+      (allGroups.length?allGroups.map(function(g){return '<label class="checkbox-row"><input type="checkbox" class="u-group" value="'+g.id+'" '+(myGr.indexOf(g.id)>=0?'checked':'')+'/> '+esc(g.name)+'</label>'}).join(''):'<div class="field-hint">ยังไม่มีกอง</div>')+'</div>'+
+    '<div class="field" id="u-branch-wrap" style="'+(role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
+      allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-user\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveUser()">บันทึก</button></div>';
-  document.getElementById('modal-user-body')._role=u?u.role:'staff';
+  document.getElementById('modal-user-body')._role=role0;
   openModal('modal-user');
 }
 function selRole(r){
   document.querySelectorAll('#u-role button').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-v')===r)});
   document.getElementById('modal-user-body')._role=r;
   document.getElementById('u-branch-wrap').style.display=r==='staff'?'':'none';
+  document.getElementById('u-group-wrap').style.display=r==='head'?'':'none';
 }
 async function saveUser(){
   var name=document.getElementById('u-name').value.trim();
   var pass=document.getElementById('u-pass').value;
   var role=document.getElementById('modal-user-body')._role;
   var branchIds=Array.prototype.slice.call(document.querySelectorAll('.u-branch:checked')).map(function(el){return el.value});
+  var groupIds=Array.prototype.slice.call(document.querySelectorAll('.u-group:checked')).map(function(el){return el.value});
   if(!name){toast('กรุณากรอกชื่อ','err');return}
 
+  var uid;
   if(editingUserId){
     var payload={full_name:name,role:role};
     if(pass)payload.password=pass;
     var res=await _sb.from('users').update(payload).eq('id',editingUserId);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
-    // update branches
-    await _sb.from('user_branches').delete().eq('user_id',editingUserId);
-    if(role==='staff'&&branchIds.length)await _sb.from('user_branches').insert(branchIds.map(function(b){return{user_id:editingUserId,branch_id:b}}));
-    toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-user');await loadAll();return;
+    uid=editingUserId;
+  } else {
+    var username=document.getElementById('u-username').value.trim();
+    if(!username||!pass){toast('กรุณากรอก Username และรหัสผ่าน','err');return}
+    var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:role,is_active:true}).select().single();
+    if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
+    uid=res.data.id;
   }
 
-  var username=document.getElementById('u-username').value.trim();
-  if(!username||!pass){toast('กรุณากรอก Username และรหัสผ่าน','err');return}
-  var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:role,is_active:true}).select().single();
-  if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
-  if(role==='staff'&&branchIds.length)await _sb.from('user_branches').insert(branchIds.map(function(b){return{user_id:res.data.id,branch_id:b}}));
-  toast('✅ เพิ่มผู้ใช้สำเร็จ','ok');closeModal('modal-user');await loadAll();
+  // sync user_branches (staff)
+  await _sb.from('user_branches').delete().eq('user_id',uid);
+  if(role==='staff'&&branchIds.length)
+    await _sb.from('user_branches').insert(branchIds.map(function(b){return{user_id:uid,branch_id:b}}));
+
+  // sync user_groups (head)
+  await _sb.from('user_groups').delete().eq('user_id',uid);
+  if(role==='head'&&groupIds.length)
+    await _sb.from('user_groups').insert(groupIds.map(function(g){return{user_id:uid,group_id:g}}));
+
+  toast(editingUserId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มผู้ใช้สำเร็จ','ok');closeModal('modal-user');await loadAll();
 }
 async function toggleUserActive(id){
   var u=allUsers.find(function(x){return x.id===id});
