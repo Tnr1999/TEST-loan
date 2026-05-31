@@ -280,6 +280,16 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .cols-3{grid-template-columns:repeat(3,1fr)}
   .stat .value{font-size:1.15rem}
+  /* สรุปยอด 3 ตัวให้พอดีจอ ไม่ล้นแนวนอน */
+  .cols-3{gap:8px}
+  .cols-3 .stat{padding:11px 10px}
+  .cols-3 .stat .value{font-size:0.92rem}
+  .cols-3 .stat .label{font-size:0.58rem;letter-spacing:0.02em}
+  /* ปฏิทินเตี้ยลง กระชับขึ้น */
+  .cal-wrap{padding:10px}
+  .cal-grid{gap:3px}
+  .cal-grid button{aspect-ratio:auto!important;height:36px}
+  .cal-dow{gap:3px}
   .detail-grid{grid-template-columns:1fr}
   .modal{border-radius:20px;margin:auto 12px;max-height:88vh}
   .modal-overlay{align-items:center;padding:12px}
@@ -843,19 +853,6 @@ function renderDashboard(){
     stat('ดอกที่เก็บได้','฿'+fmt(sum.interest),'accent-green')+
     stat('ค่าแรง (20%)','฿'+fmt(sum.wage),'accent-purple')+
     '</div>';
-
-  // รายชื่อลูกค้า เรียงตามสถานะ: จ่ายแล้ว → ค้าง → ปิด
-  if(custs.length){
-    var dashCat=function(c){
-      if(recordedAny[c.id]) return {o:0,col:'var(--green)',bg:'var(--green-dim)',ic:'✓ '};      // จ่ายแล้ววันนี้
-      if(c.status==='closed') return {o:2,col:'var(--muted)',bg:'rgba(90,95,144,0.12)',ic:'🔒 '}; // ปิดแล้ว
-      return {o:1,col:'var(--amber)',bg:'var(--amber-dim)',ic:'⏰ '};                              // ค้าง (ยังไม่จ่าย)
-    };
-    var roster=custs.slice().map(function(c){return {c:c,k:dashCat(c)}}).sort(function(a,b){return a.k.o-b.k.o || a.c.seq-b.c.seq;});
-    h+='<div class="section-label">รายชื่อลูกค้า ('+sum.paid+' จ่ายแล้ว / '+custs.length+' ราย)</div><div class="chip-list">'+
-      roster.map(function(x){return '<span class="chip" onclick="openDetail(\''+x.c.id+'\')" style="color:'+x.k.col+';background:'+x.k.bg+';border-color:'+x.k.col+'">'+x.k.ic+'#'+x.c.seq+' '+esc(x.c.full_name)+'</span>'}).join('')+
-      '</div>';
-  }
 
   // by branch
   if(byBranch.length>1){
