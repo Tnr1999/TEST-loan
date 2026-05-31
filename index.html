@@ -270,6 +270,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .modal-overlay{align-items:center;padding:12px}
   .page-title{font-size:1.2rem}
   .user-chip .uname{display:none}
+  /* ยุบ dashboard เป็นคอลัมน์เดียว (ปฏิทินอยู่บน สรุปอยู่ล่าง) ป้องกันล้นจอ */
+  #dash-layout{grid-template-columns:1fr!important}
+  #dash-cal-wrap{max-width:none}
 }
 </style>
 </head>
