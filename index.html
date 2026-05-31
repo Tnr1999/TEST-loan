@@ -595,7 +595,7 @@ function calcPayment(c, amountPaid){
   else{ps='overpaid';ic=due;pr=+(amountPaid-due).toFixed(2);}
   return{interest_due:due,interest_collected:ic,principal_reduced:pr,
     remaining_principal:+(c.remaining_principal-pr).toFixed(2),
-    wage:+(amountPaid*0.20).toFixed(2),payment_status:ps};
+    wage:+(ic*0.20).toFixed(2),payment_status:ps};
 }
 function closeAmount(c){return +(c.remaining_principal + interestDue(c) + (c.branch_fee||0)).toFixed(2)}
 function isPaymentDueToday(c, iso){
