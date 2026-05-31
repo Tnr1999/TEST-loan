@@ -124,13 +124,22 @@ create table if not exists user_groups (
 -- ------------------------------------------------------------
 update users set role = 'head' where role = 'manager';
 
+-- ------------------------------------------------------------
+-- 10) ปิด RLS ของตารางใหม่ให้ตรงกับตารางเดิม (branches/users)
+--     แอปเข้าถึงด้วย anon key โดยตรง ถ้าไม่ปิด RLS จะถูกบล็อก
+--     ("new row violates row-level security policy")
+-- ------------------------------------------------------------
+alter table groups        disable row level security;
+alter table persons       disable row level security;
+alter table loans         disable row level security;
+alter table daily_records disable row level security;
+alter table user_groups   disable row level security;
+
 commit;
 
 -- ============================================================
 -- หมายเหตุเรื่องสิทธิ์ (RLS)
--- ตารางใหม่ (groups, persons, loans, user_groups) จะใช้ค่า RLS
--- เหมือนค่าเริ่มต้นของโปรเจกต์ ถ้าตารางเดิม (branches/users) เข้าถึง
--- ได้ด้วย anon key อยู่แล้ว ตารางใหม่ก็ควรเข้าถึงได้เช่นกัน
--- ถ้าหลังรันแล้วแอปอ่าน loans/persons ไม่ได้ ให้ตั้ง RLS/policy
--- ของตารางใหม่ให้ตรงกับ customers เดิม
+-- ขั้นที่ 10 ปิด RLS ของตารางใหม่แล้ว เพื่อให้ anon key เข้าถึงได้
+-- เหมือนตารางเดิม (เพราะแอปนี้ใช้ตาราง users เองในการ login
+-- ไม่ได้ใช้ Supabase Auth จึงไม่พึ่ง RLS เป็นชั้นความปลอดภัย)
 -- ============================================================

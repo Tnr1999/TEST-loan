@@ -371,14 +371,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
           <input type="date" class="inp btn-sm" id="pay-date-picker" onchange="renderPayments()" style="width:auto;padding:7px 12px"/>
         </div>
       </div>
-      <div class="card card-pad" style="margin-bottom:16px">
-        <div class="row-flex" style="margin-bottom:9px">
-          <span style="font-size:0.84rem;font-weight:500">ความคืบหน้าวันนี้</span>
-          <span class="spacer"></span>
-          <span style="font-size:0.84rem;font-weight:700;font-family:var(--font-mono)" id="pay-progress-txt">0 / 0</span>
-        </div>
-        <div class="prog"><div class="prog-fill" id="pay-progress-fill" style="width:0%"></div></div>
-      </div>
       <div class="filter-row">
         <div class="search-box">
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -928,11 +920,6 @@ function renderPayments(){
   var filtered=enriched.filter(function(e){
     return !search||e.c.full_name.toLowerCase().indexOf(search)>=0||String(e.c.seq).indexOf(search)>=0;
   });
-
-  var dueCount=enriched.filter(function(e){return e.due}).length;
-  var paidCount=enriched.filter(function(e){return e.due&&e.rec&&e.rec.payment_status!=='unpaid'}).length;
-  document.getElementById('pay-progress-txt').textContent=paidCount+' / '+dueCount;
-  document.getElementById('pay-progress-fill').style.width=(dueCount?(paidCount/dueCount*100):0)+'%';
 
   if(!filtered.length){document.getElementById('pay-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';return}
 
