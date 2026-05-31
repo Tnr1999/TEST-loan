@@ -116,8 +116,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
-.page{display:none;animation:fadeIn 0.25s}
-.page.active{display:block}
+.page{display:block;animation:fadeIn 0.25s;margin-bottom:34px}
+.page+.page{border-top:1px solid var(--border);padding-top:26px}
 .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .page-title{font-family:var(--font-serif);font-size:1.4rem;font-weight:700;color:var(--text)}
 .page-sub{font-size:0.82rem;color:var(--muted);margin-top:2px}
@@ -311,14 +311,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
       </div>
     </div>
     <div class="header-center">
-      <div class="tab-bar">
-        <button class="tab active" id="tab-dashboard" onclick="showPage('dashboard')">📊 ภาพรวม</button>
-        <button class="tab" id="tab-payments" onclick="showPage('payments')">💵 บันทึกชำระ</button>
-        <button class="tab" id="tab-customers" onclick="showPage('customers')">👥 ลูกค้า</button>
-        <button class="tab" id="tab-groups" onclick="showPage('groups')">🗂️ กอง</button>
-        <button class="tab" id="tab-branches" onclick="showPage('branches')">🏠 บ้าน</button>
-        <button class="tab" id="tab-users" onclick="showPage('users')">⚙️ ผู้ใช้</button>
-      </div>
     </div>
     <div class="header-right">
       <div class="user-chip">
@@ -411,13 +403,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
     </div>
 
     <!-- ═══ CUSTOMER DETAIL ═══ -->
-    <div class="page" id="page-detail">
-      <div class="page-head">
-        <button class="btn btn-ghost btn-sm" onclick="showPage('customers')">‹ กลับ</button>
-      </div>
-      <div id="detail-content"></div>
-    </div>
-
     <!-- ═══ GROUPS (กอง) ═══ -->
     <div class="page" id="page-groups">
       <div class="page-head">
@@ -455,33 +440,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
     </div>
   </div>
 
-  <!-- ═══ BOTTOM NAV (mobile) ═══ -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" id="mnav-dashboard" onclick="showPage('dashboard')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-      ภาพรวม
-    </button>
-    <button class="nav-item" id="mnav-payments" onclick="showPage('payments')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      ชำระ
-    </button>
-    <button class="nav-item" id="mnav-customers" onclick="showPage('customers')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
-      ลูกค้า
-    </button>
-    <button class="nav-item" id="mnav-groups" onclick="showPage('groups')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H3z"/></svg>
-      กอง
-    </button>
-    <button class="nav-item" id="mnav-branches" onclick="showPage('branches')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
-      บ้าน
-    </button>
-    <button class="nav-item" id="mnav-users" onclick="showPage('users')">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-      ผู้ใช้
-    </button>
-  </nav>
 </div>
 
 <!-- ═══ MODALS ═══ -->
@@ -513,6 +471,12 @@ table.tbl tbody tr:hover{background:var(--surface)}
   <div class="modal">
     <div class="modal-head"><h3 id="modal-user-title">เพิ่มผู้ใช้</h3><button class="modal-x" onclick="closeModal('modal-user')">×</button></div>
     <div class="modal-body" id="modal-user-body"></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><h3>รายละเอียดลูกค้า</h3><button class="modal-x" onclick="closeModal('modal-detail')">×</button></div>
+    <div class="modal-body" id="detail-content"></div>
   </div>
 </div>
 <div class="modal-overlay" id="confirm-overlay">
@@ -635,10 +599,10 @@ document.getElementById('confirm-cancel-btn').onclick=function(){document.getEle
 /* ═══ MODAL HELPERS ═══ */
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-['modal-customer','modal-payment','modal-branch','modal-group','modal-user','confirm-overlay'].forEach(function(id){
+['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','confirm-overlay'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
 
 /* ═══ LOGIN ═══ */
 function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none'}
@@ -670,13 +634,10 @@ function startApp(){
   document.getElementById('hdr-name').textContent=currentUser.full_name;
   var rb=document.getElementById('hdr-role');
   rb.textContent=ROLE_LABEL[currentUser.role];rb.className='role-badge role-'+currentUser.role;
-  // permission-based UI
-  document.getElementById('tab-groups').style.display=canManageGroups()?'':'none';
-  document.getElementById('tab-branches').style.display=canEdit()?'':'none';
-  document.getElementById('tab-users').style.display=canManageUsers()?'':'none';
-  document.getElementById('mnav-groups').style.display=canManageGroups()?'':'none';
-  document.getElementById('mnav-branches').style.display=canEdit()?'':'none';
-  document.getElementById('mnav-users').style.display=canManageUsers()?'':'none';
+  // permission-based UI (แสดง/ซ่อนทั้งส่วน)
+  document.getElementById('page-groups').style.display=canManageGroups()?'':'none';
+  document.getElementById('page-branches').style.display=canEdit()?'':'none';
+  document.getElementById('page-users').style.display=canManageUsers()?'':'none';
   var t=todayISO();
   document.getElementById('dash-date-picker').value=t;
   document.getElementById('pay-date-picker').value=t;
@@ -793,16 +754,10 @@ function groupNameOfBranch(id){var b=allBranches.find(function(x){return x.id===
 /* ═══════════════════════════════════════════════
    PAGE NAV
 ═══════════════════════════════════════════════ */
+// ทุกส่วนอยู่หน้าเดียว — showPage = เลื่อนไปยังส่วนนั้น
 function showPage(name){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
-  document.getElementById('page-'+name).classList.add('active');
-  var tmap={dashboard:'dashboard',payments:'payments',customers:'customers',detail:'customers',groups:'groups',branches:'branches',users:'users'};
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
-  document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active')});
-  var key=tmap[name];
-  var tab=document.getElementById('tab-'+key);if(tab)tab.classList.add('active');
-  var nav=document.getElementById('mnav-'+key);if(nav)nav.classList.add('active');
-  window.scrollTo(0,0);
+  var el=document.getElementById('page-'+name);
+  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ═══════════════════════════════════════════════
@@ -1131,7 +1086,7 @@ function openDetail(id){
   h+='</div>';
 
   document.getElementById('detail-content').innerHTML=h;
-  showPage('detail');
+  openModal('modal-detail');
   loadDetailQr(c.person_id);
 }
 function dt(k,v){return '<div class="dt-item"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'}
@@ -1172,7 +1127,7 @@ async function doDeleteCustomer(id){
   if(personId&&!allLoans.some(function(l){return l.person_id===personId&&l.id!==id})){
     await _sb.from('persons').delete().eq('id',personId);
   }
-  toast('✅ ลบลูกค้าแล้ว','ok');await loadAll();showPage('customers');
+  toast('✅ ลบลูกค้าแล้ว','ok');closeModal('modal-detail');await loadAll();
 }
 
 /* ── customer form ── */
