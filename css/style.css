@@ -292,27 +292,29 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .checkbox-row{display:flex;align-items:center;gap:9px;padding:9px 0;cursor:pointer}
 .checkbox-row input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
 
-/* ═══════════ RESPONSIVE — 4 TIERS (ดู docs/DESIGN.md) ═══════════
-   PC ≥1024 · Tablet 768–1023(สูง) · มือถือแนวนอน(เตี้ย) · มือถือแนวตั้ง ≤767
-   ฐาน CSS = มุมมองตาราง (PC/Tablet) แล้ว override ลงมาเป็นมือถือ
-═══════════════════════════════════════════════════════════════ */
+/* ═══════════ RESPONSIVE (ดู docs/DESIGN.md) ═══════════
+   แบ่งด้วย "ความกว้าง" ล้วน ตามการใช้งานจริง:
+     🖥️ PC ≥1024 (นอน)         → ตาราง · เมนูบนหัว · dashboard 2 คอลัมน์
+     📲 Tablet 768–1023 (นอน/ตั้ง) → ตาราง · เมนูบนหัว · กระชับลง
+     📱 มือถือ ≤767 (ตั้งเท่านั้น)  → การ์ด · bottom nav · 1 คอลัมน์
+   ฐาน CSS = มุมมองตาราง (PC) แล้ว override ลงมา
+═══════════════════════════════════════════════════════ */
 
-/* ── PC + TABLET: ตาราง + เมนูบนหัว (ซ่อนการ์ด/bottom nav) ── */
-@media (min-width:1024px), (min-width:768px) and (min-height:600px){
+/* ── PC + TABLET (≥768): ตาราง + เมนูบนหัว (ซ่อนการ์ด/bottom nav) ── */
+@media (min-width:768px){
   .mobile-only{display:none!important}
   .bottom-nav{display:none!important}
 }
 
-/* ── TABLET เท่านั้น (768–1023, จอสูง): คงตาราง แต่กระชับลง ── */
-@media (min-width:768px) and (max-width:1023px) and (min-height:600px){
+/* ── TABLET (768–1023): คงตาราง แต่กระชับลงเล็กน้อย ── */
+@media (min-width:768px) and (max-width:1023px){
   .container{padding:18px}
   .cols-4{grid-template-columns:repeat(2,1fr)}
-  .header-center .nav-tab{padding:7px 12px;font-size:0.82rem}
   .page-title{font-size:1.32rem}
 }
 
-/* ── มือถือ (แนวตั้ง ≤767 หรือ แนวนอนเตี้ย): การ์ด + bottom nav ── */
-@media (max-width:767px), (orientation:landscape) and (max-height:599px) and (max-width:1023px){
+/* ── มือถือ (≤767, แนวตั้ง): การ์ด + bottom nav ── */
+@media (max-width:767px){
   .bottom-nav{display:flex}
   .desktop-only{display:none!important}
   .header-center{display:none}
@@ -327,6 +329,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .detail-grid{grid-template-columns:1fr}
   .modal{border-radius:20px;margin:auto 12px;max-height:88vh}
   .modal-overlay{align-items:center;padding:12px}
+  /* ยุบ dashboard เป็นคอลัมน์เดียว (ปฏิทินอยู่บน สรุปอยู่ล่าง) */
   #dash-layout{grid-template-columns:1fr!important}
   #dash-cal-wrap{max-width:none}
   .cal-wrap{padding:10px}
@@ -338,16 +341,4 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .filter-row .search-box{flex:1 1 100%}
   .filter-row select.inp{flex:1;width:auto;min-width:0;font-size:0.8rem;padding:9px 26px 9px 10px;background-position:right 7px center}
   .page-head{margin-bottom:14px}
-}
-
-/* ── มือถือแนวนอน (จอเตี้ย ≤599): ลดความสูง + ใช้พื้นที่กว้าง ── */
-@media (orientation:landscape) and (max-height:599px) and (max-width:1023px){
-  header{height:50px}
-  .bottom-nav{height:calc(52px + env(safe-area-inset-bottom))}
-  .modal{max-height:96vh;margin:8px auto}
-  .modal-overlay{padding:8px}
-  .page-head{margin-bottom:10px}
-  .cal-grid button{height:30px}
-  /* จอกว้าง → วางปฏิทินซ้าย สรุปขวา (ประหยัดความสูง) */
-  #dash-layout{grid-template-columns:240px 1fr!important;gap:12px}
 }
