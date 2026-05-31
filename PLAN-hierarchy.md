@@ -132,7 +132,8 @@ persons (คน)         → 1 แถว/คน: ชื่อ, เบอร์, 
 
 ## 9. ข้อสรุป (ยืนยันแล้ว) ✅
 - [x] **ค่าธรรมเนียม** → อยู่ระดับ **บ้าน** (`branches.fee_per_person` คงเดิม)
-- [x] **ลำดับลูกค้า (seq)** → รันตามลำดับเดิม = นับแยกในแต่ละบ้าน (ไม่เปลี่ยน)
+- [x] **ลำดับลูกค้า (seq)** → รันต่อเนื่องทั้งระบบ (global running number ไม่รีเซ็ตต่อบ้าน/กอง)
+      หมายเหตุ: ต่างจากระบบเดิมที่นับแยกต่อบ้าน — ของใหม่นับรวมทั้งระบบ
 - [x] **ชื่อ role** → ภาษาอังกฤษ: `owner` / `head` (หัวหน้ากอง) / `staff` (พนักงานดูแลบ้าน)
 - [x] **ข้อมูลลูกค้าจริง** → ยังไม่มี → เริ่มใหม่สะอาด **ไม่ต้อง migrate**
 - [x] **กู้หลายที่** → ใช้ **แนวที่ 1** (แยก `persons` ออกจาก `loans`)
@@ -146,7 +147,7 @@ persons (คน)         → 1 แถว/คน: ชื่อ, เบอร์, 
 ```
 groups (กอง)
  └── branches (บ้าน)            fee_per_person, group_id
-      └── loans (สัญญา)         person_id, branch_id, seq(ต่อบ้าน),
+      └── loans (สัญญา)         person_id, branch_id, seq(รันต่อเนื่องทั้งระบบ),
            │                     principal, remaining_principal,
            │                     daily_interest_rate, collection_interval,
            │                     status, start_date, last_collection_date
