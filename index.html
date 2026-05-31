@@ -193,6 +193,38 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .ccard-rem b{color:var(--gold);font-size:1.02rem;font-weight:700}
 .ccard-go{font-size:0.78rem;color:var(--gold);flex-shrink:0}
 
+/* ═══ COMPACT ROW (มือถือ – ลิสต์กระชับ) ═══ */
+.crow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-left:3px solid transparent;border-radius:12px;padding:9px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.12s}
+.crow:active{background:var(--surface)}
+.crow.due{border-left-color:var(--amber)}
+.crow.paid{border-left-color:var(--green)}
+.crow.over{border-left-color:var(--red)}
+.crow-main{flex:1;min-width:0}
+.crow-l1{display:flex;align-items:center;gap:6px}
+.crow-seq{font-family:ui-monospace,monospace;color:var(--muted);font-size:0.76rem;flex-shrink:0}
+.crow-name{font-weight:600;font-size:0.96rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow-l2{font-size:0.74rem;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow-st{font-size:0.68rem;font-weight:700;padding:1px 7px;border-radius:99px;flex-shrink:0;white-space:nowrap}
+.crow-st.t-paid{color:var(--green);background:var(--green-dim)}
+.crow-st.t-due{color:var(--amber);background:var(--amber-dim)}
+.crow-st.t-over{color:var(--red);background:var(--red-dim)}
+.crow-btn{flex-shrink:0;border:none;border-radius:10px;padding:9px 13px;font-size:0.84rem;font-weight:700;cursor:pointer;white-space:nowrap}
+.crow-btn.cb-pay{background:var(--gold);color:#1a1300}
+.crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+
+/* ═══ VIEW CHIPS (ตัวกรองด่วน) ═══ */
+.vchip{display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;transition:all 0.14s}
+.vchip b{font-weight:700}
+.vchip:active{transform:scale(0.96)}
+.vchip.active{color:#1a1300;background:var(--gold);border-color:var(--gold)}
+.vchip.vc-overdue.active{background:var(--red);border-color:var(--red);color:#fff}
+.vchip.vc-paid.active{background:var(--green);border-color:var(--green);color:#04230f}
+
+/* ═══ SCROLL-TO-TOP FAB ═══ */
+.fab-top{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:150;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--gold);font-size:1.4rem;font-weight:700;box-shadow:var(--shadow-lg);display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.fab-top.show{display:flex}
+.fab-top:active{transform:scale(0.92)}
+
 /* ═══ STATUS BADGE ═══ */
 .st{display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:99px}
 .st-normal{background:var(--green-dim);color:var(--green)}
@@ -451,6 +483,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
     </div>
   </div>
 
+  <button id="scroll-top" class="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="ขึ้นบนสุด">↑</button>
 </div>
 
 <!-- ═══ MODALS ═══ -->
@@ -522,6 +555,7 @@ var currentUser = null;
 var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUserBranches = [];
 var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
 var currentDetailId = null;
+var custView = 'today';
 
 /* ═══ UTILS ═══ */
 function toISO(d){return d.toISOString().split('T')[0]}
@@ -652,6 +686,10 @@ function startApp(){
   var t=todayISO();
   document.getElementById('dash-date-picker').value=t;
   initCalendar();
+  // ปุ่มเลื่อนขึ้นบนสุด — โผล่เมื่อเลื่อนลงเกิน 400px
+  window.addEventListener('scroll',function(){
+    var f=document.getElementById('scroll-top');if(f)f.classList.toggle('show',window.scrollY>400);
+  },{passive:true});
   loadAll();
 }
 
@@ -941,62 +979,79 @@ function renderCustomers(){
     return true;
   });
 
-  // summary chips
-  var sc='';['normal','overdue','lost'].forEach(function(s){
-    var n=allCustomers.filter(function(c){return c.status===s}).length;
-    if(n)sc+='<span class="st st-'+s+'" style="cursor:default">'+STATUS_LABEL[s]+' '+n+' ราย</span>';
+  // คำนวณสถานะ "วันนี้" ของลูกค้าแต่ละคน (ใช้ทั้งชิป/เรียง/แสดงผล)
+  var today=todayISO();
+  var stMap={};
+  list.forEach(function(c){
+    var rec=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===today});
+    var paid=rec&&rec.payment_status!=='unpaid';
+    var due=c.status!=='closed'&&isPaymentDueToday(c,today);
+    var over=c.status==='overdue'||c.status==='lost';
+    stMap[c.id]={rec:rec,paid:paid,due:due,over:over};
   });
-  document.getElementById('cust-summary').innerHTML=sc;
 
-  if(!list.length){
-    document.getElementById('cust-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';
-    document.getElementById('cust-list-cards').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';
+  // ชิปกรองด่วน (ตามงานประจำวัน) — default = ที่ต้องเก็บวันนี้
+  var nToday=list.filter(function(c){var s=stMap[c.id];return s.due&&!s.paid}).length;
+  var nOver=list.filter(function(c){var s=stMap[c.id];return s.over&&!s.paid}).length;
+  var nPaid=list.filter(function(c){return stMap[c.id].paid}).length;
+  var chips=[['today','⏰ วันนี้',nToday],['overdue','🔴 ค้าง',nOver],['paid','✓ จ่ายแล้ว',nPaid],['all','ทั้งหมด',list.length]];
+  document.getElementById('cust-summary').innerHTML=chips.map(function(v){
+    return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+v[2]+'</b></button>';
+  }).join('');
+
+  // กรองตามมุมมองที่เลือก (ถ้ากำลังค้นหา → แสดงทุกผลลัพธ์ ไม่ตัดด้วยมุมมอง)
+  var vlist=list.filter(function(c){
+    if(search)return true;
+    var s=stMap[c.id];
+    if(custView==='today')return s.due&&!s.paid;
+    if(custView==='overdue')return s.over&&!s.paid;
+    if(custView==='paid')return s.paid;
+    return true;
+  });
+  // เรียง: ต้องเก็บวันนี้ ▸ ค้าง ▸ ปกติ ▸ จ่ายแล้ว ▸ ปิด แล้วตามลำดับเลข
+  function prio(c){var s=stMap[c.id];if(c.status==='closed')return 4;if(s.paid)return 3;if(s.due)return 0;if(s.over)return 1;return 2}
+  vlist.sort(function(a,b){var d=prio(a)-prio(b);return d!==0?d:a.seq-b.seq});
+
+  if(!vlist.length){
+    var msg=custView==='today'?'🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง':'ไม่พบลูกค้า';
+    var eh='<div class="empty">'+msg+(custView!=='all'?'<br><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="setCustView(\'all\')">ดูทั้งหมด</button>':'')+'</div>';
+    document.getElementById('cust-list').innerHTML=eh;
+    document.getElementById('cust-list-cards').innerHTML=eh;
     return;
   }
   // ตาราง (จอใหญ่)
   document.getElementById('cust-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นเริ่ม</th><th class="tr-right">ต้นคงเหลือ</th><th>ระยะ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
-    list.map(function(c){return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
+    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นคงเหลือ</th><th>วันนี้</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    vlist.map(function(c){var s=stMap[c.id];
+      var td=s.paid?'<span class="crow-st t-paid">✓ จ่าย ฿'+fmt(s.rec.amount_paid)+'</span>':(s.due?'<span class="crow-st t-due">⏰ ต้องเก็บ</span>':'—');
+      return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'</td>'+
       '<td style="color:var(--text2)">'+esc(groupNameOfBranch(c.branch_id))+'</td>'+
       '<td style="color:var(--text2)">'+esc(branchName(c.branch_id))+'</td>'+
-      '<td class="tr-right mono">฿'+fmt(c.principal)+'</td>'+
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
-      '<td style="color:var(--text2)">'+(c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว')+'</td>'+
+      '<td>'+td+'</td>'+
       '<td><span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></td>'+
-      '<td><span class="link-gold" style="font-size:0.78rem">ดู ›</span></td></tr>'}).join('')+
+      '<td>'+(c.status!=='closed'?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>')+'</td></tr>'}).join('')+
     '</tbody></table>';
-  // การ์ด (มือถือ)
-  var today=todayISO();
+  // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
-    list.map(function(c){
+    vlist.map(function(c){var s=stMap[c.id];
       var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
-      // สถานะการชำระ "วันนี้"
-      var recToday=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===today});
-      var paidToday=recToday&&recToday.payment_status!=='unpaid';
-      var dueToday=c.status!=='closed'&&isPaymentDueToday(c,today);
-      var todayTag='';
-      if(paidToday)todayTag='<span class="ccard-today t-paid">✓ จ่ายแล้ว ฿'+fmt(recToday.amount_paid)+'</span>';
-      else if(dueToday)todayTag='<span class="ccard-today t-due">⏰ ถึงกำหนดวันนี้</span>';
-      var actions='<div class="ccard-actions">';
-      if(c.status!=='closed')actions+='<button class="btn '+(paidToday?'btn-ghost':'btn-gold')+' btn-sm" onclick="openPayment(\''+c.id+'\',\''+today+'\')">'+(paidToday?'✏️ แก้ไขยอด':'💵 รับเงิน')+'</button>';
-      actions+='<button class="btn btn-ghost btn-sm" onclick="openDetail(\''+c.id+'\')">ดูข้อมูล</button></div>';
-      return '<div class="ccard">'+
-        '<div class="ccard-top">'+
-          '<span class="ccard-seq">#'+c.seq+'</span>'+
-          '<span class="ccard-name">'+esc(c.full_name)+'</span>'+
-          '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
-        '</div>'+
-        '<div class="ccard-meta">'+(c.phone?'<span>'+esc(c.phone)+'</span>':'')+
-          '<span>'+esc(branchName(c.branch_id))+'</span><span>'+ival+'</span></div>'+
-        '<div class="ccard-bot">'+
-          '<span class="ccard-rem">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b></span>'+
-          todayTag+
-        '</div>'+
-        actions+'</div>';
+      var cls=s.paid?'paid':(s.due?'due':(s.over?'over':''));
+      var chip=s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
+        :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
+        :(s.over?'<span class="crow-st t-over">ค้าง</span>':''));
+      var btn=c.status==='closed'?''
+        :'<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
+      return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
+        '<div class="crow-main">'+
+          '<div class="crow-l1"><span class="crow-seq">#'+c.seq+'</span><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
+          '<div class="crow-l2">คงเหลือ <b style="color:var(--text)">฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
+        '</div>'+btn+'</div>';
     }).join('');
 }
+function setCustView(v){custView=v;renderCustomers()}
 
 function openDetail(id){
   currentDetailId=id;
