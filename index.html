@@ -1174,13 +1174,15 @@ function openAddCustomer(){
       groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
     '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
-    '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><input class="inp mono" id="f-principal" type="number" min="1" step="0.01" placeholder="0.00"/><div class="field-err"></div></div>'+
-    '<div class="field"><label>อัตราดอกรายวัน</label><select class="inp" id="f-rate"><option value="0.10">10% (ค่าเริ่มต้น)</option><option value="0.08">8%</option><option value="0.05">5%</option></select></div>'+
+    '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><div class="seg" id="f-principal">'+
+      [300,500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(function(a){return '<button type="button" data-v="'+a+'" onclick="selPrincipal('+a+')">'+fmt0(a)+'</button>'}).join('')+
+      '</div><div class="field-err"></div></div>'+
+    '<div class="field"><label>อัตราดอกรายวัน</label><input class="inp" value="10% (คงที่)" disabled style="opacity:0.7"/></div>'+
     '<div class="field"><label>ระยะเก็บดอก</label><div class="seg" id="f-interval">'+
       '<button class="sel" data-v="1" onclick="selInterval(1)">ทุกวัน</button>'+
       '<button data-v="2" onclick="selInterval(2)">ทุก 2 วัน</button>'+
       '<button data-v="3" onclick="selInterval(3)">ทุก 3 วัน</button></div></div>'+
-    '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" id="f-start" type="date" value="'+todayISO()+'"/></div>'+
+    '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" value="'+thDate(todayISO())+'" disabled style="opacity:0.7"/></div>'+
     '<hr style="border:none;border-top:1px solid var(--border);margin:18px 0"/>'+
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
     '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
@@ -1235,6 +1237,10 @@ function selInterval(v){
   document.querySelectorAll('#f-interval button').forEach(function(b){b.classList.toggle('sel',+b.getAttribute('data-v')===v)});
   document.getElementById('modal-customer-body')._interval=v;
 }
+function selPrincipal(v){
+  document.querySelectorAll('#f-principal button').forEach(function(b){b.classList.toggle('sel',+b.getAttribute('data-v')===v)});
+  document.getElementById('modal-customer-body')._principal=v;
+}
 async function saveCustomer(){
   var name=document.getElementById('f-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อ','err');return}
@@ -1251,8 +1257,8 @@ async function saveCustomer(){
     toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(editingCustId);return;
   }
 
-  var principal=parseFloat(document.getElementById('f-principal').value);
-  if(isNaN(principal)||principal<=0){toast('กรุณากรอกวงเงิน','err');return}
+  var principal=document.getElementById('modal-customer-body')._principal;
+  if(!principal||principal<=0){toast('กรุณาเลือกวงเงิน','err');return}
   var branchId=document.getElementById('f-branch').value;
   if(!branchId){toast('กรุณาเลือกบ้าน','err');return}
   var branch=allBranches.find(function(b){return b.id===branchId});
@@ -1277,8 +1283,8 @@ async function saveCustomer(){
   // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)
   var res=await _sb.from('loans').insert({
     person_id:personId,branch_id:branchId,
-    principal:principal,daily_interest_rate:parseFloat(document.getElementById('f-rate').value),
-    collection_interval:interval,start_date:document.getElementById('f-start').value,
+    principal:principal,daily_interest_rate:0.10,
+    collection_interval:interval,start_date:todayISO(),
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0
   }).select().single();
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
