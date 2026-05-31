@@ -176,6 +176,19 @@ table.tbl tbody tr{transition:background 0.12s}
 table.tbl tbody tr:hover{background:var(--surface)}
 .tr-right{text-align:right}
 
+/* ═══ CUSTOMER CARD (มือถือ) ═══ */
+.ccard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ccard:active{background:var(--surface)}
+.ccard-top{display:flex;align-items:center;gap:8px}
+.ccard-seq{font-family:ui-monospace,monospace;color:var(--muted);font-size:0.78rem;flex-shrink:0}
+.ccard-name{font-weight:600;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ccard-meta{display:flex;flex-wrap:wrap;gap:4px 6px;font-size:0.76rem;color:var(--muted)}
+.ccard-meta span:not(:last-child)::after{content:"·";margin-left:6px;color:var(--border2)}
+.ccard-bot{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ccard-rem{font-size:0.82rem;color:var(--text2)}
+.ccard-rem b{color:var(--gold);font-size:1.02rem;font-weight:700}
+.ccard-go{font-size:0.78rem;color:var(--gold);flex-shrink:0}
+
 /* ═══ STATUS BADGE ═══ */
 .st{display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:99px}
 .st-normal{background:var(--green-dim);color:var(--green)}
@@ -274,6 +287,11 @@ table.tbl tbody tr:hover{background:var(--surface)}
   /* ยุบ dashboard เป็นคอลัมน์เดียว (ปฏิทินอยู่บน สรุปอยู่ล่าง) ป้องกันล้นจอ */
   #dash-layout{grid-template-columns:1fr!important}
   #dash-cal-wrap{max-width:none}
+  /* ฟิลเตอร์กระชับ: ช่องค้นหาเต็มแถว, ตัวเลือก 3 อันแบ่งแถวเท่าๆ กัน */
+  .filter-row{gap:8px;margin-bottom:12px}
+  .filter-row .search-box{flex:1 1 100%}
+  .filter-row select.inp{flex:1;width:auto;min-width:0;font-size:0.8rem;padding:9px 26px 9px 10px;background-position:right 7px center}
+  .page-head{margin-bottom:14px}
 }
 </style>
 </head>
@@ -399,7 +417,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
         </select>
       </div>
       <div id="cust-summary" class="chip-list" style="margin-bottom:14px"></div>
-      <div class="card"><div class="table-wrap"><div id="cust-list"></div></div></div>
+      <div class="card desktop-only"><div class="table-wrap"><div id="cust-list"></div></div></div>
+      <div id="cust-list-cards" class="mobile-only" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
 
     <!-- ═══ CUSTOMER DETAIL ═══ -->
@@ -999,7 +1018,12 @@ function renderCustomers(){
   });
   document.getElementById('cust-summary').innerHTML=sc;
 
-  if(!list.length){document.getElementById('cust-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';return}
+  if(!list.length){
+    document.getElementById('cust-list').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';
+    document.getElementById('cust-list-cards').innerHTML='<div class="empty">ไม่พบลูกค้า</div>';
+    return;
+  }
+  // ตาราง (จอใหญ่)
   document.getElementById('cust-list').innerHTML=
     '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นเริ่ม</th><th class="tr-right">ต้นคงเหลือ</th><th>ระยะ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     list.map(function(c){return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
@@ -1013,6 +1037,23 @@ function renderCustomers(){
       '<td><span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></td>'+
       '<td><span class="link-gold" style="font-size:0.78rem">ดู ›</span></td></tr>'}).join('')+
     '</tbody></table>';
+  // การ์ด (มือถือ)
+  document.getElementById('cust-list-cards').innerHTML=
+    list.map(function(c){
+      var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
+      return '<div class="ccard" onclick="openDetail(\''+c.id+'\')">'+
+        '<div class="ccard-top">'+
+          '<span class="ccard-seq">#'+c.seq+'</span>'+
+          '<span class="ccard-name">'+esc(c.full_name)+'</span>'+
+          '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
+        '</div>'+
+        '<div class="ccard-meta">'+(c.phone?'<span>'+esc(c.phone)+'</span>':'')+
+          '<span>'+esc(branchName(c.branch_id))+'</span><span>'+ival+'</span></div>'+
+        '<div class="ccard-bot">'+
+          '<span class="ccard-rem">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b></span>'+
+          '<span class="ccard-go">ดู ›</span>'+
+        '</div></div>';
+    }).join('');
 }
 
 function openDetail(id){
