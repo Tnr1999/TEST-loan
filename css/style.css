@@ -201,6 +201,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow{display:flex;align-items:center;gap:10px;background:var(--card2);border:1px solid var(--border);border-left:3px solid transparent;border-radius:12px;padding:9px 12px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.12s}
 .crow:active{background:var(--surface)}
 .crow.due{border-left-color:var(--amber)}
+.crow.pending{border-left-color:var(--amber)}
 .crow.paid{border-left-color:var(--green)}
 .crow.over{border-left-color:var(--red)}
 .crow-main{flex:1;min-width:0}
@@ -212,6 +213,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-st.t-paid{color:var(--green);background:var(--green-dim)}
 .crow-st.t-due{color:var(--amber);background:var(--amber-dim)}
 .crow-st.t-over{color:var(--red);background:var(--red-dim)}
+.crow-st.t-pending{color:var(--amber);background:var(--amber-dim)}
 .crow-btn{flex-shrink:0;border:none;border-radius:10px;padding:9px 13px;font-size:0.84rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .crow-btn.cb-pay{background:var(--gold);color:#1a1300}
 .crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
@@ -223,6 +225,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .vchip.active{color:#1a1300;background:var(--gold);border-color:var(--gold)}
 .vchip.vc-overdue.active{background:var(--red);border-color:var(--red);color:#fff}
 .vchip.vc-paid.active{background:var(--green);border-color:var(--green);color:#04230f}
+.vchip.vc-new.active{background:var(--cyan);border-color:var(--cyan);color:#04222b}
+.vchip.vc-closed.active{background:var(--muted);border-color:var(--muted);color:#0d1030}
+.vchip.vc-dead.active{background:var(--text2);border-color:var(--text2);color:#0d1030}
 
 /* ═══ SCROLL-TO-TOP FAB ═══ */
 .fab-top{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:150;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--gold);font-size:1.4rem;font-weight:700;box-shadow:var(--shadow-lg);display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -235,6 +240,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .st-overdue{background:var(--red-dim);color:var(--red)}
 .st-lost{background:rgba(146,152,192,0.12);color:var(--text2)}
 .st-closed{background:rgba(90,95,144,0.12);color:var(--muted)}
+.st-pending{background:var(--amber-dim);color:var(--amber)}
 .pst{font-size:0.68rem;font-weight:600;padding:2px 7px;border-radius:5px}
 .pst-exact,.pst-overpaid{background:var(--green-dim);color:var(--green)}
 .pst-partial{background:var(--amber-dim);color:var(--amber)}

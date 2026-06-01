@@ -23,7 +23,7 @@ function fmt0(n){return (parseFloat(n)||0).toLocaleString('th-TH')}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return d.getDate()+' '+m[d.getMonth()]+' '+(d.getFullYear()+543)}
 
-var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'หายติดต่อ',closed:'ปิดแล้ว'};
+var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'ตาย',closed:'ปิดแล้ว'};
 var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)'};
 var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',manager:'หัวหน้ากอง',staff:'STAFF'};
 
