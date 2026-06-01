@@ -7,7 +7,7 @@ function renderBranches(){
     var custCount=allCustomers.filter(function(c){return c.branch_id===b.id}).length;
     return '<div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
       '<div><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+'</div>'+
-      '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">ค่าธรรมเนียม ฿'+fmt0(b.fee_per_person)+' / คน · ลูกค้า '+custCount+' ราย</div></div>'+
+      '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">ค่าธรรมเนียม ฿'+fmt0(b.fee_per_person)+' / คน · ค่าปรับ ฿'+fmt0(b.penalty_fee)+' · ลูกค้า '+custCount+' ราย</div></div>'+
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditBranch(\''+b.id+'\')">แก้ไข</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteBranch(\''+b.id+'\')">ลบ</button></div></div>';
   };
@@ -22,9 +22,9 @@ function renderBranches(){
   document.getElementById('branch-list').innerHTML=html;
 }
 var editingBranchId=null;
-function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','')}
-function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.fee_per_person,b.group_id||'')}
-function branchForm(title,name,fee,groupId){
+function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','')}
+function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.fee_per_person,b.group_id||'',b.penalty_fee)}
+function branchForm(title,name,fee,groupId,penalty){
   document.getElementById('modal-branch-title').textContent=title;
   document.getElementById('modal-branch-body').innerHTML=
     '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="b-group">'+
@@ -32,6 +32,7 @@ function branchForm(title,name,fee,groupId){
       allGroups.map(function(g){return '<option value="'+g.id+'" '+(g.id===groupId?'selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
     '<div class="field"><label>ชื่อบ้าน <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
+    '<div class="field"><label>ค่าปรับมาตรฐาน (บาท)</label><input class="inp mono" id="b-penalty" type="number" min="0" value="'+(penalty||'')+'"/><div style="font-size:0.72rem;color:var(--muted);margin-top:4px">ใช้เติมอัตโนมัติตอนรับเงิน (แก้ได้ทีละครั้ง)</div></div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-branch\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveBranch()">บันทึก</button></div>';
@@ -40,7 +41,7 @@ function branchForm(title,name,fee,groupId){
 async function saveBranch(){
   var name=document.getElementById('b-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
-  var payload={name:name,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,group_id:document.getElementById('b-group').value||null};
+  var payload={name:name,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,penalty_fee:parseFloat(document.getElementById('b-penalty').value)||0,group_id:document.getElementById('b-group').value||null};
   var res=editingBranchId?await _sb.from('branches').update(payload).eq('id',editingBranchId):await _sb.from('branches').insert(payload);
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();

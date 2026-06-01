@@ -26,9 +26,11 @@ function renderDashboard(){
   });
 
   var sum=recs.reduce(function(a,r){
-    a.collected+=+r.amount_paid;a.interest+=+r.interest_collected;a.wage+=+r.wage;a.principal+=+r.principal_reduced;
+    a.collected+=+r.amount_paid;a.interest+=+r.interest_collected;a.wage+=+r.wage;a.principal+=+r.principal_reduced;a.penalty+=+(r.penalty||0);
     if(r.payment_status!=='unpaid')a.paid++;return a;
-  },{collected:0,interest:0,wage:0,principal:0,paid:0});
+  },{collected:0,interest:0,wage:0,principal:0,penalty:0,paid:0});
+  // เงินต้นคงค้างในตลาด (ปัจจุบัน) = สัญญาที่ยังไม่ปิด
+  var outstanding=custs.filter(function(c){return c.status!=='closed'}).reduce(function(s,c){return s+ +c.remaining_principal},0);
 
   // due today & alerts
   var activeCusts=custs.filter(function(c){return c.status==='normal'||c.status==='overdue'});
@@ -43,6 +45,7 @@ function renderDashboard(){
     var br=recs.filter(function(r){var c=allCustomers.find(function(x){return x.id===r.customer_id});return c&&c.branch_id===b.id});
     return{name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
+      penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
@@ -63,18 +66,21 @@ function renderDashboard(){
       lostList.slice(0,12).map(function(c){return '<span class="chip" onclick="openDetail(\''+c.id+'\')">'+esc(c.full_name)+'</span>'}).join('')+'</div></div>';
   }
 
-  // daily stats
-  h+='<div class="section-label">รายวัน — '+thDate(date)+'</div>';
+  // สรุปยอด 6 ตัว
+  h+='<div class="section-label">📊 สรุปยอด — '+thDate(date)+'</div>';
   h+='<div class="stat-grid cols-3">'+
-    stat('ยอดที่เก็บได้วันนี้','฿'+fmt(sum.collected),'accent-gold')+
+    stat('ยอดรวมรับเงิน','฿'+fmt(sum.collected+sum.penalty),'accent-gold','ดอก+ต้น+ค่าปรับ')+
     stat('ดอกที่เก็บได้','฿'+fmt(sum.interest),'accent-green')+
+    stat('ค่าปรับ','฿'+fmt(sum.penalty),'accent-red')+
     stat('ค่าแรง (20%)','฿'+fmt(sum.wage),'accent-purple')+
+    stat('เงินต้นเก็บคืน','฿'+fmt(sum.principal),'accent-cyan')+
+    stat('เงินต้นคงค้าง','฿'+fmt(outstanding),'accent-cyan','ยังไม่คืน · ปัจจุบัน')+
     '</div>';
 
   // by branch
   if(byBranch.length>1){
-    h+='<div class="section-label">แยกตามบ้าน</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>บ้าน</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
-      byBranch.map(function(b){return '<tr><td style="font-weight:500">'+esc(b.name)+'</td><td class="tr-right" style="color:var(--green)">฿'+fmt(b.interest)+'</td><td class="tr-right" style="color:var(--purple)">฿'+fmt(b.wage)+'</td><td class="tr-right">'+b.paid+' ราย</td></tr>'}).join('')+
+    h+='<div class="section-label">แยกตามบ้าน</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>บ้าน</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าปรับ</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
+      byBranch.map(function(b){return '<tr><td style="font-weight:500">'+esc(b.name)+'</td><td class="tr-right" style="color:var(--green)">฿'+fmt(b.interest)+'</td><td class="tr-right" style="color:var(--red)">฿'+fmt(b.penalty)+'</td><td class="tr-right" style="color:var(--purple)">฿'+fmt(b.wage)+'</td><td class="tr-right">'+b.paid+' ราย</td></tr>'}).join('')+
       '</tbody></table></div></div>';
   }
   document.getElementById('dash-main').innerHTML=h;

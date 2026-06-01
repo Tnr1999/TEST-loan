@@ -125,6 +125,7 @@ function openDetail(id){
   h+=dt('วันปล่อยสินเชื่อ',thDate(c.start_date));
   h+=dt('เก็บล่าสุด',c.last_collection_date?thDate(c.last_collection_date):'—');
   h+=dt('ค่าธรรมเนียมบ้าน','฿'+fmt0(c.branch_fee));
+  h+=dt('ค่าปรับมาตรฐานบ้าน','฿'+fmt0(b?b.penalty_fee:0));
   h+='</div></div>';
 
   // QR code (ดึงรูปแบบ on-demand เฉพาะตอนเปิดดู)
@@ -157,13 +158,14 @@ function openDetail(id){
   h+='<div class="card"><div class="card-head"><h3>📜 ประวัติการชำระ ('+recs.length+' รายการ)</h3></div>';
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
-    h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th>สถานะ</th></tr></thead><tbody>'+
+    h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
       recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--cyan)">'+(r.principal_reduced>0?'฿'+fmt(r.principal_reduced):'—')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.remaining_principal)+'</td>'+
+        '<td class="tr-right mono" style="color:var(--red)">'+(r.penalty>0?'฿'+fmt(r.penalty):'—')+'</td>'+
         '<td><span class="pst pst-'+r.payment_status+'">'+PSTATUS_LABEL[r.payment_status]+'</span></td></tr>'}).join('')+
       '</tbody></table></div>';
   }
