@@ -136,6 +136,11 @@ function startApp(){
   document.getElementById('hdr-name').textContent=currentUser.full_name;
   var rb=document.getElementById('hdr-role');
   rb.textContent=ROLE_LABEL[currentUser.role];rb.className='role-badge role-'+currentUser.role;
+  // role class ที่ body → ใช้สลับ UX/UI ตามบทบาท (CSS/JS)
+  document.body.className='role-'+(currentUser.role==='manager'?'head':currentUser.role);
+  // ปรับคำโปรยหน้าแรกตามบทบาท
+  var dsub={owner:'ภาพรวมทั้งระบบ',head:'ภาพรวมกองของคุณ',manager:'ภาพรวมกองของคุณ',staff:'งานเก็บเงินวันนี้'};
+  var de=document.getElementById('dash-sub');if(de)de.textContent=dsub[currentUser.role]||'สรุปการดำเนินงานรายวัน';
   // permission-based UI (แสดง/ซ่อนทั้งส่วน)
   document.getElementById('page-groups').style.display=canManageGroups()?'':'none';
   document.getElementById('page-branches').style.display=canEdit()?'':'none';
