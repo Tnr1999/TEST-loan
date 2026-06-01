@@ -5,12 +5,10 @@ function renderCustomers(){
   var search=(document.getElementById('cust-search').value||'').toLowerCase();
   var fg=document.getElementById('cust-filter-group')?document.getElementById('cust-filter-group').value:'';
   var fb=document.getElementById('cust-filter-branch').value;
-  var fs=document.getElementById('cust-filter-status').value;
   var grpBids=fg?allBranches.filter(function(b){return b.group_id===fg}).map(function(b){return b.id}):null;
   var list=allCustomers.filter(function(c){
     if(fb&&c.branch_id!==fb)return false;
     if(grpBids&&grpBids.indexOf(c.branch_id)<0)return false;
-    if(fs&&c.status!==fs)return false;
     if(search){
       var hit=c.full_name.toLowerCase().indexOf(search)>=0
         || (c.phone||'').indexOf(search)>=0
@@ -26,36 +24,40 @@ function renderCustomers(){
   list.forEach(function(c){
     var rec=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===today});
     var paid=rec&&rec.payment_status!=='unpaid';
-    var due=c.status!=='closed'&&isPaymentDueToday(c,today);
-    var over=c.status==='overdue'||c.status==='lost';
-    stMap[c.id]={rec:rec,paid:paid,due:due,over:over};
+    var due=c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,today);
+    var isNew=c.start_date===today;          // ลูกค้าที่เข้ามาในวันนี้
+    var pending=!c.disbursed;                 // รอแอดมินโอนเงินให้
+    stMap[c.id]={rec:rec,paid:paid,due:due,isNew:isNew,pending:pending};
   });
 
-  // ชิปกรองด่วน (ตามงานประจำวัน) — default = ที่ต้องเก็บวันนี้
-  var nToday=list.filter(function(c){var s=stMap[c.id];return s.due&&!s.paid}).length;
-  var nOver=list.filter(function(c){var s=stMap[c.id];return s.over&&!s.paid}).length;
-  var nPaid=list.filter(function(c){return stMap[c.id].paid}).length;
-  var chips=[['today','⏰ วันนี้',nToday],['overdue','🔴 ค้าง',nOver],['paid','✓ จ่ายแล้ว',nPaid],['all','ทั้งหมด',list.length]];
+  // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
+  function inView(c,v){
+    var s=stMap[c.id];
+    if(v==='today')return s.due&&!s.paid;
+    if(v==='overdue')return c.status==='overdue'&&!s.paid;
+    if(v==='new')return s.isNew;
+    if(v==='old')return !s.isNew&&c.status!=='closed'&&c.status!=='lost';
+    if(v==='closed')return c.status==='closed';
+    if(v==='dead')return c.status==='lost';
+    return true;
+  }
+
+  // ชิปกรองด่วน — default = ที่ต้องจ่ายวันนี้
+  var chips=[['today','⏰ ต้องจ่ายวันนี้'],['overdue','🔴 ค้าง'],['new','🆕 ลูกค้าใหม่'],['old','👥 ลูกค้าเก่า'],['closed','✅ ปิดยอด'],['dead','✝️ ตาย']];
   document.getElementById('cust-summary').innerHTML=chips.map(function(v){
-    return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+v[2]+'</b></button>';
+    var n=list.filter(function(c){return inView(c,v[0])}).length;
+    return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';
   }).join('');
 
   // กรองตามมุมมองที่เลือก (ถ้ากำลังค้นหา → แสดงทุกผลลัพธ์ ไม่ตัดด้วยมุมมอง)
-  var vlist=list.filter(function(c){
-    if(search)return true;
-    var s=stMap[c.id];
-    if(custView==='today')return s.due&&!s.paid;
-    if(custView==='overdue')return s.over&&!s.paid;
-    if(custView==='paid')return s.paid;
-    return true;
-  });
-  // เรียง: ต้องเก็บวันนี้ ▸ ค้าง ▸ ปกติ ▸ จ่ายแล้ว ▸ ปิด แล้วตามลำดับเลข
-  function prio(c){var s=stMap[c.id];if(c.status==='closed')return 4;if(s.paid)return 3;if(s.due)return 0;if(s.over)return 1;return 2}
+  var vlist=list.filter(function(c){return search?true:inView(c,custView)});
+  // เรียง: รอรับเงิน/ต้องเก็บวันนี้ ▸ ค้าง ▸ ปกติ ▸ จ่ายแล้ว ▸ ตาย ▸ ปิด แล้วตามลำดับเลข
+  function prio(c){var s=stMap[c.id];if(c.status==='closed')return 5;if(c.status==='lost')return 4;if(s.pending||s.due)return 0;if(s.paid)return 3;if(c.status==='overdue')return 1;return 2}
   vlist.sort(function(a,b){var d=prio(a)-prio(b);return d!==0?d:a.seq-b.seq});
 
   if(!vlist.length){
-    var msg=custView==='today'?'🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง':'ไม่พบลูกค้า';
-    var eh='<div class="empty">'+msg+(custView!=='all'?'<br><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="setCustView(\'all\')">ดูทั้งหมด</button>':'')+'</div>';
+    var msg=custView==='today'?'🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง':'ไม่พบลูกค้าในมุมมองนี้';
+    var eh='<div class="empty">'+msg+(custView!=='old'?'<br><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="setCustView(\'old\')">ดูลูกค้าเก่าทั้งหมด</button>':'')+'</div>';
     document.getElementById('cust-list').innerHTML=eh;
     document.getElementById('cust-list-cards').innerHTML=eh;
     return;
@@ -64,7 +66,7 @@ function renderCustomers(){
   document.getElementById('cust-list').innerHTML=
     '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นคงเหลือ</th><th>วันนี้</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     vlist.map(function(c){var s=stMap[c.id];
-      var td=s.paid?'<span class="crow-st t-paid">✓ จ่าย ฿'+fmt(s.rec.amount_paid)+'</span>':(s.due?'<span class="crow-st t-due">⏰ ต้องเก็บ</span>':'—');
+      var td=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>':(s.paid?'<span class="crow-st t-paid">✓ จ่าย ฿'+fmt(s.rec.amount_paid)+'</span>':(s.due?'<span class="crow-st t-due">⏰ ต้องเก็บ</span>':'—'));
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'</td>'+
@@ -73,17 +75,20 @@ function renderCustomers(){
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td>'+td+'</td>'+
       '<td><span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></td>'+
-      '<td>'+(c.status!=='closed'?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>')+'</td></tr>'}).join('')+
+      '<td>'+((c.status!=='closed'&&!s.pending)?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>')+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
     vlist.map(function(c){var s=stMap[c.id];
       var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
-      var cls=s.paid?'paid':(s.due?'due':(s.over?'over':''));
-      var chip=s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
+      var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
+      var chip=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>'
+        :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
         :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
-        :(s.over?'<span class="crow-st t-over">ค้าง</span>':''));
-      var btn=c.status==='closed'?''
+        :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
+        :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
+        :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
+      var btn=(c.status==='closed'||s.pending)?''
         :'<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
       return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
         '<div class="crow-main">'+
@@ -104,7 +109,8 @@ function openDetail(id){
   var h='<div class="page-head" style="margin-bottom:14px"><div>'+
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">#'+c.seq+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
-    '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></div>'+
+    '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
+    (!c.disbursed?'<span class="st st-pending">🕓 รอรับเงิน</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
   if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">✏️ แก้ไข</button>';
   h+='</div>';
@@ -131,6 +137,16 @@ function openDetail(id){
   // QR code (ดึงรูปแบบ on-demand เฉพาะตอนเปิดดู)
   h+='<div id="detail-qr"></div>';
 
+  // สถานะการโอนเงินให้ลูกค้า (ลูกค้าใหม่ที่ยังรอรับเงิน)
+  if(!c.disbursed){
+    h+='<div class="card card-pad" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.3);background:var(--amber-dim)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+      '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">🕓 รอโอนเงินให้ลูกค้า</div>'+
+      '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดยืนยันเพื่อเปลี่ยนเป็น "รับเงินแล้ว"</div></div>'+
+      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">✅ ยืนยันโอนเงินแล้ว</button>':'')+
+      '</div></div>';
+  }
+
   // close amount
   if(c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">'+
@@ -148,7 +164,7 @@ function openDetail(id){
   // actions (manager/owner)
   if(canEdit()&&c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">';
-    if(c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "หายติดต่อ"</button>';
+    if(c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">✝️ เปลี่ยนเป็น "ตาย"</button>';
     h+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     h+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     h+='</div></div>';
@@ -188,11 +204,20 @@ function loadDetailQr(personId){
 
 async function changeStatus(id,status){
   var c=allCustomers.find(function(x){return x.id===id});
-  var ok=await showConfirm({icon:'👻',title:'เปลี่ยนสถานะ',msg:'เปลี่ยน "'+c.full_name+'" เป็น "หายติดต่อไม่ได้"?',okText:'ยืนยัน',okClass:'btn-amber'});
+  var ok=await showConfirm({icon:'✝️',title:'เปลี่ยนสถานะ',msg:'เปลี่ยน "'+c.full_name+'" เป็น "ตาย" (หายติดต่อ)?',okText:'ยืนยัน',okClass:'btn-amber'});
   if(!ok)return;
   var res=await _sb.from('loans').update({status:status}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
+}
+// ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอรับเงิน → รับเงินแล้ว)
+async function setDisbursed(id){
+  var c=allCustomers.find(function(x){return x.id===id});
+  var ok=await showConfirm({icon:'✅',title:'ยืนยันการโอนเงิน',msg:'ยืนยันว่าได้โอนเงินให้ "'+c.full_name+'" แล้ว?',okText:'รับเงินแล้ว',okClass:'btn-green'});
+  if(!ok)return;
+  var res=await _sb.from('loans').update({disbursed:true}).eq('id',id);
+  if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  toast('✅ เปลี่ยนเป็น "รับเงินแล้ว"','ok');await loadAll();openDetail(id);
 }
 async function doCloseLoan(id){
   var c=allCustomers.find(function(x){return x.id===id});var ca=closeAmount(c);
@@ -371,7 +396,8 @@ async function saveCustomer(){
     person_id:personId,branch_id:branchId,
     principal:principal,daily_interest_rate:0.10,
     collection_interval:interval,start_date:todayISO(),
-    status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0
+    status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0,
+    disbursed:false
   }).select().single();
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
   toast('✅ เพิ่มลูกค้าสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);
