@@ -66,15 +66,16 @@ function renderDashboard(){
       lostList.slice(0,12).map(function(c){return '<span class="chip" onclick="openDetail(\''+c.id+'\')">'+esc(c.full_name)+'</span>'}).join('')+'</div></div>';
   }
 
-  // สรุปยอด 6 ตัว
-  h+='<div class="section-label">📊 สรุปยอด — '+thDate(date)+'</div>';
-  h+='<div class="stat-grid cols-3">'+
-    stat('ยอดรวมรับเงิน','฿'+fmt(sum.collected+sum.penalty),'accent-gold','ดอก+ต้น+ค่าปรับ')+
-    stat('ดอกที่เก็บได้','฿'+fmt(sum.interest),'accent-green')+
-    stat('ค่าปรับ','฿'+fmt(sum.penalty),'accent-red')+
-    stat('ค่าแรง (20%)','฿'+fmt(sum.wage),'accent-purple')+
-    stat('เงินต้นเก็บคืน','฿'+fmt(sum.principal),'accent-cyan')+
-    stat('เงินต้นคงค้าง','฿'+fmt(outstanding),'accent-cyan','ยังไม่คืน · ปัจจุบัน')+
+  // สรุปยอด 6 ตัว → แถบกระชับติดใต้ header (เลื่อนแนวนอน)
+  var sb=function(k,v,cls){return '<div class="sbar-item"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
+  document.getElementById('summary-bar').innerHTML='<div class="sbar-scroll">'+
+    '<div class="sbar-item sbar-date"><span class="sbar-k">📊 สรุปยอด</span><span class="sbar-v">'+thDate(date)+'</span></div>'+
+    sb('รวมรับ',sum.collected+sum.penalty,'gold')+
+    sb('ดอก',sum.interest,'green')+
+    sb('ค่าปรับ',sum.penalty,'red')+
+    sb('ค่าแรง',sum.wage,'purple')+
+    sb('ต้นเก็บคืน',sum.principal,'cyan')+
+    sb('ต้นคงค้าง',outstanding,'cyan')+
     '</div>';
 
   // by branch
