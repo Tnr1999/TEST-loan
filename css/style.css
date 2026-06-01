@@ -127,8 +127,13 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .page-sub{font-size:0.82rem;color:var(--muted);margin-top:2px}
 
 /* ═══ ROLE-BASED UX (แยกตามบทบาท) ═══ */
-/* staff (คนเก็บเงิน): ใช้หน้า "ลูกค้า" เป็นหน้าหลัก (หน้าแรก/ภาพรวมถูกซ่อนใน core.js) ห้ามเพิ่มลูกค้า */
-body.role-staff #btn-add-customer{display:none}
+/* ปุ่มลัดไปเก็บเงิน — โหมดคนเก็บเงิน (staff) */
+.collector-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1300;border:none;border-radius:16px;padding:18px 22px;font-size:1.08rem;font-weight:700;cursor:pointer;margin-bottom:16px;box-shadow:0 6px 22px rgba(129,140,248,0.38);transition:transform 0.12s}
+.collector-cta:active{transform:scale(0.98)}
+.collector-cta b{font-size:1.15rem;background:rgba(0,0,0,0.13);padding:5px 14px;border-radius:99px;white-space:nowrap}
+.collector-cta.done{justify-content:center;background:var(--green-dim);color:var(--green);box-shadow:none;cursor:default;font-size:1rem}
+/* staff: ซ่อนมุมมองผู้บริหาร (staff เพิ่มลูกค้าได้แล้ว จึงไม่ซ่อน #btn-add-customer) */
+body.role-staff #dash-group-wrap{display:none}
 
 /* ═══ CARD ═══ */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
