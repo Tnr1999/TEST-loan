@@ -244,6 +244,7 @@ async function doDeleteCustomer(id){
 /* ── customer form ── */
 var editingCustId=null;
 function openAddCustomer(){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์เพิ่มลูกค้า','err');return}
   editingCustId=null;
   var groups=accessibleGroups();
   if(!groups.length){toast('กรุณาสร้างกองและผูกบ้านเข้ากองก่อน','err');return}

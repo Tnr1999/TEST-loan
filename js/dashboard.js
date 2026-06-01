@@ -6,6 +6,8 @@ function showPage(name){
   var el=document.getElementById('page-'+name);
   if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
+// ลัดไปหน้าเก็บเงิน (มุมมองที่ต้องจ่ายวันนี้)
+function gotoCollect(){custView='today';renderCustomers();showPage('customers');}
 
 /* ═══════════════════════════════════════════════
    DASHBOARD
@@ -50,6 +52,12 @@ function renderDashboard(){
   });
 
   var h='';
+  // โหมดคนเก็บเงิน (staff) — ปุ่มลัดไปเก็บเงินวันนี้เด่นๆ บนสุด
+  if(isStaff()){
+    h+=unpaidToday.length
+      ? '<button class="collector-cta" onclick="gotoCollect()"><span>🧰 ไปเก็บเงินวันนี้</span><b>'+unpaidToday.length+' คน</b></button>'
+      : '<div class="collector-cta done">🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง</div>';
+  }
   // alerts
   if(unpaidToday.length){
     h+='<div class="alert alert-amber"><div class="alert-title">⚠️ ต้องจ่ายวันนี้แต่ยังไม่จ่าย ('+unpaidToday.length+' ราย)</div><div class="chip-list">'+
@@ -78,8 +86,8 @@ function renderDashboard(){
     sb('ต้นคงค้าง',outstanding,'cyan')+
     '</div>';
 
-  // by branch
-  if(byBranch.length>1){
+  // by branch (มุมมองผู้บริหาร — ซ่อนจากคนเก็บเงิน)
+  if(byBranch.length>1&&!isStaff()){
     h+='<div class="section-label">แยกตามบ้าน</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>บ้าน</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าปรับ</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
       byBranch.map(function(b){return '<tr><td style="font-weight:500">'+esc(b.name)+'</td><td class="tr-right" style="color:var(--green)">฿'+fmt(b.interest)+'</td><td class="tr-right" style="color:var(--red)">฿'+fmt(b.penalty)+'</td><td class="tr-right" style="color:var(--purple)">฿'+fmt(b.wage)+'</td><td class="tr-right">'+b.paid+' ราย</td></tr>'}).join('')+
       '</tbody></table></div></div>';
