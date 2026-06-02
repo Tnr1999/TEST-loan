@@ -21,14 +21,7 @@ function renderCustomers(){
   // คำนวณสถานะ "วันนี้" ของลูกค้าแต่ละคน (ใช้ทั้งชิป/เรียง/แสดงผล)
   var today=todayISO();
   var stMap={};
-  list.forEach(function(c){
-    var rec=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===today});
-    var paid=rec&&rec.payment_status!=='unpaid';
-    var due=c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,today);
-    var isNew=c.start_date===today;          // ลูกค้าที่เข้ามาในวันนี้
-    var pending=!c.disbursed;                 // รอแอดมินโอนเงินให้
-    stMap[c.id]={rec:rec,paid:paid,due:due,isNew:isNew,pending:pending};
-  });
+  list.forEach(function(c){stMap[c.id]=custDayStatus(c,today)});
 
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
@@ -79,25 +72,40 @@ function renderCustomers(){
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
-    vlist.map(function(c){var s=stMap[c.id];
-      var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
-      var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
-      var chip=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>'
-        :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
-        :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
-        :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
-        :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
-        :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
-      var btn=(c.status==='closed'||s.pending)?''
-        :'<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
-      return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
-        '<div class="crow-main">'+
-          '<div class="crow-l1"><span class="crow-seq">#'+c.seq+'</span><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
-          '<div class="crow-l2">คงเหลือ <b style="color:var(--text)">฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
-        '</div>'+btn+'</div>';
-    }).join('');
+    vlist.map(function(c){return custCardHTML(c,today,stMap[c.id])}).join('');
 }
 function setCustView(v){custView=v;renderCustomers()}
+
+// สถานะของลูกค้า ณ วันที่กำหนด (ใช้ร่วมหน้าลูกค้า + หน้าเก็บเงินของ staff)
+function custDayStatus(c,date){
+  var rec=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===date});
+  return {
+    rec:rec,
+    paid:!!(rec&&rec.payment_status!=='unpaid'),
+    due:c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,date),
+    isNew:c.start_date===date,   // ลูกค้าที่เข้ามาในวันนี้
+    pending:!c.disbursed         // รอแอดมินโอนเงินให้
+  };
+}
+// การ์ดลูกค้าแบบลิสต์ (มือถือ + หน้าเก็บเงิน staff) — แตะดูรายละเอียด, ปุ่มขวารับเงิน
+function custCardHTML(c,date,s){
+  s=s||custDayStatus(c,date);
+  var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
+  var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
+  var chip=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>'
+    :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
+    :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
+    :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
+    :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
+    :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
+  var btn=(c.status==='closed'||s.pending)?''
+    :'<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
+  return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
+    '<div class="crow-main">'+
+      '<div class="crow-l1"><span class="crow-seq">#'+c.seq+'</span><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
+      '<div class="crow-l2">คงเหลือ <b style="color:var(--text)">฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
+    '</div>'+btn+'</div>';
+}
 
 function openDetail(id){
   currentDetailId=id;
