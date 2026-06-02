@@ -65,12 +65,6 @@ function renderDashboard(){
   if(isStaff())return;
 
   var h='';
-  if(isStaff()){
-    document.getElementById('dash-main').innerHTML=staffCollectHTML(date,dueToday,unpaidToday,overdueList,sum);
-    return;
-  }
-
-  var h='';
   // alerts
   if(unpaidToday.length){
     h+='<div class="alert alert-amber"><div class="alert-title">⚠️ ต้องจ่ายวันนี้แต่ยังไม่จ่าย ('+unpaidToday.length+' ราย)</div><div class="chip-list">'+

@@ -132,19 +132,6 @@ body.role-staff #dash-group-wrap{display:none}
 body.role-staff #dash-cal-wrap{display:none}
 body.role-staff #dash-layout{display:block!important}
 
-/* การ์ดสรุป "เก็บเงินวันนี้" (hero) ของ staff */
-.collect-hero{background:linear-gradient(135deg,var(--gold),var(--purple));border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:18px;color:#fff;box-shadow:0 10px 30px rgba(129,140,248,0.35)}
-.collect-hero .ch-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-.collect-hero .ch-title{font-family:var(--font-serif);font-size:1.15rem;font-weight:700}
-.collect-hero .ch-date{font-size:0.8rem;font-weight:600;background:rgba(0,0,0,0.18);padding:4px 12px;border-radius:99px;white-space:nowrap}
-.collect-hero .ch-mid{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:12px}
-.collect-hero .ch-count{font-family:var(--font-mono);font-size:2.1rem;font-weight:700;line-height:1}
-.collect-hero .ch-count span{font-family:var(--font-th);font-size:0.95rem;font-weight:500;opacity:0.85;margin-left:4px}
-.collect-hero .ch-amt{text-align:right;line-height:1.3}
-.collect-hero .ch-amt span{display:block;font-size:0.72rem;opacity:0.85}
-.collect-hero .ch-amt b{font-family:var(--font-mono);font-size:1.25rem;font-weight:700}
-.collect-hero .ch-bar{height:9px;background:rgba(0,0,0,0.22);border-radius:99px;overflow:hidden}
-.collect-hero .ch-bar i{display:block;height:100%;background:#fff;border-radius:99px;transition:width 0.4s ease}
 .collect-done{text-align:center;padding:34px 20px;background:var(--green-dim);border:1px solid rgba(52,211,153,0.3);border-radius:var(--radius-lg);color:var(--green);font-weight:600;font-size:1rem;line-height:1.6}
 .collect-done>:first-child{font-size:2.4rem;margin-bottom:8px}
 /* รายการการ์ดในหน้าเก็บเงิน */
