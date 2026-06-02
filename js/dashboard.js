@@ -61,11 +61,8 @@ function renderDashboard(){
     sb('ต้นคงค้าง',outstanding,'cyan')+
     '</div>';
 
-  // ── หน้าแรกของ staff = โหมดเก็บเงิน (การ์ดคนที่ต้องเก็บวันนี้ กดรับเงินได้เลย) ──
-  if(isStaff()){
-    document.getElementById('dash-main').innerHTML=staffCollectHTML(date,dueToday,unpaidToday,overdueList,sum);
-    return;
-  }
+  // ── staff ไม่ใช้หน้าแรก (ซ่อนทั้งส่วนใน core.js) — แถบสรุปด้านบนพอแล้ว ใช้หน้า "ลูกค้า" เก็บเงิน ──
+  if(isStaff())return;
 
   var h='';
   // alerts
@@ -93,29 +90,6 @@ function renderDashboard(){
   document.getElementById('dash-main').innerHTML=h;
 }
 
-// หน้าเก็บเงินของ staff: รายชื่อต้องเก็บ/ค้าง/เก็บแล้ว (สรุปยอดอยู่แถบบนแล้ว)
-function staffCollectHTML(date,dueToday,unpaidToday,overdueList,sum){
-  var bySeq=function(a,b){return a.seq-b.seq};
-  var h='';
-
-  var todo=unpaidToday.slice().sort(bySeq);
-  var inTodo={};todo.forEach(function(c){inTodo[c.id]=1});
-  var over=overdueList.filter(function(c){return !inTodo[c.id]&&!custDayStatus(c,date).paid}).sort(bySeq);
-  var doneList=dueToday.filter(function(c){return custDayStatus(c,date).paid}).sort(bySeq);
-
-  if(todo.length)
-    h+='<div class="crow-list">'+
-      todo.map(function(c){return custCardHTML(c,date)}).join('')+'</div>';
-  if(over.length)
-    h+='<div class="section-label" style="color:var(--red)">🔴 ค้างจ่าย ('+over.length+')</div><div class="crow-list">'+
-      over.map(function(c){return custCardHTML(c,date)}).join('')+'</div>';
-  if(!todo.length&&!over.length)
-    h+='<div class="collect-done"><div>🎉</div><div>เยี่ยมมาก! วันนี้เก็บครบแล้ว<br>ไม่มีใครค้าง</div></div>';
-  if(doneList.length)
-    h+='<div class="section-label">✅ เก็บแล้ววันนี้ ('+doneList.length+')</div><div class="crow-list">'+
-      doneList.map(function(c){return custCardHTML(c,date)}).join('')+'</div>';
-  return h;
-}
 function stat(label,value,accent,sub){
   return '<div class="stat '+(accent||'')+'"><span class="label">'+label+'</span><span class="value">'+value+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>';
 }

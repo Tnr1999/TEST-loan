@@ -127,16 +127,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .page-sub{font-size:0.82rem;color:var(--muted);margin-top:2px}
 
 /* ═══ ROLE-BASED UX (แยกตามบทบาท) ═══ */
-/* staff (คนเก็บเงิน): ซ่อนมุมมองผู้บริหาร + ปฏิทินก้อนใหญ่ → หน้าแรกโฟกัสการเก็บเงิน */
+/* staff (คนเก็บเงิน): ใช้หน้า "ลูกค้า" เป็นหน้าหลัก (หน้าแรก/ภาพรวมถูกซ่อนใน core.js) ห้ามเพิ่มลูกค้า */
 body.role-staff #btn-add-customer{display:none}
-body.role-staff #dash-group-wrap{display:none}
-body.role-staff #dash-cal-wrap{display:none}
-body.role-staff #dash-layout{display:block!important}
-
-.collect-done{text-align:center;padding:34px 20px;background:var(--green-dim);border:1px solid rgba(52,211,153,0.3);border-radius:var(--radius-lg);color:var(--green);font-weight:600;font-size:1rem;line-height:1.6}
-.collect-done>:first-child{font-size:2.4rem;margin-bottom:8px}
-/* รายการการ์ดในหน้าเก็บเงิน */
-.crow-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
 
 /* ═══ CARD ═══ */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}

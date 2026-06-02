@@ -145,6 +145,8 @@ function startApp(){
   var dt=document.getElementById('dash-title');if(dt)dt.textContent=dttl[currentUser.role]||'ภาพรวม';
   var de=document.getElementById('dash-sub');if(de)de.textContent=dsub[currentUser.role]||'สรุปการดำเนินงานรายวัน';
   // permission-based UI (แสดง/ซ่อนทั้งส่วน)
+  // staff ไม่ใช้หน้าแรก (ภาพรวม) — ใช้หน้า "ลูกค้า" ที่มีชิป ต้องจ่ายวันนี้/ค้าง + ค้นหา แทน
+  document.getElementById('page-dashboard').style.display=isStaff()?'none':'';
   document.getElementById('page-groups').style.display=canManageGroups()?'':'none';
   document.getElementById('page-branches').style.display=canEdit()?'':'none';
   document.getElementById('page-users').style.display=canManageUsers()?'':'none';
