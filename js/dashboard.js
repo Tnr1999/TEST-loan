@@ -93,18 +93,10 @@ function renderDashboard(){
   document.getElementById('dash-main').innerHTML=h;
 }
 
-// หน้าเก็บเงินของ staff: การ์ดสรุปความคืบหน้า + รายชื่อต้องเก็บ/ค้าง/เก็บแล้ว
+// หน้าเก็บเงินของ staff: รายชื่อต้องเก็บ/ค้าง/เก็บแล้ว (สรุปยอดอยู่แถบบนแล้ว)
 function staffCollectHTML(date,dueToday,unpaidToday,overdueList,sum){
-  var done=dueToday.length-unpaidToday.length;if(done<0)done=0;
-  var pct=dueToday.length?Math.round(done/dueToday.length*100):100;
-  var got=sum.collected+sum.penalty;
   var bySeq=function(a,b){return a.seq-b.seq};
-
-  var h='<div class="collect-hero">'+
-    '<div class="ch-top"><span class="ch-title">🧰 เก็บเงินวันนี้</span><span class="ch-date">'+thDate(date)+'</span></div>'+
-    '<div class="ch-mid"><div class="ch-count">'+done+'<span>/ '+dueToday.length+' ราย</span></div>'+
-    '<div class="ch-amt"><span>เก็บได้แล้ว</span><b>฿'+fmt0(got)+'</b></div></div>'+
-    '<div class="ch-bar"><i style="width:'+pct+'%"></i></div></div>';
+  var h='';
 
   var todo=unpaidToday.slice().sort(bySeq);
   var inTodo={};todo.forEach(function(c){inTodo[c.id]=1});
