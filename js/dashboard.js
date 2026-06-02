@@ -104,7 +104,7 @@ function staffCollectHTML(date,dueToday,unpaidToday,overdueList,sum){
   var doneList=dueToday.filter(function(c){return custDayStatus(c,date).paid}).sort(bySeq);
 
   if(todo.length)
-    h+='<div class="section-label">⏰ ต้องเก็บ ('+todo.length+')</div><div class="crow-list">'+
+    h+='<div class="crow-list">'+
       todo.map(function(c){return custCardHTML(c,date)}).join('')+'</div>';
   if(over.length)
     h+='<div class="section-label" style="color:var(--red)">🔴 ค้างจ่าย ('+over.length+')</div><div class="crow-list">'+
