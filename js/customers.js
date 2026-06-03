@@ -146,7 +146,7 @@ function openDetail(id){
   h+=dt('Facebook',c.facebook_url?'<a class="link-gold" href="'+esc(c.facebook_url)+'" target="_blank">เปิดลิงก์ ›</a>':'—');
   h+=dt('เลขบัตรประชาชน',c.id_card?esc(c.id_card):'—');
   h+=dt('ธนาคาร',c.bank_name?esc(c.bank_name):'—');
-  h+=dt('เลขบัญชี',c.bank_account?'<span class="mono">'+esc(c.bank_account)+'</span>':'—');
+  h+=dt('เลขบัญชี',c.bank_account?'<span class="mono copy-btn" onclick="copyText(\''+esc(c.bank_account)+'\')" title="กดเพื่อคัดลอก">'+esc(c.bank_account)+'</span>':'—');
   h+=dt('วันปล่อยสินเชื่อ',thDate(c.start_date));
   h+=dt('เก็บล่าสุด',c.last_collection_date?thDate(c.last_collection_date):'—');
   h+=dt('ค่าธรรมเนียมบ้าน','฿'+fmt0(c.branch_fee));
