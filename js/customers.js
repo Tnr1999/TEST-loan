@@ -252,7 +252,7 @@ async function doDeleteCustomer(id){
 /* ── customer form ── */
 var editingCustId=null;
 function openAddCustomer(){
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์เพิ่มลูกค้า','err');return}
+  if(!canAddCustomer()){toast('คุณไม่มีสิทธิ์เพิ่มลูกค้า','err');return}
   editingCustId=null;
   var groups=accessibleGroups();
   if(!groups.length){toast('กรุณาสร้างกองและผูกบ้านเข้ากองก่อน','err');return}
@@ -308,6 +308,7 @@ function loanRuleError(personId,branchId){
   return null;
 }
 function openEditCustomer(id){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
   editingCustId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   document.getElementById('modal-customer-title').textContent='✏️ แก้ไขลูกค้า';

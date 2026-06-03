@@ -32,6 +32,7 @@ function isOwner(){return currentUser&&currentUser.role==='owner'}
 function isHead(){return currentUser&&(currentUser.role==='head'||currentUser.role==='manager')}
 function isStaff(){return currentUser&&currentUser.role==='staff'}
 function canEdit(){return isOwner()||isHead()}      // แก้/ลบลูกค้า, ปิดสินเชื่อ, จัดการบ้าน
+function canAddCustomer(){return isOwner()||isHead()||isStaff()} // เพิ่มลูกค้า (staff เพิ่มได้ แต่แก้ไขไม่ได้)
 function canManageUsers(){return isOwner()}
 function canManageGroups(){return isOwner()}
 function myGroupIds(){
