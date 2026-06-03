@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=20260603f"/>
+<link rel="stylesheet" href="css/style.css?v=20260603g"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -101,8 +101,7 @@
           <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input class="inp" id="cust-search" placeholder="ค้นหาชื่อ, เบอร์, ลำดับ..." oninput="renderCustomers()"/>
         </div>
-        <select class="inp" id="cust-filter-group" onchange="onCustGroup()" style="width:auto"></select>
-        <select class="inp" id="cust-filter-branch" onchange="renderCustomers()" style="width:auto"></select>
+        <div id="cust-branch-btns" class="branch-btns"></div>
       </div>
       <div id="cust-summary" class="chip-list" style="margin-bottom:14px"></div>
       <div class="card desktop-only"><div class="table-wrap"><div id="cust-list"></div></div></div>
@@ -110,40 +109,49 @@
     </div>
 
     <!-- ═══ CUSTOMER DETAIL ═══ -->
-    <!-- ═══ GROUPS (กอง) ═══ -->
-    <div class="page" id="page-groups">
+    <!-- ═══ SETTINGS (ตั้งค่า) ═══ -->
+    <div class="page" id="page-settings">
       <div class="page-head">
         <div>
-          <div class="page-title">กอง</div>
-          <div class="page-sub">จัดการกอง (กลุ่มของบ้าน)</div>
+          <div class="page-title">ตั้งค่า</div>
+          <div class="page-sub">จัดการกอง · บ้าน · ผู้ใช้งาน</div>
         </div>
-        <button class="btn btn-gold" onclick="openAddGroup()">+ เพิ่มกอง</button>
       </div>
-      <div id="group-list" style="display:flex;flex-direction:column;gap:12px"></div>
-    </div>
-
-    <!-- ═══ BRANCHES (บ้าน) ═══ -->
-    <div class="page" id="page-branches">
-      <div class="page-head">
-        <div>
-          <div class="page-title">บ้าน</div>
-          <div class="page-sub">จัดการบ้านและค่าธรรมเนียม</div>
+      <div class="settings-tabs">
+        <button class="stab" id="stab-btn-groups" onclick="showSettingsTab('groups')">🗂️ กอง</button>
+        <button class="stab active" id="stab-btn-branches" onclick="showSettingsTab('branches')">🏠 บ้าน</button>
+        <button class="stab" id="stab-btn-users" onclick="showSettingsTab('users')">👤 ผู้ใช้</button>
+      </div>
+      <div class="stab-pane" id="stab-groups">
+        <div class="page-head">
+          <div>
+            <div style="font-weight:600;font-size:1rem;color:var(--text)">กอง</div>
+            <div class="page-sub">จัดการกอง (กลุ่มของบ้าน)</div>
+          </div>
+          <button class="btn btn-gold" onclick="openAddGroup()">+ เพิ่มกอง</button>
         </div>
-        <button class="btn btn-gold" onclick="openAddBranch()">+ เพิ่มบ้าน</button>
+        <div id="group-list" style="display:flex;flex-direction:column;gap:12px"></div>
       </div>
-      <div id="branch-list" style="display:flex;flex-direction:column;gap:12px"></div>
-    </div>
-
-    <!-- ═══ USERS ═══ -->
-    <div class="page" id="page-users">
-      <div class="page-head">
-        <div>
-          <div class="page-title">จัดการผู้ใช้</div>
-          <div class="page-sub">เพิ่ม/แก้ไขผู้ใช้งานระบบ</div>
+      <div class="stab-pane active" id="stab-branches">
+        <div class="page-head">
+          <div>
+            <div style="font-weight:600;font-size:1rem;color:var(--text)">บ้าน</div>
+            <div class="page-sub">จัดการบ้านและค่าธรรมเนียม</div>
+          </div>
+          <button class="btn btn-gold" onclick="openAddBranch()">+ เพิ่มบ้าน</button>
         </div>
-        <button class="btn btn-gold" onclick="openAddUser()">+ เพิ่มผู้ใช้</button>
+        <div id="branch-list" style="display:flex;flex-direction:column;gap:12px"></div>
       </div>
-      <div class="card"><div class="table-wrap"><div id="user-list"></div></div></div>
+      <div class="stab-pane" id="stab-users">
+        <div class="page-head">
+          <div>
+            <div style="font-weight:600;font-size:1rem;color:var(--text)">จัดการผู้ใช้</div>
+            <div class="page-sub">เพิ่ม/แก้ไขผู้ใช้งานระบบ</div>
+          </div>
+          <button class="btn btn-gold" onclick="openAddUser()">+ เพิ่มผู้ใช้</button>
+        </div>
+        <div class="card"><div class="table-wrap"><div id="user-list"></div></div></div>
+      </div>
     </div>
   </div>
 
@@ -204,12 +212,12 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=20260603f"></script>
-<script src="js/dashboard.js?v=20260603f"></script>
-<script src="js/payments.js?v=20260603f"></script>
-<script src="js/customers.js?v=20260603f"></script>
-<script src="js/admin.js?v=20260603f"></script>
-<script src="js/calendar.js?v=20260603f"></script>
-<script src="js/init.js?v=20260603f"></script>
+<script src="js/core.js?v=20260603g"></script>
+<script src="js/dashboard.js?v=20260603g"></script>
+<script src="js/payments.js?v=20260603g"></script>
+<script src="js/customers.js?v=20260603g"></script>
+<script src="js/admin.js?v=20260603g"></script>
+<script src="js/calendar.js?v=20260603g"></script>
+<script src="js/init.js?v=20260603g"></script>
 </body>
 </html>

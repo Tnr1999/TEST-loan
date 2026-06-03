@@ -1,14 +1,26 @@
 /* ═══════════════════════════════════════════════
    CUSTOMERS
 ═══════════════════════════════════════════════ */
+function renderCustBranchBtns(){
+  var el=document.getElementById('cust-branch-btns');if(!el)return;
+  var bids=myBranchIds();
+  var branches=allBranches.filter(function(b){return bids.indexOf(b.id)>=0});
+  if(branches.length<=1){el.innerHTML='';return;}
+  var btns='<button class="branch-btn'+(custBranchId===''?' active':'')+'" onclick="setCustBranch(\'\')">ทั้งหมด</button>';
+  allGroups.forEach(function(g){
+    var gb=branches.filter(function(b){return b.group_id===g.id});
+    gb.forEach(function(b){btns+='<button class="branch-btn'+(custBranchId===b.id?' active':'')+'" onclick="setCustBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
+  });
+  branches.filter(function(b){return !b.group_id}).forEach(function(b){btns+='<button class="branch-btn'+(custBranchId===b.id?' active':'')+'" onclick="setCustBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
+  el.innerHTML=btns;
+}
+function setCustBranch(id){custBranchId=id;renderCustBranchBtns();renderCustomers();}
+
 function renderCustomers(){
   var search=(document.getElementById('cust-search').value||'').toLowerCase();
-  var fg=document.getElementById('cust-filter-group')?document.getElementById('cust-filter-group').value:'';
-  var fb=document.getElementById('cust-filter-branch').value;
-  var grpBids=fg?allBranches.filter(function(b){return b.group_id===fg}).map(function(b){return b.id}):null;
+  var fb=custBranchId;
   var list=allCustomers.filter(function(c){
     if(fb&&c.branch_id!==fb)return false;
-    if(grpBids&&grpBids.indexOf(c.branch_id)<0)return false;
     if(search){
       var hit=c.full_name.toLowerCase().indexOf(search)>=0
         || (c.phone||'').indexOf(search)>=0

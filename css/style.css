@@ -311,6 +311,20 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .copy-btn{cursor:pointer;border-bottom:1px dashed var(--border2);transition:color 0.15s}
 .copy-btn:hover{color:var(--gold)}
 
+/* ═══ SETTINGS TABS ═══ */
+.settings-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px}
+.stab{padding:10px 18px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:0.86rem;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;font-family:inherit}
+.stab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.stab:hover:not(.active){color:var(--text2)}
+.stab-pane{display:none}
+.stab-pane.active{display:block}
+
+/* ═══ BRANCH FILTER BUTTONS ═══ */
+.branch-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.branch-btn{padding:5px 14px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:0.78rem;font-weight:500;transition:all 0.15s;white-space:nowrap;font-family:inherit}
+.branch-btn:hover:not(.active){border-color:var(--border2);color:var(--text)}
+.branch-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);font-weight:600}
+
 /* ═══ CUSTOM TOOLTIP ═══ */
 [data-tip]{position:relative;cursor:default}
 [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card2);color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:8px 12px;font-size:0.75rem;font-family:var(--font-th);white-space:pre;line-height:1.6;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:var(--shadow);min-width:160px;max-width:260px}
@@ -345,6 +359,13 @@ table.tbl tbody tr:hover{background:var(--surface)}
 @media (min-width:768px){
   .mobile-only{display:none!important}
   .bottom-nav{display:none!important}
+  /* ปฏิทิน dashboard ชิดขอบซ้าย */
+  #page-dashboard #dash-layout{margin-left:-16px}
+  #page-dashboard .cal-wrap{border-left:none;border-top:none;border-bottom:none;border-radius:0 var(--radius-lg) var(--radius-lg) 0}
+}
+/* ── TABLET: ชดเชย padding 18px ── */
+@media (min-width:768px) and (max-width:1023px){
+  #page-dashboard #dash-layout{margin-left:-18px}
 }
 
 /* ── TABLET (768–1023): คงตาราง แต่กระชับลงเล็กน้อย ── */

@@ -1,4 +1,16 @@
 /* ═══════════════════════════════════════════════
+   SETTINGS TABS
+═══════════════════════════════════════════════ */
+function showSettingsTab(tab){
+  document.querySelectorAll('.stab').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.stab-pane').forEach(function(p){p.classList.remove('active')});
+  var btn=document.getElementById('stab-btn-'+tab);
+  var pane=document.getElementById('stab-'+tab);
+  if(btn)btn.classList.add('active');
+  if(pane)pane.classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════
    BRANCHES
 ═══════════════════════════════════════════════ */
 function renderBranches(){

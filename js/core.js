@@ -13,6 +13,7 @@ var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUser
 var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
 var currentDetailId = null;
 var custView = 'today';
+var custBranchId = '';
 
 /* ═══ UTILS ═══ */
 function toISO(d){return d.toISOString().split('T')[0]}
@@ -151,9 +152,18 @@ function startApp(){
   // permission-based UI (แสดง/ซ่อนทั้งส่วน)
   // staff ไม่ใช้หน้าแรก (ภาพรวม) — ใช้หน้า "ลูกค้า" ที่มีชิป ต้องจ่ายวันนี้/ค้าง + ค้นหา แทน
   document.getElementById('page-dashboard').style.display=isStaff()?'none':'';
-  document.getElementById('page-groups').style.display=canManageGroups()?'':'none';
-  document.getElementById('page-branches').style.display=canEdit()?'':'none';
-  document.getElementById('page-users').style.display=canManageUsers()?'':'none';
+  // settings page: แสดงถ้ามีสิทธิ์อย่างน้อย 1 แท็บ
+  var ps=document.getElementById('page-settings');
+  if(ps) ps.style.display=(canEdit()||canManageGroups()||canManageUsers())?'':'none';
+  var sgb=document.getElementById('stab-btn-groups');if(sgb)sgb.style.display=canManageGroups()?'':'none';
+  var sbb=document.getElementById('stab-btn-branches');if(sbb)sbb.style.display=canEdit()?'':'none';
+  var sub=document.getElementById('stab-btn-users');if(sub)sub.style.display=canManageUsers()?'':'none';
+  // เริ่มต้นแสดงแท็บที่เหมาะสม
+  if(typeof showSettingsTab==='function'){
+    if(canEdit()) showSettingsTab('branches');
+    else if(canManageGroups()) showSettingsTab('groups');
+    else if(canManageUsers()) showSettingsTab('users');
+  }
   var t=todayISO();
   document.getElementById('dash-date-picker').value=t;
   initCalendar();
@@ -240,14 +250,14 @@ function accessibleGroups(){
 function populateFilters(){
   var groups=accessibleGroups();
   var gopts='<option value="">ทุกกอง</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('');
-  ['dash-filter-group','cust-filter-group'].forEach(function(id){
-    var el=document.getElementById(id);if(!el)return;var v=el.value;el.innerHTML=gopts;if(groups.some(function(g){return g.id===v}))el.value=v;
-  });
+  var el=document.getElementById('dash-filter-group');
+  if(el){var v=el.value;el.innerHTML=gopts;if(groups.some(function(g){return g.id===v}))el.value=v;}
   // ซ่อนตัวกรองกองถ้ามี ≤1 กอง
   var hideG=groups.length<=1;
   var pg=document.getElementById('dash-group-wrap');if(pg)pg.style.display=hideG?'none':'';
   populateBranchOptions('dash-filter-group','dash-filter-branch');
-  populateBranchOptions('cust-filter-group','cust-filter-branch');
+  // ปุ่มกรองบ้านในหน้าลูกค้า
+  if(typeof renderCustBranchBtns==='function') renderCustBranchBtns();
   // ซ่อนตัวกรองบ้านบนแดชบอร์ดถ้ามี ≤1 บ้าน
   var nb=allBranches.filter(function(b){return canAccessBranch(b.id)}).length;
   var bw=document.getElementById('dash-branch-wrap');if(bw)bw.style.display=nb<=1?'none':'';
