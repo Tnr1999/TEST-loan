@@ -164,11 +164,6 @@ function openDetail(id){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
   }
 
-  // บันทึกการชำระ (รับเงิน / จ่ายย้อนวัน)
-  if(c.status!=='closed'){
-    h+='<button class="btn btn-gold btn-block" style="margin-bottom:14px" onclick="openPayment(\''+id+'\',todayISO())">💵 บันทึกการชำระ / จ่ายย้อนวัน</button>';
-  }
-
   // actions (manager/owner)
   if(canEdit()&&c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">';
