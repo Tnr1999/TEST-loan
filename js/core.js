@@ -76,6 +76,9 @@ function isOverdue(c, iso){
   return daysBetween(ref, iso) > c.collection_interval*7;
 }
 
+/* ═══ COPY ═══ */
+function copyText(t){navigator.clipboard.writeText(t).then(function(){toast('คัดลอกแล้ว: '+t,'ok')}).catch(function(){toast('ไม่สามารถคัดลอกได้','err')})}
+
 /* ═══ TOAST ═══ */
 function toast(msg,type){
   var t=document.getElementById('toast');
