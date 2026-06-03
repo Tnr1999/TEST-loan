@@ -7,7 +7,8 @@ function openPayment(custId,date){
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
   var due=interestDue(c);
   var br=allBranches.find(function(x){return x.id===c.branch_id});
-  // ค่าปรับ: ถ้าแก้ไขใช้ค่าเดิม, ถ้าใหม่เติม default จากบ้าน
+  // ค่าปรับ: แสดงเฉพาะลูกค้าที่ค้าง (overdue) — ถ้าแก้ไขใช้ค่าเดิม, ถ้าใหม่เติม default จากบ้าน
+  var showPenalty=c.status==='overdue'||(existing&&existing.penalty>0);
   var penDefault=existing?(existing.penalty||0):(br&&br.penalty_fee?br.penalty_fee:'');
   document.getElementById('modal-payment-title').textContent='💵 #'+c.seq+' '+c.full_name;
   document.getElementById('modal-payment-body').innerHTML=
@@ -19,9 +20,10 @@ function openPayment(custId,date){
     '<div class="quick-btns">'+
       '<button class="quick-btn" onclick="setPayAmt(0)">ไม่จ่าย</button>'+
       '<button class="quick-btn" onclick="setPayAmt('+due+')">ดอก ฿'+fmt(due)+'</button>'+
+      '<button class="quick-btn" onclick="setPayAmt('+closeAmount(c)+')">ปิดยอด ฿'+fmt(closeAmount(c))+'</button>'+
     '</div>'+
     '<div class="field"><label>จำนวนที่จ่าย (บาท)</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+(existing?existing.amount_paid:'')+'" oninput="updatePayCalc(\''+custId+'\')"/></div>'+
-    '<div class="field"><label>ค่าปรับ (บาท) <span style="color:var(--muted);font-weight:400">· แยกจากดอก/ต้น</span></label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penDefault+'" oninput="updatePayCalc(\''+custId+'\')"/></div>'+
+    (showPenalty?'<div class="field"><label>ค่าปรับ (บาท) <span style="color:var(--muted);font-weight:400">· แยกจากดอก/ต้น</span></label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penDefault+'" oninput="updatePayCalc(\''+custId+'\')"/></div>':'')+
     '<div id="pay-calc"></div>'+
     '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(closeAmount(c))+'</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
@@ -32,16 +34,35 @@ function openPayment(custId,date){
   updatePayCalc(custId);
 }
 function setPayAmt(v){document.getElementById('pay-amount').value=v;var id=document.getElementById('pay-save-btn').getAttribute('onclick').match(/'([^']+)'/)[1];updatePayCalc(id)}
+// คำนวณการชำระ + ตรวจ "ปิดสัญญา" (จ่าย ≥ ยอดปิด) และกันเงินต้นติดลบ
+function payCalc(c,amt){
+  var close=closeAmount(c),due=interestDue(c);
+  if(close>0&&amt>=close){
+    // จ่ายครบยอดปิด → ปิดสัญญา: เก็บดอกรอบนี้ + คืนต้นทั้งหมด + ค่าธรรมเนียมบ้าน
+    return{interest_due:due,interest_collected:due,principal_reduced:+c.remaining_principal,
+      remaining_principal:0,wage:+(due*0.20).toFixed(2),payment_status:'overpaid',closing:true};
+  }
+  var calc=calcPayment(c,amt);
+  // กันต้นติดลบ: หักต้นได้ไม่เกินต้นคงเหลือ
+  if(calc.principal_reduced>c.remaining_principal){
+    calc.principal_reduced=+c.remaining_principal;
+    calc.remaining_principal=0;
+  }
+  calc.closing=false;
+  return calc;
+}
 function updatePayCalc(custId){
   var c=allCustomers.find(function(x){return x.id===custId});
   var amt=parseFloat(document.getElementById('pay-amount').value)||0;
-  var pen=parseFloat(document.getElementById('pay-penalty').value)||0;
-  var calc=calcPayment(c,amt);
-  var lbl={unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
+  var penEl=document.getElementById('pay-penalty');
+  var pen=penEl?(parseFloat(penEl.value)||0):0;
+  var calc=payCalc(c,amt);
+  var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']:{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
   var h='<div class="calc-box"><div class="calc-title">🧮 ผลการคำนวณ</div>'+
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
-  if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">หักเงินต้น</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';
+  if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">'+(calc.closing?'คืนเงินต้น':'หักเงินต้น')+'</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';
+  if(calc.closing&&c.branch_fee>0)h+='<div class="calc-row"><span class="k">ค่าธรรมเนียมบ้าน</span><span class="v">฿'+fmt(c.branch_fee)+'</span></div>';
   h+='<div class="calc-row"><span class="k">เงินต้นคงเหลือใหม่</span><span class="v">฿'+fmt(calc.remaining_principal)+'</span></div>'+
     '<div class="calc-row"><span class="k">ค่าแรง (20%)</span><span class="v" style="color:var(--purple)">฿'+fmt(calc.wage)+'</span></div>';
   if(pen>0)h+='<div class="calc-row"><span class="k">ค่าปรับ</span><span class="v" style="color:var(--red)">฿'+fmt(pen)+'</span></div>';
@@ -51,7 +72,8 @@ function updatePayCalc(custId){
 async function savePayment(custId,date,recId){
   var c=allCustomers.find(function(x){return x.id===custId});
   var amt=parseFloat(document.getElementById('pay-amount').value)||0;
-  var pen=parseFloat(document.getElementById('pay-penalty').value)||0;
+  var penEl=document.getElementById('pay-penalty');
+  var pen=penEl?(parseFloat(penEl.value)||0):0;
   var btn=document.getElementById('pay-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
 
   // base principal: ถ้าแก้ไข ใช้ principal ก่อนหักของ record เดิม
@@ -60,7 +82,7 @@ async function savePayment(custId,date,recId){
     var old=allRecords.find(function(r){return r.id===recId});
     baseC=Object.assign({},c,{remaining_principal:c.remaining_principal + (old?+old.principal_reduced:0)});
   }
-  var calc=calcPayment(baseC,amt);
+  var calc=payCalc(baseC,amt);
   var payload={loan_id:custId,record_date:date,interest_due:calc.interest_due,amount_paid:amt,
     interest_collected:calc.interest_collected,principal_reduced:calc.principal_reduced,
     remaining_principal:calc.remaining_principal,wage:calc.wage,payment_status:calc.payment_status,
@@ -71,8 +93,10 @@ async function savePayment(custId,date,recId){
   // update customer
   var upd={remaining_principal:calc.remaining_principal};
   if(amt>0){upd.last_collection_date=date;upd.status='normal';}
+  // จ่ายครบยอดปิด → ปิดสัญญาทันที
+  if(calc.closing){upd.status='closed';upd.close_amount=closeAmount(baseC);}
   // lost + จ่ายเงิน → ปิดสินเชื่อทันที (ตามที่ตกลง)
-  if(c.status==='lost'&&amt>0){upd.status='closed';upd.close_amount=closeAmount(Object.assign({},c,{remaining_principal:calc.remaining_principal}));}
+  else if(c.status==='lost'&&amt>0){upd.status='closed';upd.close_amount=closeAmount(Object.assign({},c,{remaining_principal:calc.remaining_principal}));}
   await _sb.from('loans').update(upd).eq('id',custId);
 
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');
