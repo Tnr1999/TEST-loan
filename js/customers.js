@@ -145,14 +145,13 @@ function openDetail(id){
   h+=dt('เบอร์โทร',c.phone?esc(c.phone):'—');
   h+=dt('Facebook',c.facebook_url?'<a class="link-gold" href="'+esc(c.facebook_url)+'" target="_blank">เปิดลิงก์ ›</a>':'—');
   h+=dt('เลขบัตรประชาชน',c.id_card?esc(c.id_card):'—');
+  h+=dt('ธนาคาร',c.bank_name?esc(c.bank_name):'—');
+  h+=dt('เลขบัญชี',c.bank_account?'<span class="mono">'+esc(c.bank_account)+'</span>':'—');
   h+=dt('วันปล่อยสินเชื่อ',thDate(c.start_date));
   h+=dt('เก็บล่าสุด',c.last_collection_date?thDate(c.last_collection_date):'—');
   h+=dt('ค่าธรรมเนียมบ้าน','฿'+fmt0(c.branch_fee));
   h+=dt('ค่าปรับมาตรฐานบ้าน','฿'+fmt0(b?b.penalty_fee:0));
   h+='</div></div>';
-
-  // QR code (ดึงรูปแบบ on-demand เฉพาะตอนเปิดดู)
-  h+='<div id="detail-qr"></div>';
 
   // สถานะการโอนเงินให้ลูกค้า (ลูกค้าใหม่ที่ยังรอรับเงิน)
   if(!c.disbursed){
@@ -201,18 +200,8 @@ function openDetail(id){
 
   document.getElementById('detail-content').innerHTML=h;
   openModal('modal-detail');
-  loadDetailQr(c.person_id);
 }
 function dt(k,v){return '<div class="dt-item"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'}
-// ดึงรูป QR ของลูกค้า (เฉพาะตอนเปิดดู) แล้วแสดงในหน้ารายละเอียด
-function loadDetailQr(personId){
-  if(!personId)return;
-  _sb.from('persons').select('qr_image').eq('id',personId).single().then(function(r){
-    var el=document.getElementById('detail-qr');if(!el)return;
-    if(r.data&&r.data.qr_image)
-      el.innerHTML='<div class="section-label">QR code</div><div class="card card-pad" style="text-align:center"><img src="'+r.data.qr_image+'" style="max-width:240px;width:100%;border-radius:10px"/></div>';
-  });
-}
 
 async function changeStatus(id,status){
   var c=allCustomers.find(function(x){return x.id===id});
@@ -279,11 +268,12 @@ function openAddCustomer(){
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
     '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
     '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13"/></div>'+
-    '<div class="field"><label>QR code (พร้อมเพย์/โอนเงิน)</label><input class="inp" type="file" accept="image/*" id="f-qr" onchange="readQrFile(this)"/><div id="f-qr-preview"></div></div>'+
+    '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์..."/></div>'+
+    '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="cust-save-btn" onclick="saveCustomer()">เพิ่มลูกค้า</button></div>';
-  var body=document.getElementById('modal-customer-body');body._interval=1;body._principal=null;body._qr=null;
+  var body=document.getElementById('modal-customer-body');body._interval=1;body._principal=null;
   custFormBranches();
   openModal('modal-customer');
 }
@@ -321,16 +311,12 @@ function openEditCustomer(id){
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" value="'+esc(c.phone||'')+'"/></div>'+
     '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" value="'+esc(c.facebook_url||'')+'"/></div>'+
     '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13" value="'+esc(c.id_card||'')+'"/></div>'+
-    '<div class="field"><label>QR code (พร้อมเพย์/โอนเงิน)</label><input class="inp" type="file" accept="image/*" id="f-qr" onchange="readQrFile(this)"/><div id="f-qr-preview"></div></div>'+
+    '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" value="'+esc(c.bank_name||'')+'"/></div>'+
+    '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" value="'+esc(c.bank_account||'')+'"/></div>'+
     '<div class="field-hint" style="background:var(--surface);padding:10px;border-radius:8px">หมายเหตุ: ไม่สามารถแก้ไข วงเงิน/อัตราดอก/ระยะเก็บดอก ได้หลังสร้างแล้ว</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveCustomer()">บันทึก</button></div>';
-  document.getElementById('modal-customer-body')._qr=undefined; // undefined = ไม่เปลี่ยนรูปเดิม
-  // โหลดรูป QR เดิมมาแสดงตัวอย่าง
-  _sb.from('persons').select('qr_image').eq('id',c.person_id).single().then(function(r){
-    if(r.data&&r.data.qr_image)document.getElementById('f-qr-preview').innerHTML='<img src="'+r.data.qr_image+'" style="max-width:160px;border-radius:8px;margin-top:8px"/>';
-  });
   openModal('modal-customer');
 }
 function selInterval(v){
@@ -341,25 +327,6 @@ function selPrincipal(v){
   document.querySelectorAll('#f-principal button').forEach(function(b){b.classList.toggle('sel',+b.getAttribute('data-v')===v)});
   document.getElementById('modal-customer-body')._principal=v;
 }
-// อ่านไฟล์ QR → ย่อขนาด (กว้าง/สูงสุด 500px) → เก็บเป็น base64 + พรีวิว
-function readQrFile(input){
-  var f=input.files&&input.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(e){
-    var img=new Image();
-    img.onload=function(){
-      var max=500,w=img.width,h=img.height;
-      if(w>h&&w>max){h=Math.round(h*max/w);w=max;}else if(h>=w&&h>max){w=Math.round(w*max/h);h=max;}
-      var cv=document.createElement('canvas');cv.width=w;cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
-      var data=cv.toDataURL('image/jpeg',0.85);
-      document.getElementById('modal-customer-body')._qr=data;
-      document.getElementById('f-qr-preview').innerHTML='<img src="'+data+'" style="max-width:160px;border-radius:8px;margin-top:8px"/>';
-    };
-    img.src=e.target.result;
-  };
-  rd.readAsDataURL(f);
-}
 async function saveCustomer(){
   var name=document.getElementById('f-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อ','err');return}
@@ -367,13 +334,13 @@ async function saveCustomer(){
   var phone=document.getElementById('f-phone').value.trim()||null;
   var fb=document.getElementById('f-fb').value.trim()||null;
   var idcard=document.getElementById('f-idcard').value.trim()||null;
-  var qr=document.getElementById('modal-customer-body')._qr; // undefined=ไม่เปลี่ยน, null/dataURL=ตั้งค่า
+  var bankName=document.getElementById('f-bank-name').value.trim()||null;
+  var bankAccount=document.getElementById('f-bank-account').value.trim()||null;
 
   // โหมดแก้ไข → แก้ที่ตาราง persons (ตัวตนของคน)
   if(editingCustId){
     var cc=allCustomers.find(function(x){return x.id===editingCustId});
-    var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard};
-    if(qr!==undefined)upd.qr_image=qr; // อัปเดตรูปเฉพาะเมื่อเลือกไฟล์ใหม่
+    var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
     toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(editingCustId);return;
@@ -397,10 +364,10 @@ async function saveCustomer(){
   var personId;
   if(existing){
     personId=existing.id;
-    if(qr)await _sb.from('persons').update({qr_image:qr}).eq('id',personId); // อัปเดต QR ให้คนเดิมถ้าอัปโหลดใหม่
+    if(bankName||bankAccount)await _sb.from('persons').update({bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else{
-    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,qr_image:qr||null}).select().single();
+    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
     if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
     personId=pres.data.id;
   }
