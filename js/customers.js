@@ -57,17 +57,26 @@ function renderCustomers(){
   }
   // ตาราง (จอใหญ่)
   document.getElementById('cust-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th>กอง</th><th>บ้าน</th><th class="tr-right">ต้นคงเหลือ</th><th>วันนี้</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ดอก/งวด</th><th class="tr-right">ยอดปิด</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     vlist.map(function(c){var s=stMap[c.id];
-      var td=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>':(s.paid?'<span class="crow-st t-paid">✓ จ่าย ฿'+fmt(s.rec.amount_paid)+'</span>':(s.due?'<span class="crow-st t-due">⏰ ต้องเก็บ</span>':'—'));
+      var interest=interestDue(c);
+      var close=closeAmount(c);
+      var ref=c.last_collection_date||c.start_date;
+      var daysSince=ref?daysBetween(ref,today):0;
+      var daysOver=daysSince-c.collection_interval;
+      var tipLines=[];
+      tipLines.push('งวด '+c.collection_interval+' วัน · อัตรา '+(c.daily_interest_rate*100).toFixed(2)+'%/วัน');
+      if(ref)tipLines.push('เก็บล่าสุด: '+thDate(ref)+' ('+daysSince+' วันที่แล้ว)');
+      if(daysOver>0)tipLines.push('⚠️ ค้าง '+daysOver+' วัน');
+      if(c.branch_fee)tipLines.push('ค่าธรรมเนียมบ้าน: ฿'+fmt(c.branch_fee));
+      var tip=tipLines.join('\n');
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
-      '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'</td>'+
-      '<td style="color:var(--text2)">'+esc(groupNameOfBranch(c.branch_id))+'</td>'+
-      '<td style="color:var(--text2)">'+esc(branchName(c.branch_id))+'</td>'+
+      '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
-      '<td>'+td+'</td>'+
-      '<td><span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span></td>'+
+      '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
+      '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
+      '<td><span class="st st-'+c.status+'" data-tip="'+esc(tip)+'">'+STATUS_LABEL[c.status]+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
       '<td>'+((c.status!=='closed'&&!s.pending)?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>')+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน

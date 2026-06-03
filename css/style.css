@@ -306,6 +306,11 @@ table.tbl tbody tr:hover{background:var(--surface)}
 
 /* ═══ MISC ═══ */
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:0.85rem}
+
+/* ═══ CUSTOM TOOLTIP ═══ */
+[data-tip]{position:relative;cursor:default}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card2);color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:8px 12px;font-size:0.75rem;font-family:var(--font-th);white-space:pre;line-height:1.6;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:var(--shadow);min-width:160px;max-width:260px}
+[data-tip]:hover::after{opacity:1}
 .skeleton{background:linear-gradient(90deg,var(--surface),var(--card2),var(--surface));background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius)}
 @keyframes shimmer{to{background-position:-200% 0}}
 .row-flex{display:flex;align-items:center;gap:10px}
