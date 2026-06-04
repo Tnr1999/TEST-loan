@@ -14,6 +14,7 @@ var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
 var currentDetailId = null;
 var custView = 'today';
 var custBranchId = '';
+var dashBranchId = '';
 
 /* ═══ UTILS ═══ */
 function toISO(d){return d.toISOString().split('T')[0]}
@@ -248,32 +249,10 @@ function accessibleGroups(){
   return allGroups.filter(function(g){return gset[g.id]});
 }
 function populateFilters(){
-  var groups=accessibleGroups();
-  var gopts='<option value="">ทุกกอง</option>'+groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('');
-  var el=document.getElementById('dash-filter-group');
-  if(el){var v=el.value;el.innerHTML=gopts;if(groups.some(function(g){return g.id===v}))el.value=v;}
-  // ซ่อนตัวกรองกองถ้ามี ≤1 กอง
-  var hideG=groups.length<=1;
-  var pg=document.getElementById('dash-group-wrap');if(pg)pg.style.display=hideG?'none':'';
-  populateBranchOptions('dash-filter-group','dash-filter-branch');
-  // ปุ่มกรองบ้านในหน้าลูกค้า
+  // ปุ่มกรองบ้าน: dashboard + หน้าลูกค้า
+  if(typeof renderDashBranchBtns==='function') renderDashBranchBtns();
   if(typeof renderCustBranchBtns==='function') renderCustBranchBtns();
-  // ซ่อนตัวกรองบ้านบนแดชบอร์ดถ้ามี ≤1 บ้าน
-  var nb=allBranches.filter(function(b){return canAccessBranch(b.id)}).length;
-  var bw=document.getElementById('dash-branch-wrap');if(bw)bw.style.display=nb<=1?'none':'';
 }
-// เติม dropdown บ้าน ตามกองที่เลือก
-function populateBranchOptions(groupSelId,branchSelId){
-  var bsel=document.getElementById(branchSelId);if(!bsel)return;
-  var gEl=document.getElementById(groupSelId),gid=gEl?gEl.value:'';
-  var bids=myBranchIds();
-  var bs=allBranches.filter(function(b){return bids.indexOf(b.id)>=0&&(!gid||b.group_id===gid)});
-  var v=bsel.value;
-  bsel.innerHTML='<option value="">ทุกบ้าน</option>'+bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('');
-  if(bs.some(function(b){return b.id===v}))bsel.value=v;else bsel.value='';
-}
-function onDashGroup(){populateBranchOptions('dash-filter-group','dash-filter-branch');renderDashboard()}
-function onCustGroup(){populateBranchOptions('cust-filter-group','cust-filter-branch');renderCustomers()}
 // แปลง branch_id → ชื่อกอง / ชื่อบ้าน
 function branchName(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'—'}
 function groupNameOfBranch(id){var b=allBranches.find(function(x){return x.id===id});if(!b||!b.group_id)return '—';var g=allGroups.find(function(x){return x.id===b.group_id});return g?g.name:'—'}

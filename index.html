@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=20260603g"/>
+<link rel="stylesheet" href="css/style.css?v=20260603h"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -64,11 +64,8 @@
           <div class="page-title" id="dash-title">ภาพรวม</div>
           <div class="page-sub" id="dash-sub">สรุปการดำเนินงานรายวัน</div>
         </div>
-        <div class="row-flex" style="gap:8px">
-          <span id="dash-group-wrap"><select class="inp btn-sm" id="dash-filter-group" onchange="onDashGroup()" style="width:auto;padding:7px 30px 7px 12px"></select></span>
-          <span id="dash-branch-wrap"><select class="inp btn-sm" id="dash-filter-branch" onchange="renderDashboard()" style="width:auto;padding:7px 30px 7px 12px"></select></span>
-        </div>
       </div>
+      <div id="dash-branch-btns" class="branch-btns" style="margin-bottom:16px"></div>
 
       <div style="display:grid;grid-template-columns:300px 1fr;gap:16px" id="dash-layout">
         <div class="cal-wrap" id="dash-cal-wrap">
@@ -212,12 +209,12 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=20260603g"></script>
-<script src="js/dashboard.js?v=20260603g"></script>
-<script src="js/payments.js?v=20260603g"></script>
-<script src="js/customers.js?v=20260603g"></script>
-<script src="js/admin.js?v=20260603g"></script>
-<script src="js/calendar.js?v=20260603g"></script>
-<script src="js/init.js?v=20260603g"></script>
+<script src="js/core.js?v=20260603h"></script>
+<script src="js/dashboard.js?v=20260603h"></script>
+<script src="js/payments.js?v=20260603h"></script>
+<script src="js/customers.js?v=20260603h"></script>
+<script src="js/admin.js?v=20260603h"></script>
+<script src="js/calendar.js?v=20260603h"></script>
+<script src="js/init.js?v=20260603h"></script>
 </body>
 </html>

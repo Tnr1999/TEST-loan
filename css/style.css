@@ -128,7 +128,7 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 
 /* ═══ ROLE-BASED UX (แยกตามบทบาท) ═══ */
 /* staff (คนเก็บเงิน): ซ่อนมุมมองผู้บริหาร (staff เพิ่มลูกค้าได้แล้ว จึงไม่ซ่อน #btn-add-customer) */
-body.role-staff #dash-group-wrap{display:none}
+body.role-staff #dash-branch-btns{display:none}
 body.role-staff #dash-cal-wrap{display:none}
 body.role-staff #dash-layout{display:block!important}
 

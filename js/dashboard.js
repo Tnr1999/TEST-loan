@@ -10,13 +10,25 @@ function showPage(name){
 /* ═══════════════════════════════════════════════
    DASHBOARD
 ═══════════════════════════════════════════════ */
+// ปุ่มเลือกบ้านบน dashboard — "ทั้งหมด" + รายบ้าน (เรียงตามกอง)
+function renderDashBranchBtns(){
+  var el=document.getElementById('dash-branch-btns');if(!el)return;
+  var bids=myBranchIds();
+  var branches=allBranches.filter(function(b){return bids.indexOf(b.id)>=0});
+  if(branches.length<=1){el.innerHTML='';return;}
+  var btns='<button class="branch-btn'+(dashBranchId===''?' active':'')+'" onclick="setDashBranch(\'\')">ทั้งหมด</button>';
+  allGroups.forEach(function(g){
+    branches.filter(function(b){return b.group_id===g.id}).forEach(function(b){btns+='<button class="branch-btn'+(dashBranchId===b.id?' active':'')+'" onclick="setDashBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
+  });
+  branches.filter(function(b){return !b.group_id}).forEach(function(b){btns+='<button class="branch-btn'+(dashBranchId===b.id?' active':'')+'" onclick="setDashBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
+  el.innerHTML=btns;
+}
+function setDashBranch(id){dashBranchId=id;renderDashBranchBtns();renderDashboard();}
+
 function renderDashboard(){
   var date=document.getElementById('dash-date-picker').value||todayISO();
-  var fg=document.getElementById('dash-filter-group')?document.getElementById('dash-filter-group').value:'';
-  var fb=document.getElementById('dash-filter-branch').value;
   var bids=myBranchIds();
-  if(fg) bids=allBranches.filter(function(b){return b.group_id===fg&&bids.indexOf(b.id)>=0}).map(function(b){return b.id});
-  if(fb) bids=[fb];
+  if(dashBranchId) bids=[dashBranchId];
 
   var custs=allCustomers.filter(function(c){return bids.indexOf(c.branch_id)>=0});
   var recs=allRecords.filter(function(r){
