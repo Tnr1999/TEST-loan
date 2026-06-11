@@ -202,27 +202,18 @@ function startApp(){
   rb.textContent=ROLE_LABEL[currentUser.role];rb.className='role-badge role-'+currentUser.role;
   // role class ที่ body → ใช้สลับ UX/UI ตามบทบาท (CSS/JS)
   document.body.className='role-'+(currentUser.role==='manager'?'head':currentUser.role);
-  // ปรับหัวข้อ/คำโปรยหน้าแรกตามบทบาท
-  var firstName=(currentUser.full_name||'').split(' ')[0];
-  var dttl={owner:'ภาพรวม',head:'ภาพรวม',manager:'ภาพรวม',staff:'สวัสดี '+firstName};
-  var dsub={owner:'ภาพรวมทั้งระบบ',head:'ภาพรวมกองของคุณ',manager:'ภาพรวมกองของคุณ',staff:'งานเก็บเงินวันนี้'};
-  var dt=document.getElementById('dash-title');if(dt)dt.textContent=dttl[currentUser.role]||'ภาพรวม';
-  var de=document.getElementById('dash-sub');if(de)de.textContent=dsub[currentUser.role]||'สรุปการดำเนินงานรายวัน';
-  // permission-based UI (แสดง/ซ่อนทั้งส่วน)
-  // staff ไม่ใช้หน้าแรก (ภาพรวม) — ใช้หน้า "ลูกค้า" ที่มีชิป ต้องจ่ายวันนี้/ค้าง + ค้นหา แทน
-  document.getElementById('page-dashboard').style.display=isStaff()?'none':'';
-  // settings page: แสดงถ้ามีสิทธิ์อย่างน้อย 1 แท็บ
-  var ps=document.getElementById('page-settings');
-  if(ps) ps.style.display=(canEdit()||canManageGroups()||canManageUsers())?'':'none';
+  // permission-based UI: แท็บย่อยในหน้าตั้งค่า
   var sgb=document.getElementById('stab-btn-groups');if(sgb)sgb.style.display=canManageGroups()?'':'none';
   var sbb=document.getElementById('stab-btn-branches');if(sbb)sbb.style.display=canEdit()?'':'none';
   var sub=document.getElementById('stab-btn-users');if(sub)sub.style.display=canManageUsers()?'':'none';
-  // เริ่มต้นแสดงแท็บที่เหมาะสม
   if(typeof showSettingsTab==='function'){
     if(canEdit()) showSettingsTab('branches');
     else if(canManageGroups()) showSettingsTab('groups');
     else if(canManageUsers()) showSettingsTab('users');
   }
+  // เมนูตามสิทธิ์ + เปิด "หน้าลูกค้า" เป็นหน้าหลัก (owner/head เหมือน staff)
+  renderNav();
+  showPage('customers');
   var t=todayISO();
   document.getElementById('dash-date-picker').value=t;
   initCalendar();

@@ -1,10 +1,29 @@
 /* ═══════════════════════════════════════════════
    PAGE NAV
 ═══════════════════════════════════════════════ */
-// ทุกส่วนอยู่หน้าเดียว — showPage = เลื่อนไปยังส่วนนั้น
+// สลับหน้า (แสดงทีละหน้า) + อัปเดตเมนูที่ active
 function showPage(name){
-  var el=document.getElementById('page-'+name);
-  if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p.id==='page-'+name)});
+  document.querySelectorAll('.tab,.nav-item').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-page')===name)});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+// เมนูตามสิทธิ์: ลูกค้า (ทุกคน) · รายงาน (owner/head) · ตั้งค่า (ผู้มีสิทธิ์)
+function navItems(){
+  var items=[{k:'customers',ic:'👥',t:'ลูกค้า'}];
+  if(canEdit())items.push({k:'reports',ic:'📊',t:'รายงาน'});
+  if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',ic:'⚙️',t:'ตั้งค่า'});
+  return items;
+}
+function renderNav(){
+  var items=navItems();
+  var hc=document.getElementById('header-center'),bn=document.getElementById('bottom-nav');
+  if(items.length<=1){if(hc)hc.innerHTML='';if(bn){bn.innerHTML='';bn.style.display='none';}return;}
+  if(hc)hc.innerHTML='<div class="tab-bar">'+items.map(function(it){
+    return '<button class="tab" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')">'+it.ic+' '+it.t+'</button>';
+  }).join('')+'</div>';
+  if(bn)bn.innerHTML=items.map(function(it){
+    return '<button class="nav-item" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')"><span class="nav-ic">'+it.ic+'</span>'+it.t+'</button>';
+  }).join('');
 }
 
 /* ═══════════════════════════════════════════════

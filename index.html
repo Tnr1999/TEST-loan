@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=20260611k"/>
+<link rel="stylesheet" href="css/style.css?v=20260611l"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -43,7 +43,7 @@
         <span class="logo-sub">Daily Interest</span>
       </div>
     </div>
-    <div class="header-center">
+    <div class="header-center" id="header-center">
     </div>
     <div class="header-right">
       <div class="user-chip">
@@ -58,11 +58,11 @@
 
   <div class="container">
     <!-- ═══ DASHBOARD ═══ -->
-    <div class="page active" id="page-dashboard">
+    <div class="page" id="page-reports">
       <div class="page-head">
         <div>
-          <div class="page-title" id="dash-title">ภาพรวม</div>
-          <div class="page-sub" id="dash-sub">สรุปการดำเนินงานรายวัน</div>
+          <div class="page-title" id="dash-title">รายงาน</div>
+          <div class="page-sub" id="dash-sub">สรุปแยกตามบ้าน · กอง</div>
         </div>
       </div>
       <div id="dash-branch-btns" class="branch-btns" style="margin-bottom:16px"></div>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- ═══ CUSTOMERS ═══ -->
-    <div class="page" id="page-customers">
+    <div class="page active" id="page-customers">
       <div class="page-head">
         <div>
           <div class="page-title">ลูกค้า</div>
@@ -172,6 +172,7 @@
   </div>
 
   <button id="scroll-top" class="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="ขึ้นบนสุด">↑</button>
+  <nav class="bottom-nav" id="bottom-nav"></nav>
 </div>
 
 <!-- ═══ MODALS ═══ -->
@@ -228,12 +229,12 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=20260611k"></script>
-<script src="js/dashboard.js?v=20260611k"></script>
-<script src="js/payments.js?v=20260611k"></script>
-<script src="js/customers.js?v=20260611k"></script>
-<script src="js/admin.js?v=20260611k"></script>
-<script src="js/calendar.js?v=20260611k"></script>
-<script src="js/init.js?v=20260611k"></script>
+<script src="js/core.js?v=20260611l"></script>
+<script src="js/dashboard.js?v=20260611l"></script>
+<script src="js/payments.js?v=20260611l"></script>
+<script src="js/customers.js?v=20260611l"></script>
+<script src="js/admin.js?v=20260611l"></script>
+<script src="js/calendar.js?v=20260611l"></script>
+<script src="js/init.js?v=20260611l"></script>
 </body>
 </html>
