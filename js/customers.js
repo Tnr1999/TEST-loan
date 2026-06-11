@@ -84,7 +84,7 @@ function renderCustomers(){
       var tip=tipLines.join('\n');
       var actBtn;
       if(c.status==='closed')actBtn='<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
-      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ ยืนยันรับเงิน</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
+      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
       else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
@@ -92,7 +92,7 @@ function renderCustomers(){
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
-      '<td><span class="st st-'+c.status+'" data-tip="'+esc(tip)+'">'+STATUS_LABEL[c.status]+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
+      '<td><span class="st st-'+(s.pending?'pending':c.status)+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':STATUS_LABEL[c.status])+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
       '<td>'+actBtn+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
@@ -109,7 +109,7 @@ function custDayStatus(c,date){
     paid:!!(rec&&rec.payment_status!=='unpaid'),
     due:c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,date),
     isNew:c.start_date===date,   // ลูกค้าที่เข้ามาในวันนี้
-    pending:!c.disbursed         // รอแอดมินโอนเงินให้
+    pending:!c.disbursed         // รอเปิด — รอแอดมินโอนเงินให้
   };
 }
 // การ์ดลูกค้าแบบลิสต์ (มือถือ + หน้าเก็บเงิน staff) — แตะดูรายละเอียด, ปุ่มขวารับเงิน
@@ -117,7 +117,7 @@ function custCardHTML(c,date,s){
   s=s||custDayStatus(c,date);
   var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
   var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
-  var chip=s.pending?'<span class="crow-st t-pending">🕓 รอรับเงิน</span>'
+  var chip=s.pending?'<span class="crow-st t-pending">🕓 รอเปิด</span>'
     :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
     :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
@@ -125,7 +125,7 @@ function custCardHTML(c,date,s){
     :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
   var btn;
   if(c.status==='closed')btn='';
-  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ ยืนยัน</button>':'';
+  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
   else btn='<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
     '<div class="crow-main">'+
@@ -145,7 +145,7 @@ function openDetail(id){
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">#'+c.seq+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
-    (!c.disbursed?'<span class="st st-pending">🕓 รอรับเงิน</span>':'')+'</div>'+
+    (!c.disbursed?'<span class="st st-pending">🕓 รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
   if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">✏️ แก้ไข</button>';
   h+='</div>';
@@ -175,9 +175,9 @@ function openDetail(id){
   if(!c.disbursed){
     h+='<div class="card card-pad" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.3);background:var(--amber-dim)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
-      '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">🕓 รอโอนเงินให้ลูกค้า</div>'+
-      '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดยืนยันเพื่อเปลี่ยนเป็น "รับเงินแล้ว"</div></div>'+
-      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">✅ ยืนยันโอนเงินแล้ว</button>':'')+
+      '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">🕓 รอเปิด</div>'+
+      '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดเปิดเพื่อเปลี่ยนเป็น "เปิดแล้ว"</div></div>'+
+      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">✅ เปิด</button>':'')+
       '</div></div>';
   }
 
@@ -229,14 +229,14 @@ async function changeStatus(id,status){
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
 }
-// ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอรับเงิน → รับเงินแล้ว)
+// ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
 async function setDisbursed(id){
   var c=allCustomers.find(function(x){return x.id===id});
-  var ok=await showConfirm({icon:'✅',title:'ยืนยันการโอนเงิน',msg:'ยืนยันว่าได้โอนเงินให้ "'+c.full_name+'" แล้ว?',okText:'รับเงินแล้ว',okClass:'btn-green'});
+  var ok=await showConfirm({icon:'✅',title:'ยืนยันการโอนเงิน',msg:'ยืนยันว่าได้โอนเงินให้ "'+c.full_name+'" แล้ว?',okText:'เปิด',okClass:'btn-green'});
   if(!ok)return;
   var res=await _sb.from('loans').update({disbursed:true}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
-  toast('✅ เปลี่ยนเป็น "รับเงินแล้ว"','ok');await loadAll();
+  toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await loadAll();
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
