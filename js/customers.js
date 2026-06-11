@@ -82,6 +82,10 @@ function renderCustomers(){
       if(daysOver>0)tipLines.push('⚠️ ค้าง '+daysOver+' วัน');
       if(c.branch_fee)tipLines.push('ค่าธรรมเนียมบ้าน: ฿'+fmt(c.branch_fee));
       var tip=tipLines.join('\n');
+      var actBtn;
+      if(c.status==='closed')actBtn='<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
+      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ ยืนยันรับเงิน</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
+      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -89,7 +93,7 @@ function renderCustomers(){
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
       '<td><span class="st st-'+c.status+'" data-tip="'+esc(tip)+'">'+STATUS_LABEL[c.status]+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
-      '<td>'+((c.status!=='closed'&&!s.pending)?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>')+'</td></tr>'}).join('')+
+      '<td>'+actBtn+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
@@ -119,8 +123,10 @@ function custCardHTML(c,date,s){
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
     :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
-  var btn=(c.status==='closed'||s.pending)?''
-    :'<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
+  var btn;
+  if(c.status==='closed')btn='';
+  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ ยืนยัน</button>':'';
+  else btn='<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
     '<div class="crow-main">'+
       '<div class="crow-l1"><span class="crow-seq">#'+c.seq+'</span><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
@@ -230,7 +236,8 @@ async function setDisbursed(id){
   if(!ok)return;
   var res=await _sb.from('loans').update({disbursed:true}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
-  toast('✅ เปลี่ยนเป็น "รับเงินแล้ว"','ok');await loadAll();openDetail(id);
+  toast('✅ เปลี่ยนเป็น "รับเงินแล้ว"','ok');await loadAll();
+  if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
   var c=allCustomers.find(function(x){return x.id===id});var ca=closeAmount(c);

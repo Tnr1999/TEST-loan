@@ -229,6 +229,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-btn{flex-shrink:0;border:none;border-radius:10px;padding:9px 13px;font-size:0.84rem;font-weight:700;cursor:pointer;white-space:nowrap}
 .crow-btn.cb-pay{background:var(--gold);color:#1a1300}
 .crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.crow-btn.cb-confirm{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25)}
 
 /* ═══ VIEW CHIPS (ตัวกรองด่วน) ═══ */
 .vchip{display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;transition:all 0.14s}
