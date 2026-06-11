@@ -129,16 +129,30 @@ function custCardHTML(c,date,s){
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
-  var btn;
-  if(c.status==='closed')btn='';
-  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
-  else btn='<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
-  return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
-    '<div class="crow-ava">'+c.seq+'</div>'+
+  // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
+  var head='<div class="crow-ava">'+c.seq+'</div>'+
     '<div class="crow-main">'+
       '<div class="crow-l1"><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
       '<div class="crow-l2">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
-    '</div>'+btn+'</div>';
+    '</div>';
+
+  // ★ ต้องเก็บวันนี้ (ยังไม่จ่าย) = การ์ดพระเอก: โชว์ยอดดอกที่ต้องเก็บตัวโต + ปุ่มรับเงินเด่น
+  if(s.due&&!s.pending){
+    return '<div class="crow due big" onclick="openDetail(\''+c.id+'\')">'+
+      '<div class="crow-top">'+head+'</div>'+
+      '<div class="crow-act" onclick="event.stopPropagation()">'+
+        '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b>฿'+fmt(interestDue(c))+'</b></div>'+
+        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">💵 รับเงิน</button>'+
+      '</div></div>';
+  }
+
+  // อื่นๆ = แถวกระชับ
+  var btn;
+  if(c.status==='closed')btn='';
+  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
+  else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">✏️</button>';
+  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">💵 รับ</button>';
+  return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
 
 function openDetail(id){

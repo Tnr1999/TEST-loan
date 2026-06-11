@@ -61,16 +61,30 @@ function renderDashboard(){
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
-  // สรุปยอด → กริดยืดหยุ่นติดใต้ header (ไม่ล้น/ไม่ถูกตัดบนมือถือ)
-  // staff เน้นเก็บเงิน → เห็น 3 ตัวที่จำเป็น · owner/head เห็นครบ 6
-  var sb=function(k,v,cls){return '<div class="sbar-item '+cls+'"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
-  var cells=isStaff()
-    ? sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าแรง',sum.wage,'purple')
-    : sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าปรับ',sum.penalty,'red')+
+  var sbEl=document.getElementById('summary-bar');
+  if(isStaff()){
+    // ── staff = "ใบงานเก็บเงิน" → แถบความคืบหน้าของวัน (ไม่ใช่ตัวเลขบัญชี) ──
+    var dueN=dueToday.length;
+    var doneN=dueToday.filter(function(c){return recordedAny[c.id]}).length;
+    var got=sum.collected+sum.penalty;
+    var pct=dueN?Math.round(doneN/dueN*100):100;
+    var allDone=dueN>0&&doneN>=dueN;
+    var sub=dueN?(allDone?'🎉 เก็บครบแล้ว '+doneN+'/'+dueN+' ราย':'เก็บแล้ว '+doneN+'/'+dueN+' ราย · เหลือ '+(dueN-doneN)+' ราย')
+                :'วันนี้ไม่มีใครถึงกำหนด';
+    sbEl.innerHTML='<div class="today-strip'+(allDone?' done':'')+'">'+
+      '<div class="ts-top"><div class="ts-title">รอบเก็บวันนี้<span class="ts-date"> · '+thDate(date)+'</span></div>'+
+      '<div class="ts-got">เก็บได้ <b>฿'+fmt0(got)+'</b></div></div>'+
+      '<div class="prog"><div class="prog-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="ts-sub">'+sub+'</div>'+
+      '</div>';
+  }else{
+    // ── owner/head = สรุปยอด 6 ตัว (กริดยืดหยุ่น ไม่ล้นบนมือถือ) ──
+    var sb=function(k,v,cls){return '<div class="sbar-item '+cls+'"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
+    var cells=sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าปรับ',sum.penalty,'red')+
       sb('ค่าแรง',sum.wage,'purple')+sb('ต้นเก็บคืน',sum.principal,'cyan')+sb('ต้นคงค้าง',outstanding,'cyan');
-  document.getElementById('summary-bar').innerHTML=
-    '<div class="sbar"><div class="sbar-head">📊 สรุปยอด<span class="sbar-date">· '+thDate(date)+'</span></div>'+
-    '<div class="sbar-grid">'+cells+'</div></div>';
+    sbEl.innerHTML='<div class="sbar"><div class="sbar-head">📊 สรุปยอด<span class="sbar-date">· '+thDate(date)+'</span></div>'+
+      '<div class="sbar-grid">'+cells+'</div></div>';
+  }
 
   // ── staff ไม่ใช้หน้าแรก (ซ่อนทั้งส่วนใน core.js) — แถบสรุปด้านบนพอแล้ว ใช้หน้า "ลูกค้า" เก็บเงิน ──
   if(isStaff())return;

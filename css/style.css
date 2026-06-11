@@ -123,6 +123,16 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .sbar-v.purple{color:var(--purple)}.sbar-v.cyan{color:var(--cyan)}
 .sbar-item.gold{--c:var(--gold)}.sbar-item.green{--c:var(--green)}.sbar-item.red{--c:var(--red)}
 .sbar-item.purple{--c:var(--purple)}.sbar-item.cyan{--c:var(--cyan)}
+/* แถบ "รอบเก็บวันนี้" — มุมมอง staff (ใบงาน ไม่ใช่ตัวเลขบัญชี) */
+.today-strip{max-width:1100px;margin:0 auto;padding:11px 15px}
+.ts-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
+.ts-title{font-size:0.94rem;font-weight:700;color:var(--text)}
+.ts-date{font-size:0.74rem;font-weight:500;color:var(--muted)}
+.ts-got{font-size:0.74rem;color:var(--text2);white-space:nowrap}
+.ts-got b{font-family:var(--font-mono);font-size:1rem;color:var(--gold);font-weight:700}
+.ts-sub{font-size:0.74rem;color:var(--muted);margin-top:8px}
+.today-strip.done .prog-fill{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+.today-strip.done .ts-sub{color:var(--green);font-weight:600}
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
@@ -245,6 +255,14 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-btn.cb-pay:hover{filter:brightness(1.07)}
 .crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
 .crow-btn.cb-confirm{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
+/* ★ การ์ดพระเอก "ต้องเก็บวันนี้" — โชว์ยอด + ปุ่มรับเงินเด่น */
+.crow.big{flex-direction:column;align-items:stretch;gap:11px}
+.crow.big .crow-top{display:flex;align-items:center;gap:12px}
+.crow-act{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:11px;border-top:1px solid var(--border)}
+.crow-due{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:0}
+.crow-due span{font-size:0.68rem;color:var(--muted)}
+.crow-due b{font-size:1.4rem;font-weight:800;font-family:var(--font-mono);color:var(--gold);letter-spacing:-0.02em}
+.crow.big .crow-btn.cb-pay{padding:12px 24px;font-size:0.95rem}
 
 /* ═══ VIEW CHIPS (ตัวกรองด่วน) ═══ */
 .vchip{display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;transition:all 0.14s}
@@ -423,7 +441,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .bottom-nav{display:flex}
   .desktop-only{display:none!important}
   .header-center{display:none}
-  .user-chip .uname{display:none}
+  /* คืนชื่อผู้ใช้บนมือถือ (ตัดด้วย ellipsis) + ซ่อนซับโลโก้เพื่อให้พื้นที่พอ */
+  .logo-sub{display:none}
+  .user-chip .uname{display:inline-block;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .page-title{font-size:1.2rem}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .cols-3{grid-template-columns:repeat(3,1fr);gap:8px}
