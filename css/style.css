@@ -282,6 +282,15 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .modal-x:hover{color:var(--red)}
 .modal-body{padding:20px}
 .modal-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px}
+/* ฟอร์ม 2 คอลัมน์ (เพิ่มลูกค้า) — มือถือ = คอลัมน์เดียว */
+.form-cols{display:block}
+.form-col-title{font-size:0.8rem;font-weight:600;color:var(--gold);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.form-col+.form-col{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+@media (min-width:768px){
+  .modal.modal-wide{max-width:760px}
+  .form-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+  .form-col+.form-col{margin-top:0;padding-top:0;border-top:none}
+}
 
 /* ═══ CALC PREVIEW ═══ */
 .calc-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px}

@@ -263,28 +263,36 @@ function openAddCustomer(){
   if(!groups.length){toast('กรุณาสร้างกองและผูกบ้านเข้ากองก่อน','err');return}
   document.getElementById('modal-customer-title').textContent='+ เพิ่มลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
-    '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="f-group" onchange="custFormBranches()">'+
-      groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
-    '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
-    '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
-    '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><div class="seg" id="f-principal">'+
-      [300,500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(function(a){return '<button type="button" data-v="'+a+'" onclick="selPrincipal('+a+')">'+fmt0(a)+'</button>'}).join('')+
-      '</div><div class="field-err"></div></div>'+
-    '<div class="field"><label>อัตราดอกรายวัน</label><input class="inp" value="10% (คงที่)" disabled style="opacity:0.7"/></div>'+
-    '<div class="field"><label>ระยะเก็บดอก</label><div class="seg" id="f-interval">'+
-      '<button class="sel" data-v="1" onclick="selInterval(1)">ทุกวัน</button>'+
-      '<button data-v="2" onclick="selInterval(2)">ทุก 2 วัน</button>'+
-      '<button data-v="3" onclick="selInterval(3)">ทุก 3 วัน</button></div></div>'+
-    '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" value="'+thDate(todayISO())+'" disabled style="opacity:0.7"/></div>'+
-    '<hr style="border:none;border-top:1px solid var(--border);margin:18px 0"/>'+
-    '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
-    '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
-    '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13"/></div>'+
-    '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์..."/></div>'+
-    '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
+    '<div class="form-cols">'+
+    '<div class="form-col">'+
+      '<div class="form-col-title">📋 ข้อมูลสัญญา</div>'+
+      '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="f-group" onchange="custFormBranches()">'+
+        groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
+      '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
+      '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
+      '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><div class="seg" id="f-principal">'+
+        [300,500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(function(a){return '<button type="button" data-v="'+a+'" onclick="selPrincipal('+a+')">'+fmt0(a)+'</button>'}).join('')+
+        '</div><div class="field-err"></div></div>'+
+      '<div class="field"><label>อัตราดอกรายวัน</label><input class="inp" value="10% (คงที่)" disabled style="opacity:0.7"/></div>'+
+      '<div class="field"><label>ระยะเก็บดอก</label><div class="seg" id="f-interval">'+
+        '<button class="sel" data-v="1" onclick="selInterval(1)">ทุกวัน</button>'+
+        '<button data-v="2" onclick="selInterval(2)">ทุก 2 วัน</button>'+
+        '<button data-v="3" onclick="selInterval(3)">ทุก 3 วัน</button></div></div>'+
+      '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" value="'+thDate(todayISO())+'" disabled style="opacity:0.7"/></div>'+
+    '</div>'+
+    '<div class="form-col">'+
+      '<div class="form-col-title">📞 ข้อมูลติดต่อ</div>'+
+      '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
+      '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
+      '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13"/></div>'+
+      '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์..."/></div>'+
+      '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
+    '</div>'+
+    '</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="cust-save-btn" onclick="saveCustomer()">เพิ่มลูกค้า</button></div>';
+  var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.add('modal-wide');
   var body=document.getElementById('modal-customer-body');body._interval=1;body._principal=null;
   custFormBranches();
   openModal('modal-customer');
@@ -317,6 +325,7 @@ function openEditCustomer(id){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
   editingCustId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
   document.getElementById('modal-customer-title').textContent='✏️ แก้ไขลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name" value="'+esc(c.full_name)+'"/></div>'+
