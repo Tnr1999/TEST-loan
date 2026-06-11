@@ -111,7 +111,7 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 #summary-bar{position:sticky;top:var(--header-h);z-index:190;background:rgba(20,23,29,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
 #summary-bar:empty{display:none}
 .sbar{max-width:1100px;margin:0 auto;padding:9px 14px}
-.sbar-head{display:flex;align-items:center;gap:7px;font-size:0.7rem;font-weight:600;color:var(--text2);margin-bottom:8px}
+.sbar-head{display:flex;flex-wrap:wrap;align-items:center;gap:3px 7px;font-size:0.7rem;font-weight:600;color:var(--text2);margin-bottom:8px}
 .sbar-head .sbar-date{color:var(--muted);font-weight:500}
 /* กริดยืดหยุ่น: ≥96px ต่อช่อง → ไม่มีทางล้น/ถูกตัดบนมือถือ (3 ช่อง/แถว) */
 .sbar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
@@ -123,16 +123,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .sbar-v.purple{color:var(--purple)}.sbar-v.cyan{color:var(--cyan)}
 .sbar-item.gold{--c:var(--gold)}.sbar-item.green{--c:var(--green)}.sbar-item.red{--c:var(--red)}
 .sbar-item.purple{--c:var(--purple)}.sbar-item.cyan{--c:var(--cyan)}
-/* แถบ "รอบเก็บวันนี้" — มุมมอง staff (ใบงาน ไม่ใช่ตัวเลขบัญชี) */
-.today-strip{max-width:1100px;margin:0 auto;padding:11px 15px}
-.ts-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
-.ts-title{font-size:0.94rem;font-weight:700;color:var(--text)}
-.ts-date{font-size:0.74rem;font-weight:500;color:var(--muted)}
-.ts-got{font-size:0.74rem;color:var(--text2);white-space:nowrap}
-.ts-got b{font-family:var(--font-mono);font-size:1rem;color:var(--gold);font-weight:700}
-.ts-sub{font-size:0.74rem;color:var(--muted);margin-top:8px}
-.today-strip.done .prog-fill{background:linear-gradient(90deg,var(--green),#6ee7b7)}
-.today-strip.done .ts-sub{color:var(--green);font-weight:600}
+/* แถบความคืบหน้า "รอบเก็บวันนี้" ในหัวสรุป (เฉพาะ staff) */
+.sbar-prog{color:var(--gold);font-weight:700}
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
