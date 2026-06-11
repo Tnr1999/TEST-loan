@@ -86,7 +86,7 @@ function renderCustomers(){
       // ปุ่ม action ในคอลัมน์เดียว — ใช้ปุ่มทรงเดียวกันทุกสถานะ (ดู ›/เปิด/รับเงิน/แก้ไข) เพื่อความสม่ำเสมอ
       var viewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\''+c.id+'\')">ดู ›</button>';
       var actBtn;
-      if(c.status==='closed')actBtn=viewBtn;
+      if(c.status==='closed')actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">🔄 เปิดใหม่</button>':viewBtn;
       else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':viewBtn;
       else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
@@ -148,7 +148,7 @@ function custCardHTML(c,date,s){
 
   // อื่นๆ = แถวกระชับ
   var btn;
-  if(c.status==='closed')btn='';
+  if(c.status==='closed')btn=canEdit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">🔄 เปิดใหม่</button>':'';
   else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
   else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">✏️</button>';
   else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">💵 รับ</button>';
@@ -219,6 +219,12 @@ function openDetail(id){
     h+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     h+='</div></div>';
   }
+  // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — เฉพาะ owner/head
+  if(canEdit()&&c.status==='closed'){
+    h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div>'+
+      '<button class="btn btn-gold btn-sm" onclick="openReloan(\''+id+'\')">🔄 เปิดยอดใหม่ (ปล่อยกู้รอบใหม่)</button>'+
+      '<div class="field-hint" style="margin-top:8px">สร้างสัญญาใหม่ให้ลูกค้าคนนี้ — ประวัติสัญญาเดิมยังเก็บไว้</div></div>';
+  }
 
   // history
   h+='<div class="card"><div class="card-head"><h3>📜 ประวัติการชำระ ('+recs.length+' รายการ)</h3></div>';
@@ -284,9 +290,17 @@ async function doDeleteCustomer(id){
 
 /* ── customer form ── */
 var editingCustId=null;
-function openAddCustomer(){
-  if(!canAddCustomer()){toast('คุณไม่มีสิทธิ์เพิ่มลูกค้า','err');return}
+var reloanPersonId=null; // โหมด "เปิดยอดใหม่" = ปล่อยกู้รอบใหม่ให้ person เดิม
+// เปิดยอดใหม่ให้ลูกค้าที่ปิดสินเชื่อแล้ว (เฉพาะ owner/head) — สร้างสัญญาใหม่ เก็บประวัติเดิมไว้
+function openReloan(id){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์เปิดยอดใหม่','err');return}
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  openAddCustomer(c);
+}
+function openAddCustomer(reloanCust){
+  if(reloanCust?!canEdit():!canAddCustomer()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
   editingCustId=null;
+  reloanPersonId=reloanCust?reloanCust.person_id:null;
   var groups=accessibleGroups();
   if(!groups.length){toast('กรุณาสร้างกองและผูกบ้านเข้ากองก่อน','err');return}
   document.getElementById('modal-customer-title').textContent='+ เพิ่มลูกค้า';
@@ -323,6 +337,15 @@ function openAddCustomer(){
   var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.add('modal-wide');
   var body=document.getElementById('modal-customer-body');body._interval=1;body._principal=null;
   custFormBranches();
+  // โหมดเปิดยอดใหม่ → เติมข้อมูลคนเดิม + เปลี่ยนหัวข้อ/ปุ่ม
+  if(reloanCust){
+    var pp=allPersons.find(function(x){return x.id===reloanCust.person_id})||{};
+    var set=function(idn,v){var e=document.getElementById(idn);if(e)e.value=v||''};
+    set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);
+    set('f-idcard',pp.id_card);set('f-bank-name',pp.bank_name);set('f-bank-account',pp.bank_account);
+    document.getElementById('modal-customer-title').textContent='🔄 เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
+    var sbtn=document.getElementById('cust-save-btn');if(sbtn)sbtn.textContent='เปิดยอดใหม่';
+  }
   openModal('modal-customer');
 }
 // เติมรายการบ้านในฟอร์มเพิ่มลูกค้า ตามกองที่เลือก
@@ -351,7 +374,7 @@ function loanRuleError(personId,branchId){
 }
 function openEditCustomer(id){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
-  editingCustId=id;
+  editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
   document.getElementById('modal-customer-title').textContent='✏️ แก้ไขลูกค้า';
@@ -402,22 +425,27 @@ async function saveCustomer(){
   var branch=allBranches.find(function(b){return b.id===branchId});
   var interval=document.getElementById('modal-customer-body')._interval||1;
 
-  // หา person เดิมจากเลขบัตร (ถ้ากรอก) เพื่อบังคับกฎกู้หลายที่
-  var existing=idcard?allPersons.find(function(p){return p.id_card===idcard}):null;
+  // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาจากเลขบัตร เพื่อบังคับกฎกู้หลายที่
+  var existing=reloanPersonId?{id:reloanPersonId}:(idcard?allPersons.find(function(p){return p.id_card===idcard}):null);
   var ruleErr=loanRuleError(existing?existing.id:null,branchId);
   if(ruleErr){toast(ruleErr,'err');return}
 
+  var saveLabel=reloanPersonId?'เปิดยอดใหม่':'เพิ่มลูกค้า';
   if(btn){btn.innerHTML='<span class="spin"></span>';btn.disabled=true}
 
-  // ใช้ person เดิม หรือสร้างใหม่
+  // หา/สร้าง person
   var personId;
-  if(existing){
+  if(reloanPersonId){
+    personId=reloanPersonId;
+    await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
+  }
+  else if(existing){
     personId=existing.id;
     if(bankName||bankAccount)await _sb.from('persons').update({bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else{
     var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
-    if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
+    if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
     personId=pres.data.id;
   }
 
@@ -429,7 +457,9 @@ async function saveCustomer(){
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0,
     disbursed:false
   }).select().single();
-  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent='เพิ่มลูกค้า'}return}
-  toast('✅ เพิ่มลูกค้าสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
+  var okMsg=reloanPersonId?'✅ เปิดยอดใหม่สำเร็จ':'✅ เพิ่มลูกค้าสำเร็จ';
+  reloanPersonId=null;
+  toast(okMsg,'ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);
 }
 
