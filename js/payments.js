@@ -35,14 +35,16 @@ function openPayment(custId,date){
 }
 function setPayAmt(v){document.getElementById('pay-amount').value=v;var id=document.getElementById('pay-save-btn').getAttribute('onclick').match(/'([^']+)'/)[1];updatePayCalc(id)}
 // คำนวณการชำระ + ตรวจ "ปิดสัญญา" (จ่าย ≥ ยอดปิด) และกันเงินต้นติดลบ
-function payCalc(c,amt){
+// ค่าแรง = (ดอกที่เก็บได้ + ค่าปรับ + ค่าธรรมเนียมบ้าน[เฉพาะวันปิดสัญญา]) × 20%
+function payCalc(c,amt,pen){
+  pen=+pen||0;
   var close=closeAmount(c),due=interestDue(c);
   if(close>0&&amt>=close){
     // จ่ายครบยอดปิด → ปิดสัญญา: เก็บดอกรอบนี้ + คืนต้นทั้งหมด + ค่าธรรมเนียมบ้าน
     return{interest_due:due,interest_collected:due,principal_reduced:+c.remaining_principal,
-      remaining_principal:0,wage:+(due*0.20).toFixed(2),payment_status:'overpaid',closing:true};
+      remaining_principal:0,wage:+((due+pen+(c.branch_fee||0))*0.20).toFixed(2),payment_status:'overpaid',closing:true};
   }
-  var calc=calcPayment(c,amt);
+  var calc=calcPayment(c,amt,pen);
   // กันต้นติดลบ: หักต้นได้ไม่เกินต้นคงเหลือ
   if(calc.principal_reduced>c.remaining_principal){
     calc.principal_reduced=+c.remaining_principal;
@@ -56,16 +58,16 @@ function updatePayCalc(custId){
   var amt=parseFloat(document.getElementById('pay-amount').value)||0;
   var penEl=document.getElementById('pay-penalty');
   var pen=penEl?(parseFloat(penEl.value)||0):0;
-  var calc=payCalc(c,amt);
+  var calc=payCalc(c,amt,pen);
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']:{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
   var h='<div class="calc-box"><div class="calc-title">🧮 ผลการคำนวณ</div>'+
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
   if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">'+(calc.closing?'คืนเงินต้น':'หักเงินต้น')+'</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';
   if(calc.closing&&c.branch_fee>0)h+='<div class="calc-row"><span class="k">ค่าธรรมเนียมบ้าน</span><span class="v">฿'+fmt(c.branch_fee)+'</span></div>';
-  h+='<div class="calc-row"><span class="k">เงินต้นคงเหลือใหม่</span><span class="v">฿'+fmt(calc.remaining_principal)+'</span></div>'+
-    '<div class="calc-row"><span class="k">ค่าแรง (20%)</span><span class="v" style="color:var(--purple)">฿'+fmt(calc.wage)+'</span></div>';
+  h+='<div class="calc-row"><span class="k">เงินต้นคงเหลือใหม่</span><span class="v">฿'+fmt(calc.remaining_principal)+'</span></div>';
   if(pen>0)h+='<div class="calc-row"><span class="k">ค่าปรับ</span><span class="v" style="color:var(--red)">฿'+fmt(pen)+'</span></div>';
+  h+='<div class="calc-row"><span class="k">ค่าแรง (20%)</span><span class="v" style="color:var(--purple)">฿'+fmt(calc.wage)+'</span></div>';
   h+='<div class="calc-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><span class="k" style="font-weight:600">รวมรับเงินวันนี้</span><span class="v" style="font-weight:700;color:var(--gold)">฿'+fmt(amt+pen)+'</span></div></div>';
   document.getElementById('pay-calc').innerHTML=h;
 }
@@ -82,7 +84,7 @@ async function savePayment(custId,date,recId){
     var old=allRecords.find(function(r){return r.id===recId});
     baseC=Object.assign({},c,{remaining_principal:c.remaining_principal + (old?+old.principal_reduced:0)});
   }
-  var calc=payCalc(baseC,amt);
+  var calc=payCalc(baseC,amt,pen);
   var payload={loan_id:custId,record_date:date,interest_due:calc.interest_due,amount_paid:amt,
     interest_collected:calc.interest_collected,principal_reduced:calc.principal_reduced,
     remaining_principal:calc.remaining_principal,wage:calc.wage,payment_status:calc.payment_status,

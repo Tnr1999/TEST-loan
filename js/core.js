@@ -55,16 +55,17 @@ function canAccessBranch(bid){return myBranchIds().indexOf(bid)>=0}
 
 /* ═══ CALCULATIONS (ตาม Spec) ═══ */
 function interestDue(c){return +(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
-function calcPayment(c, amountPaid){
+function calcPayment(c, amountPaid, penalty){
   var due=interestDue(c), ic, pr, ps;
   amountPaid=+amountPaid||0;
+  penalty=+penalty||0;
   if(amountPaid===0){ps='unpaid';ic=0;pr=0;}
   else if(amountPaid<due){ps='partial';ic=amountPaid;pr=0;}
   else if(amountPaid===due){ps='exact';ic=due;pr=0;}
   else{ps='overpaid';ic=due;pr=+(amountPaid-due).toFixed(2);}
   return{interest_due:due,interest_collected:ic,principal_reduced:pr,
     remaining_principal:+(c.remaining_principal-pr).toFixed(2),
-    wage:+(ic*0.20).toFixed(2),payment_status:ps};
+    wage:+((ic+penalty)*0.20).toFixed(2),payment_status:ps};
 }
 function closeAmount(c){return +(c.remaining_principal + interestDue(c) + (c.branch_fee||0)).toFixed(2)}
 function isPaymentDueToday(c, iso){
