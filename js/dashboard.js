@@ -61,17 +61,16 @@ function renderDashboard(){
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
-  // สรุปยอด 6 ตัว → แถบกระชับติดใต้ header (เลื่อนแนวนอน) — ทุก role เห็นยอดของขอบเขตตัวเอง
-  var sb=function(k,v,cls){return '<div class="sbar-item"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
-  document.getElementById('summary-bar').innerHTML='<div class="sbar-scroll">'+
-    '<div class="sbar-item sbar-date"><span class="sbar-k">📊 สรุปยอด</span><span class="sbar-v">'+thDate(date)+'</span></div>'+
-    sb('รวมรับ',sum.collected+sum.penalty,'gold')+
-    sb('ดอก',sum.interest,'green')+
-    sb('ค่าปรับ',sum.penalty,'red')+
-    sb('ค่าแรง',sum.wage,'purple')+
-    sb('ต้นเก็บคืน',sum.principal,'cyan')+
-    sb('ต้นคงค้าง',outstanding,'cyan')+
-    '</div>';
+  // สรุปยอด → กริดยืดหยุ่นติดใต้ header (ไม่ล้น/ไม่ถูกตัดบนมือถือ)
+  // staff เน้นเก็บเงิน → เห็น 3 ตัวที่จำเป็น · owner/head เห็นครบ 6
+  var sb=function(k,v,cls){return '<div class="sbar-item '+cls+'"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
+  var cells=isStaff()
+    ? sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าแรง',sum.wage,'purple')
+    : sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าปรับ',sum.penalty,'red')+
+      sb('ค่าแรง',sum.wage,'purple')+sb('ต้นเก็บคืน',sum.principal,'cyan')+sb('ต้นคงค้าง',outstanding,'cyan');
+  document.getElementById('summary-bar').innerHTML=
+    '<div class="sbar"><div class="sbar-head">📊 สรุปยอด<span class="sbar-date">· '+thDate(date)+'</span></div>'+
+    '<div class="sbar-grid">'+cells+'</div></div>';
 
   // ── staff ไม่ใช้หน้าแรก (ซ่อนทั้งส่วนใน core.js) — แถบสรุปด้านบนพอแล้ว ใช้หน้า "ลูกค้า" เก็บเงิน ──
   if(isStaff())return;

@@ -134,9 +134,10 @@ function custCardHTML(c,date,s){
   else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
   else btn='<button class="crow-btn '+(s.paid?'cb-edit':'cb-pay')+'" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">'+(s.paid?'✏️':'💵 รับ')+'</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+
+    '<div class="crow-ava">'+c.seq+'</div>'+
     '<div class="crow-main">'+
-      '<div class="crow-l1"><span class="crow-seq">#'+c.seq+'</span><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
-      '<div class="crow-l2">คงเหลือ <b style="color:var(--text)">฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
+      '<div class="crow-l1"><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
+      '<div class="crow-l2">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
     '</div>'+btn+'</div>';
 }
 
