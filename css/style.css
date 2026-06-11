@@ -328,6 +328,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .quick-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .quick-btn{font-size:0.76rem;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all 0.15s}
 .quick-btn.sel,.quick-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
+.quick-btn.qb-pen{border-color:rgba(251,113,133,0.35);color:var(--red)}
+.quick-btn.qb-pen:hover,.quick-btn.qb-pen.sel{border-color:var(--red);color:var(--red);background:var(--red-dim)}
 
 /* ═══ SEGMENTED ═══ */
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

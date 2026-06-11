@@ -5,22 +5,25 @@
 function openPayment(custId,date){
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
-  var due=interestDue(c);
+  var due=interestDue(c),close=closeAmount(c),pen=computePenalty(c,date);
   document.getElementById('modal-payment-title').textContent='💵 #'+c.seq+' '+c.full_name;
   document.getElementById('modal-payment-body').innerHTML=
     '<div class="field"><label>วันที่ชำระ'+(existing?' <span style="color:var(--green)">· มีบันทึกแล้ว (แก้ไข)</span>':'')+'</label><input class="inp" id="pay-date" type="date" max="'+todayISO()+'" value="'+date+'" onchange="openPayment(\''+custId+'\',this.value)"/></div>'+
     '<div style="display:flex;gap:10px;margin-bottom:14px">'+
       '<div class="stat" style="flex:1"><span class="label">เงินต้นคงเหลือ</span><span class="value" style="font-size:1.1rem">฿'+fmt(c.remaining_principal)+'</span></div>'+
       '<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">ดอกที่ต้องจ่าย</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(due)+'</span></div>'+
+      (pen>0?'<div class="stat" style="flex:1"><span class="label" style="color:var(--red)">ค่าปรับ · อัตโนมัติ</span><span class="value" style="font-size:1.1rem;color:var(--red)">฿'+fmt(pen)+'</span></div>':'')+
     '</div>'+
     '<div class="quick-btns">'+
-      '<button class="quick-btn" onclick="setPayAmt(0)">ไม่จ่าย</button>'+
+      '<button class="quick-btn" onclick="setPayAmt(0)">↺ รีเซ็ต</button>'+
       '<button class="quick-btn" onclick="setPayAmt('+due+')">ดอก ฿'+fmt(due)+'</button>'+
-      '<button class="quick-btn" onclick="setPayAmt('+closeAmount(c)+')">ปิดยอด ฿'+fmt(closeAmount(c))+'</button>'+
+      '<button class="quick-btn qb-pen" onclick="setPayAmt('+due+')">ดอก+ค่าปรับ ฿'+fmt(due+pen)+'</button>'+
+      '<button class="quick-btn" onclick="setPayAmt('+close+')">ปิดยอด ฿'+fmt(close)+'</button>'+
+      '<button class="quick-btn qb-pen" onclick="setPayAmt('+close+')">ปิดยอด+ค่าปรับ ฿'+fmt(close+pen)+'</button>'+
     '</div>'+
     '<div class="field"><label>จำนวนที่จ่าย (บาท)</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+(existing?existing.amount_paid:'')+'" oninput="updatePayCalc(\''+custId+'\')"/></div>'+
     '<div id="pay-calc"></div>'+
-    '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(closeAmount(c))+'</div>'+
+    '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(close)+'</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-payment\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="pay-save-btn" onclick="savePayment(\''+custId+'\',\''+date+'\','+(existing?'\''+existing.id+'\'':'null')+')">'+(existing?'แก้ไข':'บันทึก')+'</button>'+
