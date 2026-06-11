@@ -17,7 +17,7 @@ var custBranchId = '';
 var dashBranchId = '';
 
 /* ═══ UTILS ═══ */
-function toISO(d){return d.toISOString().split('T')[0]}
+function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayISO(){return toISO(new Date())}
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(86400000))}
 function fmt(n){return (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
