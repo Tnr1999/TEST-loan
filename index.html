@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=20260611f"/>
+<link rel="stylesheet" href="css/style.css?v=20260611g"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -92,6 +92,25 @@
           <div class="page-sub">จัดการรายชื่อลูกค้าสินเชื่อ</div>
         </div>
         <button class="btn btn-gold" id="btn-add-customer" onclick="openAddCustomer()">+ เพิ่มลูกค้า</button>
+      </div>
+      <div class="cust-datebar" id="cust-datebar">
+        <button class="cal-nav" onclick="calStepDay(-1)" aria-label="วันก่อนหน้า">‹</button>
+        <button class="cust-date-btn" onclick="event.stopPropagation();toggleCustCal()" aria-label="เลือกวันที่">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span id="cust-date-label">—</span>
+          <svg class="caret" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <button class="cal-nav" onclick="calStepDay(1)" aria-label="วันถัดไป">›</button>
+        <button class="btn btn-ghost btn-xs cust-today-btn" onclick="calSelectToday()">วันนี้</button>
+        <div class="cust-cal-pop" id="cust-cal-pop" hidden>
+          <div class="cal-head">
+            <button class="cal-nav" onclick="calNavMonth(-1)" aria-label="เดือนก่อนหน้า">‹</button>
+            <span class="cal-month" id="cust-cal-month-label">—</span>
+            <button class="cal-nav" onclick="calNavMonth(1)" aria-label="เดือนถัดไป">›</button>
+          </div>
+          <div class="cal-dow"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
+          <div class="cal-grid" id="cust-cal-days-grid"></div>
+        </div>
       </div>
       <div class="filter-row">
         <div class="search-box">
@@ -209,12 +228,12 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=20260611f"></script>
-<script src="js/dashboard.js?v=20260611f"></script>
-<script src="js/payments.js?v=20260611f"></script>
-<script src="js/customers.js?v=20260611f"></script>
-<script src="js/admin.js?v=20260611f"></script>
-<script src="js/calendar.js?v=20260611f"></script>
-<script src="js/init.js?v=20260611f"></script>
+<script src="js/core.js?v=20260611g"></script>
+<script src="js/dashboard.js?v=20260611g"></script>
+<script src="js/payments.js?v=20260611g"></script>
+<script src="js/customers.js?v=20260611g"></script>
+<script src="js/admin.js?v=20260611g"></script>
+<script src="js/calendar.js?v=20260611g"></script>
+<script src="js/init.js?v=20260611g"></script>
 </body>
 </html>

@@ -355,6 +355,24 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .search-box .inp{padding-left:36px}
 .filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .checkbox-row{display:flex;align-items:center;gap:9px;padding:9px 0;cursor:pointer}
+
+/* ── แถบเลือกวันที่ (หน้าลูกค้า) — ใช้วันร่วมกับ dashboard ── */
+.cust-datebar{position:relative;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.cust-date-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1;min-width:0;
+  padding:9px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border2);
+  color:var(--text);font-size:0.9rem;font-weight:600;cursor:pointer;transition:border-color 0.14s,background 0.14s,color 0.14s}
+.cust-date-btn:hover{border-color:var(--gold);background:var(--card)}
+.cust-date-btn>svg:first-child{color:var(--gold);flex-shrink:0}
+.cust-date-btn .caret{color:var(--muted);flex-shrink:0}
+.cust-today-btn{flex-shrink:0}
+/* ไฮไลต์เมื่อ "ไม่ใช่วันนี้" — กันสับสนว่ากำลังดูย้อนหลัง/ล่วงหน้า */
+.cust-datebar.not-today .cust-date-btn{border-color:var(--gold);background:var(--gold-dim);color:var(--gold)}
+.cust-datebar.not-today .cust-today-btn{border-color:var(--gold);color:var(--gold)}
+/* popover ปฏิทิน — เปิดลงด้านล่างแถบ */
+.cust-cal-pop{position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:180;margin:0 auto;max-width:340px;
+  background:var(--card);border:1px solid var(--border2);border-radius:var(--radius);padding:14px;
+  box-shadow:var(--shadow-lg);animation:slideUp 0.18s cubic-bezier(0.16,1,0.3,1)}
+.cust-cal-pop[hidden]{display:none}
 .checkbox-row input{width:17px;height:17px;accent-color:var(--gold);cursor:pointer}
 
 /* ═══════════ RESPONSIVE (ดู docs/DESIGN.md) ═══════════
@@ -412,5 +430,9 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .filter-row{gap:8px;margin-bottom:12px}
   .filter-row .search-box{flex:1 1 100%}
   .filter-row select.inp{flex:1;width:auto;min-width:0;font-size:0.8rem;padding:9px 26px 9px 10px;background-position:right 7px center}
+  /* ชิปกรอง: แถวเลื่อนแนวนอนแถวเดียว (ลดความสูง controls บนมือถือ) */
+  .chip-list{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
+  .chip-list::-webkit-scrollbar{display:none}
+  .vchip{flex-shrink:0}
   .page-head{margin-bottom:14px}
 }

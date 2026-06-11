@@ -30,10 +30,10 @@ function renderCustomers(){
     return true;
   });
 
-  // คำนวณสถานะ "วันนี้" ของลูกค้าแต่ละคน (ใช้ทั้งชิป/เรียง/แสดงผล)
-  var today=todayISO();
+  // คำนวณสถานะของลูกค้าแต่ละคน ณ "วันที่กำลังดู" (ร่วมกับ dashboard) — ใช้ทั้งชิป/เรียง/แสดงผล
+  var vdate=selDate();
   var stMap={};
-  list.forEach(function(c){stMap[c.id]=custDayStatus(c,today)});
+  list.forEach(function(c){stMap[c.id]=custDayStatus(c,vdate)});
 
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
@@ -47,8 +47,8 @@ function renderCustomers(){
     return true;
   }
 
-  // ชิปกรองด่วน — default = ที่ต้องจ่ายวันนี้
-  var chips=[['today','⏰ ต้องจ่ายวันนี้'],['overdue','🔴 ค้าง'],['new','🆕 ลูกค้าใหม่'],['old','👥 ลูกค้าเก่า'],['closed','✅ ปิดยอด'],['dead','✝️ ตาย']];
+  // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู
+  var chips=[['today','⏰ ถึงกำหนด'],['overdue','🔴 ค้าง'],['new','🆕 ลูกค้าใหม่'],['old','👥 ลูกค้าเก่า'],['closed','✅ ปิดยอด'],['dead','✝️ ตาย']];
   document.getElementById('cust-summary').innerHTML=chips.map(function(v){
     var n=list.filter(function(c){return inView(c,v[0])}).length;
     return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';
@@ -61,7 +61,8 @@ function renderCustomers(){
   vlist.sort(function(a,b){var d=prio(a)-prio(b);return d!==0?d:a.seq-b.seq});
 
   if(!vlist.length){
-    var msg=custView==='today'?'🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง':'ไม่พบลูกค้าในมุมมองนี้';
+    var isToday=vdate===todayISO();
+    var msg=custView==='today'?(isToday?'🎉 วันนี้เก็บครบแล้ว ไม่มีใครค้าง':'🎉 '+thDate(vdate)+' ไม่มีใครถึงกำหนด'):'ไม่พบลูกค้าในมุมมองนี้';
     var eh='<div class="empty">'+msg+(custView!=='old'?'<br><button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="setCustView(\'old\')">ดูลูกค้าเก่าทั้งหมด</button>':'')+'</div>';
     document.getElementById('cust-list').innerHTML=eh;
     document.getElementById('cust-list-cards').innerHTML=eh;
@@ -74,7 +75,7 @@ function renderCustomers(){
       var interest=interestDue(c);
       var close=closeAmount(c);
       var ref=c.last_collection_date||c.start_date;
-      var daysSince=ref?daysBetween(ref,today):0;
+      var daysSince=ref?daysBetween(ref,vdate):0;
       var daysOver=daysSince-c.collection_interval;
       var tipLines=[];
       tipLines.push('งวด '+c.collection_interval+' วัน · อัตรา '+(c.daily_interest_rate*100).toFixed(2)+'%/วัน');
@@ -82,10 +83,12 @@ function renderCustomers(){
       if(daysOver>0)tipLines.push('⚠️ ค้าง '+daysOver+' วัน');
       if(c.branch_fee)tipLines.push('ค่าธรรมเนียมบ้าน: ฿'+fmt(c.branch_fee));
       var tip=tipLines.join('\n');
+      // ปุ่ม action ในคอลัมน์เดียว — ใช้ปุ่มทรงเดียวกันทุกสถานะ (ดู ›/เปิด/รับเงิน/แก้ไข) เพื่อความสม่ำเสมอ
+      var viewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\''+c.id+'\')">ดู ›</button>';
       var actBtn;
-      if(c.status==='closed')actBtn='<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
-      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'<span class="link-gold" style="font-size:0.78rem">ดู ›</span>';
-      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+today+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
+      if(c.status==='closed')actBtn=viewBtn;
+      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':viewBtn;
+      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -97,7 +100,7 @@ function renderCustomers(){
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
-    vlist.map(function(c){return custCardHTML(c,today,stMap[c.id])}).join('');
+    vlist.map(function(c){return custCardHTML(c,vdate,stMap[c.id])}).join('');
 }
 function setCustView(v){custView=v;renderCustomers()}
 
@@ -116,11 +119,14 @@ function custDayStatus(c,date){
 function custCardHTML(c,date,s){
   s=s||custDayStatus(c,date);
   var ival=c.collection_interval===1?'ทุกวัน':'ทุก '+c.collection_interval+'ว';
+  // วันค้าง (เดิมซ่อนใน tooltip ของตาราง — มือถือเข้าไม่ถึง จึงโชว์บนการ์ดด้วย)
+  var ref=c.last_collection_date||c.start_date;
+  var daysOver=ref?(daysBetween(ref,date)-c.collection_interval):0;
   var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
   var chip=s.pending?'<span class="crow-st t-pending">🕓 รอเปิด</span>'
     :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
-    :(s.due?'<span class="crow-st t-due">⏰ วันนี้</span>'
-    :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง</span>'
+    :(s.due?'<span class="crow-st t-due">⏰ ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
+    :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
   var btn;
