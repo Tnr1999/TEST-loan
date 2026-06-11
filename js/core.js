@@ -79,6 +79,63 @@ function isOverdue(c, iso){
   return daysBetween(ref, iso) > c.collection_interval*7;
 }
 
+/* ═══ ค่าปรับอัตโนมัติ (PENALTY) ═══
+   เส้นตายของรอบ = 16:00 ของวันครบกำหนด (ref + collection_interval)
+   16:00–22:00 → คิดชั่วโมงละ penalty_per_hour (ปัดขึ้นทีละชั่วโมง)
+   ตั้งแต่ 22:00 เป็นต้นไป → เปลี่ยนเป็นเต็มวัน penalty_per_day
+   ทุกวันถัดไปที่ยังค้าง → +penalty_per_day อีกวันละครั้ง
+   ใช้เวลาจริงโซนไทย · บันทึกย้อนหลัง = คิดเป็นเต็มวัน (ไม่คิดชั่วโมง) */
+var PENALTY_DEADLINE_HOUR = 16;   // เส้นตาย 16:00
+var PENALTY_HOURLY_SPAN   = 6;    // 16:00→22:00 = 6 ชั่วโมง แล้วเปลี่ยนเป็นเต็มวัน
+
+// เวลาปัจจุบันโซนไทย (Asia/Bangkok) แยกเป็นส่วน ๆ
+function bkkParts(){
+  var p={};
+  try{
+    new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})
+      .formatToParts(new Date()).forEach(function(x){p[x.type]=x.value});
+  }catch(e){var d=new Date();p={year:d.getFullYear(),month:('0'+(d.getMonth()+1)).slice(-2),day:('0'+d.getDate()).slice(-2),hour:('0'+d.getHours()).slice(-2),minute:('0'+d.getMinutes()).slice(-2)};}
+  var hh=+p.hour; if(hh>=24)hh-=24;   // กัน '24' ตอนเที่ยงคืนในบางเครื่อง
+  return {iso:p.year+'-'+p.month+'-'+p.day, hourFloat:hh + (+p.minute)/60};
+}
+function bkkTodayISO(){return bkkParts().iso}
+// วันครบกำหนดของรอบปัจจุบัน (ISO)
+function dueDateOf(c){
+  var ref=c.last_collection_date||c.start_date;
+  if(!ref) return null;
+  var d=new Date(ref+'T00:00:00');
+  d.setDate(d.getDate() + (+c.collection_interval||1));
+  return toISO(d);
+}
+function penaltyRates(c){
+  var b=allBranches.find(function(x){return x.id===c.branch_id})||{};
+  return {ph:+(b.penalty_per_hour||0), pd:+(b.penalty_per_day||0)};
+}
+// ค่าปรับ ณ วันที่ payDateISO (ใช้ตอนรับเงิน) — คืนเป็นบาท
+function computePenalty(c, payDateISO){
+  if(!c||c.status==='closed') return 0;
+  var r=penaltyRates(c);
+  if(!r.ph && !r.pd) return 0;
+  var dueISO=dueDateOf(c); if(!dueISO) return 0;
+  var bkkToday=bkkTodayISO();
+  var elapsedH;
+  if(payDateISO===bkkToday){
+    // วันนี้ → ใช้เวลาจริง (ชั่วโมง+วัน)
+    elapsedH = daysBetween(dueISO, bkkToday)*24 + (bkkParts().hourFloat - PENALTY_DEADLINE_HOUR);
+  }else{
+    // ย้อนหลัง/วันอื่น → คิดเป็นเต็มวัน (ยึดช่วงหลัง 22:00 ของวันนั้น)
+    elapsedH = daysBetween(dueISO, payDateISO)*24 + (PENALTY_HOURLY_SPAN + 1);
+  }
+  if(elapsedH<=0) return 0;            // ยังไม่ถึงเส้นตาย / จ่ายก่อนกำหนด
+  var k=Math.floor(elapsedH/24);       // จำนวนวันเต็มที่ผ่านมา (แต่ละวัน = pd)
+  var into=elapsedH - k*24;            // ชั่วโมงในวันปัจจุบัน (0..24)
+  var current;
+  if(into<=0) current=0;
+  else if(into<PENALTY_HOURLY_SPAN) current=Math.ceil(into)*r.ph;  // 16:00–22:00
+  else current=r.pd;                                                // 22:00 เป็นต้นไป
+  return +(k*r.pd + current).toFixed(2);
+}
+
 /* ═══ COPY ═══ */
 function copyText(t){navigator.clipboard.writeText(t).then(function(){toast('คัดลอกแล้ว: '+t,'ok')}).catch(function(){toast('ไม่สามารถคัดลอกได้','err')})}
 

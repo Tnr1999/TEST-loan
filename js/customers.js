@@ -162,7 +162,7 @@ function openDetail(id){
   h+=dt('วันปล่อยสินเชื่อ',thDate(c.start_date));
   h+=dt('เก็บล่าสุด',c.last_collection_date?thDate(c.last_collection_date):'—');
   h+=dt('ค่าธรรมเนียมบ้าน','฿'+fmt0(c.branch_fee));
-  h+=dt('ค่าปรับมาตรฐานบ้าน','฿'+fmt0(b?b.penalty_fee:0));
+  h+=dt('ค่าปรับ (อัตโนมัติ)','฿'+fmt0(b?b.penalty_per_hour:0)+'/ชม. · ฿'+fmt0(b?b.penalty_per_day:0)+'/วัน');
   h+='</div></div>';
 
   // สถานะการโอนเงินให้ลูกค้า (ลูกค้าใหม่ที่ยังรอรับเงิน)
