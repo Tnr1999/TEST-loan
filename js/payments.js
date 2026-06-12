@@ -53,7 +53,7 @@ function payCalc(c,amt,pen){
 }
 function updatePayCalc(custId){
   var c=allCustomers.find(function(x){return x.id===custId});
-  var amt=parseFloat(document.getElementById('pay-amount').value)||0;
+  var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
   var dateEl=document.getElementById('pay-date');
   var date=dateEl?dateEl.value:todayISO();
   // ค่าปรับคำนวณอัตโนมัติ — คิดเมื่อมีการจ่ายจริงเท่านั้น (จ่าย 0 = ไม่เก็บค่าปรับ)
@@ -73,11 +73,10 @@ function updatePayCalc(custId){
 }
 async function savePayment(custId,date,recId){
   var c=allCustomers.find(function(x){return x.id===custId});
-  var amt=parseFloat(document.getElementById('pay-amount').value)||0;
+  var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0); // กันยอดติดลบ
+  if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return;}     // กันบันทึกวันอนาคต
   // ค่าปรับอัตโนมัติ — เก็บเมื่อมีการจ่ายจริงเท่านั้น
   var pen=amt>0?computePenalty(c,date):0;
-  var btn=document.getElementById('pay-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
-
   // base principal: ถ้าแก้ไข ใช้ principal ก่อนหักของ record เดิม
   var baseC=c;
   if(recId){
@@ -85,6 +84,12 @@ async function savePayment(custId,date,recId){
     baseC=Object.assign({},c,{remaining_principal:c.remaining_principal + (old?+old.principal_reduced:0)});
   }
   var calc=payCalc(baseC,amt,pen);
+  // ยืนยันก่อน "ปิดสัญญา" — กันกดพลาดแล้วลูกค้าหายจากรายการเก็บ
+  if(calc.closing){
+    var okClose=await showConfirm({icon:'✓',title:'ปิดสัญญา',msg:'ยอดนี้จะปิดสัญญาของ "'+c.full_name+'"\nปิดแล้วลูกค้าจะหายจากรายการเก็บ — ยืนยัน?',okText:'ปิดสัญญา',okClass:'btn-green'});
+    if(!okClose)return;
+  }
+  var btn=document.getElementById('pay-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
   var payload={loan_id:custId,record_date:date,interest_due:calc.interest_due,amount_paid:amt,
     interest_collected:calc.interest_collected,principal_reduced:calc.principal_reduced,
     remaining_principal:calc.remaining_principal,wage:calc.wage,payment_status:calc.payment_status,

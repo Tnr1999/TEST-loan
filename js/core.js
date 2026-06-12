@@ -223,7 +223,16 @@ function startApp(){
   window.addEventListener('scroll',function(){
     var f=document.getElementById('scroll-top');if(f)f.classList.toggle('show',window.scrollY>400);
   },{passive:true});
+  showInitialSkeleton();
   loadAll();
+}
+// โครงโหลด (skeleton) ระหว่างดึงข้อมูลครั้งแรก — กันจอว่าง/ดูเหมือนค้าง
+function showInitialSkeleton(){
+  var sb=document.getElementById('summary-bar');
+  if(sb)sb.innerHTML='<div class="sbar"><div class="skel" style="height:46px;width:150px"></div><div class="skel" style="height:30px;flex:1;max-width:320px"></div></div>';
+  var cards='';for(var i=0;i<5;i++)cards+='<div class="skel skel-card"></div>';
+  var cc=document.getElementById('cust-list-cards');if(cc)cc.innerHTML=cards;
+  var cl=document.getElementById('cust-list');if(cl)cl.innerHTML='<div style="padding:16px">'+cards+'</div>';
 }
 
 /* ═══ LOAD DATA ═══ */

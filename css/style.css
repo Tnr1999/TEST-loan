@@ -79,6 +79,10 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+/* skeleton ระหว่างโหลดครั้งแรก */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);background-size:200% 100%;animation:shimmer 1.4s ease-in-out infinite;border-radius:10px}
+.skel-card{height:64px;margin-bottom:10px}
 /* เคารพ prefers-reduced-motion — ปิดแอนิเมชัน/ทรานสิชันทั้งหมด */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
