@@ -301,6 +301,7 @@ async function doCloseLoan(id){
 function openTopup(id){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  closeModal('modal-detail'); // กัน modal ซ้อนกัน
   document.getElementById('modal-topup-body').innerHTML=
     '<div class="field"><label>ยอดที่โอนเพิ่มให้ลูกค้า (บาท)</label><input class="inp mono" id="topup-amount" type="number" min="0" step="0.01" placeholder="0.00" autofocus/></div>'+
     '<div class="field-hint">ยอดนี้จะถูกเพิ่มเข้าเงินต้นของ "'+esc(c.full_name)+'" (ปัจจุบัน ฿'+fmt(c.remaining_principal)+') และนับเป็นยอดเบิกวันนี้</div>'+
@@ -344,6 +345,7 @@ function openReloan(id){
 }
 function openAddCustomer(reloanCust){
   if(reloanCust?!canEdit():!canAddCustomer()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
+  closeModal('modal-detail'); // กัน modal ซ้อนกัน (เปิดยอดใหม่จากหน้ารายละเอียด)
   editingCustId=null;
   reloanPersonId=reloanCust?reloanCust.person_id:null;
   var groups=accessibleGroups();
@@ -427,6 +429,7 @@ function loanRuleError(personId,branchId){
 }
 function openEditCustomer(id){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
+  closeModal('modal-detail'); // กัน modal ซ้อนกัน
   editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
