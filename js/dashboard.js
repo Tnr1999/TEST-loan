@@ -80,7 +80,7 @@ function renderDashboard(){
   // by branch
   var byBranch=allBranches.filter(function(b){return bids.indexOf(b.id)>=0}).map(function(b){
     var br=recs.filter(function(r){var c=allCustomers.find(function(x){return x.id===r.customer_id});return c&&c.branch_id===b.id});
-    return{name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
+    return{id:b.id,group_id:b.group_id,name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
       penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
       principal:br.reduce(function(s,r){return s+ +(r.principal_reduced||0)},0),
@@ -130,22 +130,38 @@ function renderDashboard(){
       lostList.slice(0,12).map(function(c){return '<span class="chip" onclick="openDetail(\''+c.id+'\')">'+esc(c.full_name)+'</span>'}).join('')+'</div></div>';
   }
 
-  // by branch (มุมมองผู้บริหาร) — รายละเอียดครบทุกตัวเลขต่อบ้าน
+  // by branch (มุมมองผู้บริหาร) — จัดกลุ่ม กอง → บ้าน + ยอดรวมต่อกอง
   if(byBranch.length>1){
     var mrow=function(k,v,cls){return '<div class="br-m"><span class="br-mk">'+k+'</span><span class="br-mv'+(cls||'')+'">฿'+fmt0(v)+'</span></div>'};
-    h+='<div class="section-label">แยกตามบ้าน</div>'+
-      byBranch.map(function(b){
-        return '<div class="card card-pad brbox">'+
-          '<div class="brbox-head"><span class="brbox-name">'+esc(b.name)+'</span>'+
-            '<span class="brbox-total">รวมรับ <b>฿'+fmt0(b.collected)+'</b></span></div>'+
-          '<div class="brbox-grid">'+
-            mrow('ดอกที่เก็บได้',b.interest)+
-            mrow('ค่าปรับ',b.penalty,b.penalty>0?' r':'')+
-            mrow('ค่าแรง',b.wage)+
-            mrow('เงินต้นเก็บคืน',b.principal)+
-            '<div class="br-m"><span class="br-mk">จ่ายแล้ว</span><span class="br-mv">'+b.paid+' ราย</span></div>'+
-          '</div></div>';
-      }).join('');
+    var brCard=function(b){
+      return '<div class="card card-pad brbox">'+
+        '<div class="brbox-head"><span class="brbox-name">'+esc(b.name)+'</span>'+
+          '<span class="brbox-total">รวมรับ <b>฿'+fmt0(b.collected)+'</b></span></div>'+
+        '<div class="brbox-grid">'+
+          mrow('ดอกที่เก็บได้',b.interest)+
+          mrow('ค่าปรับ',b.penalty,b.penalty>0?' r':'')+
+          mrow('ค่าแรง',b.wage)+
+          mrow('เงินต้นเก็บคืน',b.principal)+
+          '<div class="br-m"><span class="br-mk">จ่ายแล้ว</span><span class="br-mv">'+b.paid+' ราย</span></div>'+
+        '</div></div>';
+    };
+    // หัวกอง + ยอดรวมของกอง แล้วตามด้วยบ้านในกอง
+    var grpBlock=function(title,list){
+      if(!list.length)return '';
+      var gTot=list.reduce(function(s,b){return s+b.collected},0);
+      return '<div class="grp-head"><span class="grp-name">'+esc(title)+' <span class="grp-count">· '+list.length+' บ้าน</span></span>'+
+        '<span class="grp-total">รวมรับ <b>฿'+fmt0(gTot)+'</b></span></div>'+
+        list.map(brCard).join('');
+    };
+    h+='<div class="section-label">แยกตามบ้าน</div>';
+    var done={};
+    allGroups.forEach(function(g){
+      var gb=byBranch.filter(function(b){return b.group_id===g.id});
+      gb.forEach(function(b){done[b.id]=1});
+      h+=grpBlock(g.name,gb);
+    });
+    var rest=byBranch.filter(function(b){return !done[b.id]});
+    h+=grpBlock('ไม่มีกอง',rest);
   }
   document.getElementById('dash-main').innerHTML=h;
 }

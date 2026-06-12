@@ -190,6 +190,12 @@ body.role-staff #dash-layout{display:block!important}
 .br-mk{font-size:0.66rem;color:var(--muted)}
 .br-mv{font-size:1rem;font-weight:600;font-family:var(--font-mono);color:var(--text)}
 .br-mv.r{color:var(--red)}
+/* หัวกอง — จัดกลุ่ม กอง → บ้าน */
+.grp-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:24px 0 12px}
+.grp-name{font-family:var(--font-serif);font-size:1.06rem;font-weight:700;color:var(--gold)}
+.grp-count{font-family:var(--font-th);font-size:0.7rem;font-weight:400;color:var(--muted)}
+.grp-total{font-size:0.74rem;color:var(--muted);white-space:nowrap}
+.grp-total b{font-family:var(--font-mono);font-size:0.98rem;font-weight:700;color:var(--gold);margin-left:4px}
 
 /* ═══ ALERTS ═══ */
 .alert{border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
