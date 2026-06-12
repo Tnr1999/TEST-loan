@@ -59,7 +59,7 @@ function renderCustomers(){
     var s=stMap[c.id];
     if(v==='today')return s.due&&!s.paid;
     if(v==='overdue')return c.status==='overdue'&&!s.paid;
-    if(v==='new')return s.isNew;
+    if(v==='new')return s.isNew&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&c.status!=='closed'&&c.status!=='lost';
     if(v==='closed')return c.status==='closed';
     if(v==='dead')return c.status==='lost';
