@@ -27,7 +27,7 @@ function renderBranches(){
   allGroups.forEach(function(g){
     var bs=allBranches.filter(function(b){return b.group_id===g.id});
     if(!bs.length)return;
-    html+='<div class="section-label">🗂️ '+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+bs.map(renderCard).join('');
+    html+='<div class="section-label">'+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+bs.map(renderCard).join('');
   });
   var ungrouped=allBranches.filter(function(b){return !b.group_id});
   if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+ungrouped.map(renderCard).join('');
@@ -83,7 +83,7 @@ function renderGroups(){
     var nBranch=allBranches.filter(function(b){return b.group_id===g.id}).length;
     var nCust=allCustomers.filter(function(c){var b=allBranches.find(function(x){return x.id===c.branch_id});return b&&b.group_id===g.id}).length;
     return '<div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
-      '<div><div style="font-weight:600;font-size:0.95rem">🗂️ '+esc(g.name)+'</div>'+
+      '<div><div style="font-weight:600;font-size:0.95rem">'+esc(g.name)+'</div>'+
       '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">'+nBranch+' บ้าน · ลูกค้า '+nCust+' ราย</div></div>'+
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditGroup(\''+g.id+'\')">แก้ไข</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteGroup(\''+g.id+'\')">ลบ</button></div></div>';

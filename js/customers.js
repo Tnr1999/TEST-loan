@@ -227,7 +227,7 @@ function openDetail(id){
   }
 
   // history
-  h+='<div class="card"><div class="card-head"><h3>📜 ประวัติการชำระ ('+recs.length+' รายการ)</h3></div>';
+  h+='<div class="card"><div class="card-head"><h3>ประวัติการชำระ ('+recs.length+' รายการ)</h3></div>';
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
@@ -307,7 +307,7 @@ function openAddCustomer(reloanCust){
   document.getElementById('modal-customer-body').innerHTML=
     '<div class="form-cols">'+
     '<div class="form-col">'+
-      '<div class="form-col-title">📋 ข้อมูลสัญญา</div>'+
+      '<div class="form-col-title">ข้อมูลสัญญา</div>'+
       '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="f-group" onchange="custFormBranches()">'+
         groups.map(function(g){return '<option value="'+g.id+'">'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
       '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
@@ -323,7 +323,7 @@ function openAddCustomer(reloanCust){
       '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" value="'+thDate(todayISO())+'" disabled style="opacity:0.7"/></div>'+
     '</div>'+
     '<div class="form-col">'+
-      '<div class="form-col-title">📞 ข้อมูลติดต่อ</div>'+
+      '<div class="form-col-title">ข้อมูลติดต่อ</div>'+
       '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
       '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
       '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13"/></div>'+

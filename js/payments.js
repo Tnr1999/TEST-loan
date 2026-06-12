@@ -6,7 +6,7 @@ function openPayment(custId,date){
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
   var due=interestDue(c),close=closeAmount(c),pen=computePenalty(c,date);
-  document.getElementById('modal-payment-title').textContent='💵 #'+c.seq+' '+c.full_name;
+  document.getElementById('modal-payment-title').textContent='#'+c.seq+' '+c.full_name;
   document.getElementById('modal-payment-body').innerHTML=
     '<div class="field"><label>วันที่ชำระ'+(existing?' <span style="color:var(--green)">· มีบันทึกแล้ว (แก้ไข)</span>':'')+'</label><input class="inp" id="pay-date" type="date" max="'+todayISO()+'" value="'+date+'" onchange="openPayment(\''+custId+'\',this.value)"/></div>'+
     '<div style="display:flex;gap:10px;margin-bottom:14px">'+
@@ -60,7 +60,7 @@ function updatePayCalc(custId){
   var pen=amt>0?computePenalty(c,date):0;
   var calc=payCalc(c,amt,pen);
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']:{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
-  var h='<div class="calc-box"><div class="calc-title">🧮 ผลการคำนวณ</div>'+
+  var h='<div class="calc-box"><div class="calc-title">ผลการคำนวณ</div>'+
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
   if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">'+(calc.closing?'คืนเงินต้น':'หักเงินต้น')+'</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';

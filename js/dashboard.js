@@ -128,11 +128,18 @@ function renderDashboard(){
       lostList.slice(0,12).map(function(c){return '<span class="chip" onclick="openDetail(\''+c.id+'\')">'+esc(c.full_name)+'</span>'}).join('')+'</div></div>';
   }
 
-  // by branch (มุมมองผู้บริหาร)
+  // by branch (มุมมองผู้บริหาร) — กราฟแท่งทอง วัดจาก "ดอกที่เก็บได้"
   if(byBranch.length>1){
-    h+='<div class="section-label">แยกตามบ้าน</div><div class="card"><div class="table-wrap"><table class="tbl"><thead><tr><th>บ้าน</th><th class="tr-right">ดอกที่เก็บได้</th><th class="tr-right">ค่าปรับ</th><th class="tr-right">ค่าแรง</th><th class="tr-right">จ่ายแล้ว</th></tr></thead><tbody>'+
-      byBranch.map(function(b){return '<tr><td style="font-weight:500">'+esc(b.name)+'</td><td class="tr-right" style="color:var(--green)">฿'+fmt(b.interest)+'</td><td class="tr-right" style="color:var(--red)">฿'+fmt(b.penalty)+'</td><td class="tr-right" style="color:var(--purple)">฿'+fmt(b.wage)+'</td><td class="tr-right">'+b.paid+' ราย</td></tr>'}).join('')+
-      '</tbody></table></div></div>';
+    var maxI=byBranch.reduce(function(m,b){return Math.max(m,b.interest)},0)||1;
+    h+='<div class="section-label">ดอกที่เก็บได้ · แยกตามบ้าน</div><div class="card card-pad bar-card">'+
+      byBranch.map(function(b){
+        var pct=Math.max(2,Math.round(b.interest/maxI*100));
+        return '<div class="bar-row">'+
+          '<div class="bar-top"><span class="bar-name">'+esc(b.name)+'</span><span class="bar-val">฿'+fmt0(b.interest)+'</span></div>'+
+          '<div class="bar-track"><div class="bar-fill" style="width:'+(b.interest>0?pct:0)+'%"></div></div>'+
+          '<div class="bar-sub">ค่าปรับ ฿'+fmt0(b.penalty)+' · ค่าแรง ฿'+fmt0(b.wage)+' · จ่าย '+b.paid+' ราย</div>'+
+        '</div>';
+      }).join('')+'</div>';
   }
   document.getElementById('dash-main').innerHTML=h;
 }

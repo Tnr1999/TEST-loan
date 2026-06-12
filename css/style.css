@@ -173,6 +173,17 @@ body.role-staff #dash-layout{display:block!important}
 .stat.accent-cyan .value{color:var(--cyan)}
 .stat.accent-red .value{color:var(--red)}
 .section-label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 10px}
+/* มาร์กเกอร์แท่งทองนำหน้าหัวข้อ (แทนอิโมจิ — ระบบเดียวกันทั้งแอป) */
+.section-label,.form-col-title{display:flex;align-items:center;gap:8px}
+.section-label::before,.form-col-title::before,.card-head h3::before,.calc-box .calc-title::before{content:'';width:3px;height:0.9em;background:var(--gold);border-radius:2px;flex-shrink:0}
+/* กราฟแท่งทอง (หน้ารายงาน — แยกตามบ้าน) */
+.bar-card{display:flex;flex-direction:column;gap:17px}
+.bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:6px}
+.bar-name{font-size:0.88rem;font-weight:600;color:var(--text)}
+.bar-val{font-family:var(--font-mono);font-size:0.95rem;font-weight:700;color:var(--gold)}
+.bar-track{height:10px;background:var(--surface);border:1px solid var(--border);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;box-shadow:0 0 12px rgba(212,175,55,0.35);transition:width 0.7s cubic-bezier(0.16,1,0.3,1)}
+.bar-sub{font-size:0.72rem;color:var(--muted);margin-top:7px}
 
 /* ═══ ALERTS ═══ */
 .alert{border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
