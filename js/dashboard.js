@@ -80,21 +80,27 @@ function renderDashboard(){
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
-  // ── สรุปยอด 6 ตัว (ทุก role เห็นครบ) · staff เพิ่มแถบความคืบหน้า "รอบเก็บวันนี้" ในหัว ──
-  var sb=function(k,v,cls){return '<div class="sbar-item '+cls+'"><span class="sbar-k">'+k+'</span><span class="sbar-v '+cls+'">฿'+fmt0(v)+'</span></div>'};
-  var cells=sb('รวมรับ',sum.collected+sum.penalty,'gold')+sb('ดอก',sum.interest,'green')+sb('ค่าปรับ',sum.penalty,'red')+
-    sb('ค่าแรง',sum.wage,'purple')+sb('ต้นเก็บคืน',sum.principal,'cyan')+sb('ต้นคงค้าง',outstanding,'cyan');
-  var headExtra='',progBar='';
+  // ── สรุปยอดดำ-ทอง: "รวมรับวันนี้" เป็นพระเอก + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) ──
+  var total=sum.collected+sum.penalty;
+  var sub=function(k,v,ex){return '<div class="sub-item"><span class="sub-k">'+k+'</span><span class="sub-v'+(ex||'')+'">฿'+fmt0(v)+'</span></div>'};
+  var subs=sub('ดอก',sum.interest)+sub('ค่าปรับ',sum.penalty,sum.penalty>0?' is-pen':'')+
+    sub('ค่าแรง',sum.wage)+sub('ต้นเก็บคืน',sum.principal)+sub('ต้นคงค้าง',outstanding);
+  var heroSub='';
   if(isStaff()){
     var dueN=dueToday.length;
     var doneN=dueToday.filter(function(c){return recordedAny[c.id]}).length;
     var pct=dueN?Math.round(doneN/dueN*100):100;
-    headExtra=dueN?'<span class="sbar-prog">· เก็บแล้ว '+doneN+'/'+dueN+' ราย</span>':'<span class="sbar-prog">· ไม่มีใครถึงกำหนด</span>';
-    progBar='<div class="prog" style="margin:7px 0 9px"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
+    heroSub='<div class="sbar-prog">'+(dueN?'เก็บแล้ว '+doneN+'/'+dueN+' ราย':'วันนี้ไม่มีใครถึงกำหนด')+'</div>'+
+      '<div class="prog" style="margin-top:6px;max-width:220px"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
   }
   document.getElementById('summary-bar').innerHTML=
-    '<div class="sbar"><div class="sbar-head">📊 สรุปยอด<span class="sbar-date">· '+thDate(date)+'</span>'+headExtra+'</div>'+
-    progBar+'<div class="sbar-grid">'+cells+'</div></div>';
+    '<div class="sbar">'+
+      '<div class="sbar-hero">'+
+        '<div class="sbar-hero-lbl">รวมรับวันนี้ <span class="sbar-date">· '+thDate(date)+'</span></div>'+
+        '<div class="sbar-hero-val">฿'+fmt0(total)+'</div>'+heroSub+
+      '</div>'+
+      '<div class="sbar-sub">'+subs+'</div>'+
+    '</div>';
 
   // ── staff ไม่ใช้หน้าแรก (ซ่อนทั้งส่วนใน core.js) — แถบสรุปด้านบนพอแล้ว ใช้หน้า "ลูกค้า" เก็บเงิน ──
   if(isStaff())return;

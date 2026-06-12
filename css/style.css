@@ -1,18 +1,17 @@
 :root{
-  /* ── ฐานสี: charcoal อุ่น (เลิกใช้ indigo-navy เดิม) ── */
-  --bg:#0c0e12; --surface:#14171d; --card:#181c23; --card2:#1e232b;
-  --border:#2a2f38; --border2:#3a4150;
-  /* ── สีหลักของแบรนด์ = ทอง (ธุรกิจเงิน) ── */
-  --gold:#e0a82e; --gold2:#f0bf4d; --gold-dim:rgba(224,168,46,0.14);
+  /* ── ดำ-ทอง หรูหรา: ฐานดำอุ่น + ทองโลหะเป็น accent เดียว ── */
+  --bg:#0a0a09; --surface:#13110d; --card:#181510; --card2:#211d15;
+  --border:#2c2820; --border2:#3e3727;
+  --gold:#d4af37; --gold2:#ecc868; --gold-dim:rgba(212,175,55,0.13);
   --purple:#a78bfa; --purple-dim:rgba(167,139,250,0.14);
-  --text:#eef1f5; --text2:#a6adb9; --muted:#6e7682; --dim:#3b424d;
+  --text:#f2eee4; --text2:#b6ae9b; --muted:#7d7666; --dim:#473f2d;
   --red:#fb7185; --red-dim:rgba(251,113,133,0.14);
   --green:#34d399; --green-dim:rgba(52,211,153,0.14);
   --amber:#f97316; --amber-dim:rgba(249,115,22,0.15);
   --cyan:#38bdf8; --cyan-dim:rgba(56,189,248,0.12);
   --radius:14px; --radius-lg:20px;
   color-scheme:dark;
-  --shadow:0 4px 20px rgba(0,0,0,0.42); --shadow-lg:0 18px 50px rgba(0,0,0,0.62);
+  --shadow:0 4px 20px rgba(0,0,0,0.5); --shadow-lg:0 18px 50px rgba(0,0,0,0.7);
   --font-th:'Sarabun',sans-serif; --font-serif:'Kanit',sans-serif; --font-mono:'IBM Plex Mono',monospace;
   --header-h:60px; --nav-h:60px;
 }
@@ -20,8 +19,7 @@
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font-th);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.5}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 80% 50% at 10% 0%,rgba(224,168,46,0.07) 0%,transparent 58%),
-             radial-gradient(ellipse 60% 40% at 90% 100%,rgba(52,211,153,0.05) 0%,transparent 58%)}
+  background:radial-gradient(ellipse 100% 45% at 50% -8%,rgba(212,175,55,0.10) 0%,transparent 60%)}
 ::-webkit-scrollbar{width:8px;height:8px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
@@ -33,11 +31,10 @@ input,select,textarea,button{font-family:var(--font-th)}
 /* ═══ LOGIN ═══ */
 #login-screen{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 #login-screen::before{content:'';position:fixed;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse 70% 60% at 20% 10%,rgba(224,168,46,0.12) 0%,transparent 60%),
-             radial-gradient(ellipse 60% 50% at 80% 90%,rgba(52,211,153,0.08) 0%,transparent 60%)}
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(212,175,55,0.14) 0%,transparent 62%)}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:44px 36px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);animation:slideUp 0.35s cubic-bezier(0.16,1,0.3,1);position:relative;z-index:1}
 .login-logo{text-align:center;margin-bottom:32px}
-.login-logo-icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;box-shadow:0 10px 28px rgba(224,168,46,0.35);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px}
+.login-logo-icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;box-shadow:0 10px 28px rgba(212,175,55,0.35);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px}
 .login-logo .name{font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:var(--gold);display:block}
 .login-logo .sub{font-size:0.72rem;color:var(--muted);letter-spacing:0.14em;margin-top:5px;display:block;text-transform:uppercase}
 .login-err{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);color:var(--red);border-radius:10px;padding:10px 14px;font-size:0.82rem;margin-bottom:16px;display:none;align-items:center;gap:8px}
@@ -52,7 +49,7 @@ input,select,textarea,button{font-family:var(--font-th)}
 .inp:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
 .inp::placeholder{color:var(--dim)}
 .inp.invalid{border-color:var(--red)}
-select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23a8b0d4' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23b6ae9b' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
 .field-err{color:var(--red);font-size:0.72rem;margin-top:5px;display:none}
 .field-hint{color:var(--muted);font-size:0.72rem;margin-top:5px}
 
@@ -61,7 +58,7 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .btn:active{transform:scale(0.97)}
 .btn:disabled{opacity:0.5;cursor:not-allowed}
 .btn-gold{background:var(--gold);color:#1c1500;font-weight:700}
-.btn-gold:hover:not(:disabled){background:var(--gold2);box-shadow:0 6px 18px rgba(224,168,46,0.38)}
+.btn-gold:hover:not(:disabled){background:var(--gold2);box-shadow:0 6px 18px rgba(212,175,55,0.38)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
 .btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface)}
 .btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25)}
@@ -82,9 +79,9 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 
 /* ═══ APP SHELL ═══ */
 #app{display:none;position:relative;z-index:1;min-height:100vh;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(12,14,18,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
+header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(10,10,9,0.82);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px}
 .logo{display:flex;align-items:center;gap:10px;flex-shrink:0}
-.logo-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;box-shadow:0 4px 12px rgba(224,168,46,0.35);display:flex;align-items:center;justify-content:center;font-size:0.95rem}
+.logo-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;box-shadow:0 4px 12px rgba(212,175,55,0.35);display:flex;align-items:center;justify-content:center;font-size:0.95rem}
 .logo-text{display:flex;flex-direction:column;line-height:1.15}
 .logo-name{font-family:var(--font-serif);font-size:0.98rem;font-weight:700;color:var(--gold)}
 .logo-sub{font-size:0.6rem;color:var(--muted);letter-spacing:0.1em}
@@ -96,36 +93,38 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .user-chip{display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:0.78rem;font-weight:500}
 .role-badge{padding:2px 8px;border-radius:99px;font-size:0.6rem;font-weight:700;letter-spacing:0.06em}
-.role-owner{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(224,168,46,0.35)}
+.role-owner{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,0.35)}
 .role-manager{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.35)}
 .role-head{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.35)}
 .role-staff{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.35)}
 
 /* ═══ MOBILE BOTTOM NAV ═══ */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(20,23,29,0.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:none;align-items:stretch;box-shadow:0 -4px 20px rgba(0,0,0,0.4)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(19,17,13,0.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:none;align-items:stretch;box-shadow:0 -4px 20px rgba(0,0,0,0.4)}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);cursor:pointer;border:none;background:transparent;font-size:0.62rem;transition:color 0.15s}
 .nav-item svg{width:21px;height:21px}
 .nav-item.active{color:var(--gold)}
 .nav-ic{font-size:1.2rem;line-height:1}
 
 /* ═══ SUMMARY BAR (แถบสรุปยอดติดใต้ header) ═══ */
-#summary-bar{position:sticky;top:var(--header-h);z-index:190;background:rgba(20,23,29,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+#summary-bar{position:sticky;top:var(--header-h);z-index:190;background:rgba(19,17,13,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
 #summary-bar:empty{display:none}
-.sbar{max-width:1100px;margin:0 auto;padding:9px 14px}
-.sbar-head{display:flex;flex-wrap:wrap;align-items:center;gap:3px 7px;font-size:0.7rem;font-weight:600;color:var(--text2);margin-bottom:8px}
-.sbar-head .sbar-date{color:var(--muted);font-weight:500}
-/* กริดยืดหยุ่น: ≥96px ต่อช่อง → ไม่มีทางล้น/ถูกตัดบนมือถือ (3 ช่อง/แถว) */
-.sbar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
-.sbar-item{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:8px 11px;display:flex;flex-direction:column;gap:3px;line-height:1.15}
-.sbar-k{display:flex;align-items:center;gap:5px;font-size:0.64rem;color:var(--muted);white-space:nowrap}
-.sbar-k::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--c,var(--border2));flex-shrink:0}
-.sbar-v{font-size:1rem;font-weight:700;font-family:var(--font-mono);white-space:nowrap;letter-spacing:-0.01em}
-.sbar-v.gold{color:var(--gold)}.sbar-v.green{color:var(--green)}.sbar-v.red{color:var(--red)}
-.sbar-v.purple{color:var(--purple)}.sbar-v.cyan{color:var(--cyan)}
-.sbar-item.gold{--c:var(--gold)}.sbar-item.green{--c:var(--green)}.sbar-item.red{--c:var(--red)}
-.sbar-item.purple{--c:var(--purple)}.sbar-item.cyan{--c:var(--cyan)}
-/* แถบความคืบหน้า "รอบเก็บวันนี้" ในหัวสรุป (เฉพาะ staff) */
-.sbar-prog{color:var(--gold);font-weight:700}
+/* ดำ-ทอง: "รวมรับวันนี้" พระเอกทองตัวใหญ่ + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) */
+.sbar{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:11px}
+.sbar-hero{flex-shrink:0}
+.sbar-hero-lbl{font-size:0.68rem;color:var(--muted);letter-spacing:0.03em}
+.sbar-hero-lbl .sbar-date{color:var(--dim)}
+.sbar-hero-val{font-family:var(--font-mono);font-size:1.95rem;font-weight:800;color:var(--gold);line-height:1.04;letter-spacing:-0.025em;margin-top:1px}
+.sbar-prog{font-size:0.68rem;color:var(--text2);margin-top:6px}
+.sbar-sub{display:flex;gap:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
+.sbar-sub::-webkit-scrollbar{display:none}
+.sub-item{display:flex;flex-direction:column;gap:1px;line-height:1.15;flex-shrink:0}
+.sub-k{font-size:0.62rem;color:var(--muted);white-space:nowrap}
+.sub-v{font-size:0.92rem;font-weight:600;font-family:var(--font-mono);color:var(--text);white-space:nowrap}
+.sub-v.is-pen{color:var(--red)}
+@media (min-width:768px){
+  .sbar{flex-direction:row;align-items:center;gap:22px}
+  .sbar-sub{flex-wrap:wrap;overflow:visible;border-left:1px solid var(--border);padding-left:22px}
+}
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
@@ -231,7 +230,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow.due .crow-ava{background:var(--amber-dim);color:var(--amber);border-color:rgba(249,115,22,0.3)}
 .crow.over .crow-ava{background:var(--red-dim);color:var(--red);border-color:rgba(251,113,133,0.3)}
 .crow.paid .crow-ava{background:var(--green-dim);color:var(--green);border-color:rgba(52,211,153,0.3)}
-.crow.pending .crow-ava{background:var(--gold-dim);color:var(--gold);border-color:rgba(224,168,46,0.3)}
+.crow.pending .crow-ava{background:var(--gold-dim);color:var(--gold);border-color:rgba(212,175,55,0.3)}
 .crow-main{flex:1;min-width:0}
 .crow-l1{display:flex;align-items:center;gap:7px}
 .crow-name{font-weight:600;font-size:0.98rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
