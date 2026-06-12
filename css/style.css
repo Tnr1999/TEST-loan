@@ -32,7 +32,8 @@ input,select,textarea,button{font-family:var(--font-th)}
 #login-screen{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
 #login-screen::before{content:'';position:fixed;inset:0;pointer-events:none;
   background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(212,175,55,0.14) 0%,transparent 62%)}
-.login-card{background:var(--card);border:1px solid var(--border);border-radius:24px;padding:44px 36px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);animation:slideUp 0.35s cubic-bezier(0.16,1,0.3,1);position:relative;z-index:1}
+.login-card{background:linear-gradient(180deg,rgba(212,175,55,0.04),transparent 40%),var(--card);border:1px solid rgba(212,175,55,0.18);border-radius:24px;padding:46px 36px 40px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);animation:slideUp 0.4s cubic-bezier(0.16,1,0.3,1);position:relative;z-index:1;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:26px;right:26px;height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.55),transparent)}
 .login-logo{text-align:center;margin-bottom:32px}
 .login-logo-icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--gold2),var(--gold));border:none;box-shadow:0 10px 30px rgba(212,175,55,0.4);display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:2.1rem;font-weight:700;color:#1c1500;margin:0 auto 14px}
 .login-logo .name{font-family:var(--font-serif);font-size:1.5rem;font-weight:700;color:var(--gold);display:block}
@@ -75,7 +76,12 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+/* เคารพ prefers-reduced-motion — ปิดแอนิเมชัน/ทรานสิชันทั้งหมด */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
+}
 
 /* ═══ APP SHELL ═══ */
 #app{display:none;position:relative;z-index:1;min-height:100vh;padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom))}
@@ -129,8 +135,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
-.page{display:none;animation:fadeIn 0.25s;margin-bottom:34px}
-.page.active{display:block}
+.page{display:none;margin-bottom:34px}
+.page.active{display:block;animation:pageIn 0.3s cubic-bezier(0.16,1,0.3,1)}
 .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
 .page-title{font-family:var(--font-serif);font-size:1.4rem;font-weight:700;color:var(--text)}
 .page-sub{font-size:0.82rem;color:var(--muted);margin-top:2px}
@@ -220,7 +226,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 
 /* ═══ COMPACT ROW (มือถือ – ลิสต์กระชับ) ═══ */
 .crow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:11px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .14s,background .12s,transform .08s}
-.crow:hover{border-color:rgba(212,175,55,0.3)}
+.crow:hover{border-color:rgba(212,175,55,0.3);transform:translateY(-1px)}
 .crow:active{transform:scale(.99);background:var(--card2)}
 /* เน้นงานที่ต้องทำ (ถึงกำหนด/ค้าง) ด้วยเส้นขอบสี + แต้ม avatar — ไม่ใช้แถบสีซ้าย */
 .crow.due{border-color:rgba(249,115,22,0.4)}
@@ -267,6 +273,15 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .vchip.vc-new.active{background:var(--cyan);border-color:var(--cyan);color:#04222b}
 .vchip.vc-closed.active{background:var(--muted);border-color:var(--muted);color:#0d1030}
 .vchip.vc-dead.active{background:var(--text2);border-color:var(--text2);color:#0d1030}
+/* จุดสีนำหน้าชิป (แทนอิโมจิ) — ซ่อนเมื่อ active เพราะชิปเปลี่ยนเป็นสีเต็ม */
+.vchip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.vc-today::before{background:var(--amber)}
+.vc-overdue::before{background:var(--red)}
+.vc-new::before{background:var(--cyan)}
+.vc-old::before{background:var(--text2)}
+.vc-closed::before{background:var(--green)}
+.vc-dead::before{background:var(--dim)}
+.vchip.active::before{display:none}
 
 /* ═══ SCROLL-TO-TOP FAB ═══ */
 .fab-top{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:150;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--gold);font-size:1.4rem;font-weight:700;box-shadow:var(--shadow-lg);display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}

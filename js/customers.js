@@ -48,7 +48,7 @@ function renderCustomers(){
   }
 
   // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู
-  var chips=[['today','⏰ ถึงกำหนด'],['overdue','🔴 ค้าง'],['new','🆕 ลูกค้าใหม่'],['old','👥 ลูกค้าเก่า'],['closed','✅ ปิดยอด'],['dead','✝️ ตาย']];
+  var chips=[['today','ถึงกำหนด'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
   document.getElementById('cust-summary').innerHTML=chips.map(function(v){
     var n=list.filter(function(c){return inView(c,v[0])}).length;
     return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';
@@ -86,9 +86,9 @@ function renderCustomers(){
       // ปุ่ม action ในคอลัมน์เดียว — ใช้ปุ่มทรงเดียวกันทุกสถานะ (ดู ›/เปิด/รับเงิน/แก้ไข) เพื่อความสม่ำเสมอ
       var viewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\''+c.id+'\')">ดู ›</button>';
       var actBtn;
-      if(c.status==='closed')actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">🔄 เปิดใหม่</button>':viewBtn;
-      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':viewBtn;
-      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'💵 รับเงิน')+'</button>';
+      if(c.status==='closed')actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
+      else if(s.pending)actBtn=canEdit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':viewBtn;
+      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -123,12 +123,12 @@ function custCardHTML(c,date,s){
   var ref=c.last_collection_date||c.start_date;
   var daysOver=ref?(daysBetween(ref,date)-c.collection_interval):0;
   var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
-  var chip=s.pending?'<span class="crow-st t-pending">🕓 รอเปิด</span>'
+  var chip=s.pending?'<span class="crow-st t-pending">รอเปิด</span>'
     :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
-    :(s.due?'<span class="crow-st t-due">⏰ ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
+    :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
-    :(c.status==='lost'?'<span class="crow-st t-over">✝️ ตาย</span>'
-    :(c.status==='closed'?'<span class="crow-st t-paid">✅ ปิดยอด</span>':'')))));
+    :(c.status==='lost'?'<span class="crow-st t-over">ตาย</span>'
+    :(c.status==='closed'?'<span class="crow-st t-paid">ปิดยอด</span>':'')))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
   var head='<div class="crow-ava">'+c.seq+'</div>'+
     '<div class="crow-main">'+
@@ -142,16 +142,16 @@ function custCardHTML(c,date,s){
       '<div class="crow-top">'+head+'</div>'+
       '<div class="crow-act" onclick="event.stopPropagation()">'+
         '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b>฿'+fmt(interestDue(c))+'</b></div>'+
-        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">💵 รับเงิน</button>'+
+        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">รับเงิน</button>'+
       '</div></div>';
   }
 
   // อื่นๆ = แถวกระชับ
   var btn;
-  if(c.status==='closed')btn=canEdit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">🔄 เปิดใหม่</button>':'';
-  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">✅ เปิด</button>':'';
-  else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">✏️</button>';
-  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">💵 รับ</button>';
+  if(c.status==='closed')btn=canEdit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
+  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'';
+  else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">แก้</button>';
+  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
 
@@ -168,7 +168,7 @@ function openDetail(id){
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
     (!c.disbursed?'<span class="st st-pending">🕓 รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
-  if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">✏️ แก้ไข</button>';
+  if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
   h+='</div>';
 
   // stats
@@ -198,7 +198,7 @@ function openDetail(id){
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
       '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">🕓 รอเปิด</div>'+
       '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดเปิดเพื่อเปลี่ยนเป็น "เปิดแล้ว"</div></div>'+
-      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">✅ เปิด</button>':'')+
+      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">เปิด</button>':'')+
       '</div></div>';
   }
 
@@ -222,7 +222,7 @@ function openDetail(id){
   // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — เฉพาะ owner/head
   if(canEdit()&&c.status==='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div>'+
-      '<button class="btn btn-gold btn-sm" onclick="openReloan(\''+id+'\')">🔄 เปิดยอดใหม่ (ปล่อยกู้รอบใหม่)</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openReloan(\''+id+'\')">เปิดยอดใหม่ (ปล่อยกู้รอบใหม่)</button>'+
       '<div class="field-hint" style="margin-top:8px">สร้างสัญญาใหม่ให้ลูกค้าคนนี้ — ประวัติสัญญาเดิมยังเก็บไว้</div></div>';
   }
 
@@ -343,7 +343,7 @@ function openAddCustomer(reloanCust){
     var set=function(idn,v){var e=document.getElementById(idn);if(e)e.value=v||''};
     set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);
     set('f-idcard',pp.id_card);set('f-bank-name',pp.bank_name);set('f-bank-account',pp.bank_account);
-    document.getElementById('modal-customer-title').textContent='🔄 เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
+    document.getElementById('modal-customer-title').textContent='เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
     var sbtn=document.getElementById('cust-save-btn');if(sbtn)sbtn.textContent='เปิดยอดใหม่';
   }
   openModal('modal-customer');
@@ -377,7 +377,7 @@ function openEditCustomer(id){
   editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
-  document.getElementById('modal-customer-title').textContent='✏️ แก้ไขลูกค้า';
+  document.getElementById('modal-customer-title').textContent='แก้ แก้ไขลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name" value="'+esc(c.full_name)+'"/></div>'+
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" value="'+esc(c.phone||'')+'"/></div>'+
@@ -458,7 +458,7 @@ async function saveCustomer(){
     disbursed:false
   }).select().single();
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
-  var okMsg=reloanPersonId?'✅ เปิดยอดใหม่สำเร็จ':'✅ เพิ่มลูกค้าสำเร็จ';
+  var okMsg=reloanPersonId?'เปิดยอดใหม่สำเร็จ':'✅ เพิ่มลูกค้าสำเร็จ';
   reloanPersonId=null;
   toast(okMsg,'ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);
 }
