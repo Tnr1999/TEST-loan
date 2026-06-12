@@ -166,7 +166,7 @@ function openDetail(id){
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">#'+c.seq+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
-    (!c.disbursed?'<span class="st st-pending">🕓 รอเปิด</span>':'')+'</div>'+
+    (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
   if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
   h+='</div>';
@@ -196,7 +196,7 @@ function openDetail(id){
   if(!c.disbursed){
     h+='<div class="card card-pad" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.3);background:var(--amber-dim)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
-      '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">🕓 รอเปิด</div>'+
+      '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">รอเปิด</div>'+
       '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดเปิดเพื่อเปลี่ยนเป็น "เปิดแล้ว"</div></div>'+
       (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">เปิด</button>':'')+
       '</div></div>';
@@ -214,7 +214,7 @@ function openDetail(id){
   // actions (manager/owner)
   if(canEdit()&&c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">';
-    if(c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">✝️ เปลี่ยนเป็น "ตาย"</button>';
+    if(c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
     h+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     h+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     h+='</div></div>';
