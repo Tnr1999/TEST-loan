@@ -10,7 +10,7 @@ var SESSION_KEY = 'loan_session_v1';
 /* ═══ STATE ═══ */
 var currentUser = null;
 var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUserBranches = [];
-var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
+var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [], allDisbursements = [];
 var currentDetailId = null;
 var custView = 'today';
 var custGroupId = '';
@@ -167,10 +167,10 @@ document.getElementById('confirm-cancel-btn').onclick=function(){document.getEle
 /* ═══ MODAL HELPERS ═══ */
 function openModal(id){document.getElementById(id).classList.add('open')}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','confirm-overlay'].forEach(function(id){
+['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','modal-topup','confirm-overlay'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','modal-topup','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
 
 /* ═══ LOGIN ═══ */
 function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none'}
@@ -191,7 +191,7 @@ async function doLogin(){
 function doLogout(){
   localStorage.removeItem(SESSION_KEY);currentUser=null;
   allBranches=[];allCustomers=[];allRecords=[];allUsers=[];allUserBranches=[];
-  allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];
+  allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];allDisbursements=[];
   showLoginScreen();
 }
 
@@ -257,6 +257,10 @@ async function loadAll(){
   allUserBranches=r[5].data||[];
   allUserGroups=r[6].data||[];
   if(canManageUsers()&&r[7]) allUsers=r[7].data||[];
+
+  // ยอดเบิก — โหลดแยก กันแอปพังถ้ายังไม่รัน migration phase4-disbursements
+  var dres=await _sb.from('disbursements').select('*');
+  allDisbursements=dres.error?[]:(dres.data||[]);
 
   // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
   allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});

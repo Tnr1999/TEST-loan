@@ -234,6 +234,7 @@ function openDetail(id){
   if(canEdit()&&c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">';
     if(c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
+    h+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
     h+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     h+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     h+='</div></div>';
@@ -282,6 +283,8 @@ async function setDisbursed(id){
   if(!ok)return;
   var res=await _sb.from('loans').update({disbursed:true}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  // บันทึก "ยอดเบิก" — เงินที่โอนให้ลูกค้าตอนเปิดสัญญา
+  await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:c.principal,disburse_date:todayISO(),kind:'new',recorded_by:currentUser.id});
   toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await loadAll();
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
@@ -292,6 +295,29 @@ async function doCloseLoan(id){
   var res=await _sb.from('loans').update({status:'closed',close_amount:ca}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ ปิดสินเชื่อสำเร็จ ยอด ฿'+fmt(ca),'ok');await loadAll();openDetail(id);
+}
+// เพิ่มยอด — ลูกค้าเดิมขอยอดเพิ่ม (เช่น เปิด 1000 ขอเพิ่มเป็น 2000 → โอนเพิ่ม 1000)
+// บันทึกเป็น "ยอดเบิก" (kind=topup) + เพิ่มเข้าเงินต้น/เงินต้นคงเหลือ
+function openTopup(id){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  document.getElementById('modal-topup-body').innerHTML=
+    '<div class="field"><label>ยอดที่โอนเพิ่มให้ลูกค้า (บาท)</label><input class="inp mono" id="topup-amount" type="number" min="0" step="0.01" placeholder="0.00" autofocus/></div>'+
+    '<div class="field-hint">ยอดนี้จะถูกเพิ่มเข้าเงินต้นของ "'+esc(c.full_name)+'" (ปัจจุบัน ฿'+fmt(c.remaining_principal)+') และนับเป็นยอดเบิกวันนี้</div>'+
+    '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
+      '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-topup\')">ยกเลิก</button>'+
+      '<button class="btn btn-gold btn-block" id="topup-save-btn" onclick="saveTopup(\''+id+'\')">โอนเพิ่ม</button></div>';
+  openModal('modal-topup');
+}
+async function saveTopup(id){
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  var amt=Math.max(0,parseFloat(document.getElementById('topup-amount').value)||0);
+  if(amt<=0){toast('กรุณากรอกยอดที่จะเพิ่ม','err');return}
+  var btn=document.getElementById('topup-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
+  var res=await _sb.from('loans').update({principal:+c.principal+amt,remaining_principal:+c.remaining_principal+amt}).eq('id',id);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');btn.disabled=false;btn.textContent='โอนเพิ่ม';return}
+  await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:amt,disburse_date:todayISO(),kind:'topup',recorded_by:currentUser.id});
+  toast('✅ เพิ่มยอดสำเร็จ ฿'+fmt(amt),'ok');closeModal('modal-topup');await loadAll();openDetail(id);
 }
 async function doDeleteCustomer(id){
   var c=allCustomers.find(function(x){return x.id===id});
