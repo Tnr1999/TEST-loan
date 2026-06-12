@@ -61,7 +61,7 @@ function renderCustomers(){
     if(v==='overdue')return c.status==='overdue'&&!s.paid;
     if(v==='new')return s.isNew&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='closed')return c.status==='closed';
+    if(v==='closed')return c.status==='closed'&&!personHasActiveLoan(c.person_id);
     if(v==='dead')return c.status==='lost';
     return true;
   }
@@ -395,6 +395,10 @@ function custFormBranches(){
   document.getElementById('f-branch').innerHTML=bs.length
     ?bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('')
     :'<option value="">— ยังไม่มีบ้านในกองนี้ —</option>';
+}
+// คนนี้มีสัญญาที่ยังเก็บอยู่ (เปิดใหม่ไปแล้ว) หรือไม่ — ใช้ซ่อนสัญญาเก่าที่ปิดแล้วออกจากแท็บ "ปิดยอด"
+function personHasActiveLoan(personId){
+  return allLoans.some(function(l){return l.person_id===personId&&(l.status==='normal'||l.status==='overdue')});
 }
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
 function loanRuleError(personId,branchId){
