@@ -37,10 +37,23 @@ function renderNav(){
    DASHBOARD
 ═══════════════════════════════════════════════ */
 // ปุ่มเลือกบ้านบน dashboard — "ทั้งหมด" + รายบ้าน (เรียงตามกอง)
+// ── ตัวกรอง "กอง" หน้ารายงาน (โชว์เมื่อมี ≥2 กอง) ──
+function renderDashGroupBtns(){
+  var el=document.getElementById('dash-group-btns');if(!el)return;
+  var groups=accessibleGroups();
+  if(groups.length<=1){el.innerHTML='';dashGroupId='';return;}
+  var btns='<button class="branch-btn'+(dashGroupId===''?' active':'')+'" onclick="setDashGroup(\'\')">ทุกกอง</button>';
+  groups.forEach(function(g){btns+='<button class="branch-btn'+(dashGroupId===g.id?' active':'')+'" onclick="setDashGroup(\''+g.id+'\')">'+esc(g.name)+'</button>';});
+  el.innerHTML=btns;
+}
+function setDashGroup(id){dashGroupId=id;dashBranchId='';renderDashGroupBtns();renderDashBranchBtns();renderDashboard();}
+// ── ตัวกรอง "บ้าน" — ถ้าเลือกกองแล้วโชว์เฉพาะบ้านในกองนั้น ──
 function renderDashBranchBtns(){
   var el=document.getElementById('dash-branch-btns');if(!el)return;
-  var bids=myBranchIds();
+  var bids=myBranchIds(),hasGroups=accessibleGroups().length>1;
   var branches=allBranches.filter(function(b){return bids.indexOf(b.id)>=0});
+  if(hasGroups&&!dashGroupId){el.innerHTML='';return;}
+  if(dashGroupId)branches=branches.filter(function(b){return b.group_id===dashGroupId});
   if(branches.length<=1){el.innerHTML='';return;}
   var btns='<button class="branch-btn'+(dashBranchId===''?' active':'')+'" onclick="setDashBranch(\'\')">ทั้งหมด</button>';
   allGroups.forEach(function(g){
@@ -61,7 +74,9 @@ function currentScopeBids(){
     if(custGroupId)return allBranches.filter(function(b){return b.group_id===custGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
     return all;
   }
-  return dashBranchId?[dashBranchId]:all;
+  if(dashBranchId)return [dashBranchId];
+  if(dashGroupId)return allBranches.filter(function(b){return b.group_id===dashGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
+  return all;
 }
 function renderDashboard(){
   var date=document.getElementById('dash-date-picker').value||todayISO();
