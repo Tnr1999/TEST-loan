@@ -7,11 +7,17 @@ function showPage(name){
   document.querySelectorAll('.tab,.nav-item').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-page')===name)});
   window.scrollTo({top:0,behavior:'smooth'});
 }
+// ไอคอนเส้น (stroke=currentColor → เปลี่ยนเป็นทองเมื่อ active)
+var NAV_ICONS={
+  customers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  reports:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="13"/><line x1="4" y1="9" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="15"/><line x1="20" y1="11" x2="20" y2="3"/><line x1="1.5" y1="13" x2="6.5" y2="13"/><line x1="9.5" y1="8" x2="14.5" y2="8"/><line x1="17.5" y1="15" x2="22.5" y2="15"/></svg>'
+};
 // เมนูตามสิทธิ์: ลูกค้า (ทุกคน) · รายงาน (owner/head) · ตั้งค่า (ผู้มีสิทธิ์)
 function navItems(){
-  var items=[{k:'customers',ic:'👥',t:'ลูกค้า'}];
-  if(canEdit())items.push({k:'reports',ic:'📊',t:'รายงาน'});
-  if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',ic:'⚙️',t:'ตั้งค่า'});
+  var items=[{k:'customers',t:'ลูกค้า'}];
+  if(canEdit())items.push({k:'reports',t:'รายงาน'});
+  if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',t:'ตั้งค่า'});
   return items;
 }
 function renderNav(){
@@ -19,10 +25,10 @@ function renderNav(){
   var hc=document.getElementById('header-center'),bn=document.getElementById('bottom-nav');
   if(items.length<=1){if(hc)hc.innerHTML='';if(bn){bn.innerHTML='';bn.style.display='none';}return;}
   if(hc)hc.innerHTML='<div class="tab-bar">'+items.map(function(it){
-    return '<button class="tab" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')">'+it.ic+' '+it.t+'</button>';
+    return '<button class="tab" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')">'+NAV_ICONS[it.k]+it.t+'</button>';
   }).join('')+'</div>';
   if(bn)bn.innerHTML=items.map(function(it){
-    return '<button class="nav-item" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')"><span class="nav-ic">'+it.ic+'</span>'+it.t+'</button>';
+    return '<button class="nav-item" data-page="'+it.k+'" onclick="showPage(\''+it.k+'\')"><span class="nav-ic">'+NAV_ICONS[it.k]+'</span>'+it.t+'</button>';
   }).join('');
 }
 
