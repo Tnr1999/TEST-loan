@@ -141,7 +141,7 @@ function custCardHTML(c,date,s){
     return '<div class="crow due big" onclick="openDetail(\''+c.id+'\')">'+
       '<div class="crow-top">'+head+'</div>'+
       '<div class="crow-act" onclick="event.stopPropagation()">'+
-        '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b>฿'+fmt(interestDue(c))+'</b></div>'+
+        '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b><span class="cur">฿</span>'+fmt(interestDue(c))+'</b></div>'+
         '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">รับเงิน</button>'+
       '</div></div>';
   }

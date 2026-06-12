@@ -103,7 +103,7 @@ function renderDashboard(){
     '<div class="sbar">'+
       '<div class="sbar-hero">'+
         '<div class="sbar-hero-lbl">รวมรับวันนี้ <span class="sbar-date">· '+thDate(date)+'</span></div>'+
-        '<div class="sbar-hero-val">฿'+fmt0(total)+'</div>'+heroSub+
+        '<div class="sbar-hero-val"><span class="cur">฿</span>'+fmt0(total)+'</div>'+heroSub+
       '</div>'+
       '<div class="sbar-sub">'+subs+'</div>'+
     '</div>';

@@ -13,6 +13,7 @@
   color-scheme:dark;
   --shadow:0 4px 20px rgba(0,0,0,0.5); --shadow-lg:0 18px 50px rgba(0,0,0,0.7);
   --font-th:'Sarabun',sans-serif; --font-serif:'Kanit',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+  --font-display:'Playfair Display',Georgia,serif; /* เลขพระเอก: เซริฟ high-contrast */
   --header-h:60px; --nav-h:60px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -120,7 +121,9 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .sbar-hero{flex-shrink:0}
 .sbar-hero-lbl{font-size:0.68rem;color:var(--muted);letter-spacing:0.03em}
 .sbar-hero-lbl .sbar-date{color:var(--dim)}
-.sbar-hero-val{font-family:var(--font-mono);font-size:1.95rem;font-weight:800;color:var(--gold);line-height:1.04;letter-spacing:-0.025em;margin-top:1px}
+.sbar-hero-val{font-family:var(--font-display);font-size:2.3rem;font-weight:800;color:var(--gold);line-height:1.02;letter-spacing:0;margin-top:2px}
+/* ฿ เป็นพรีฟิกซ์เล็ก-ยกขึ้น (สัญลักษณ์ใช้ฟอนต์ไทยที่มี ฿) */
+.cur{font-family:var(--font-serif);font-weight:600;font-size:0.5em;opacity:0.8;vertical-align:0.32em;margin-right:2px}
 .sbar-prog{font-size:0.68rem;color:var(--text2);margin-top:6px}
 .sbar-sub{display:flex;gap:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
 .sbar-sub::-webkit-scrollbar{display:none}
@@ -271,7 +274,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-act{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:11px;border-top:1px solid var(--border)}
 .crow-due{display:flex;flex-direction:column;gap:1px;line-height:1.15;min-width:0}
 .crow-due span{font-size:0.68rem;color:var(--muted)}
-.crow-due b{font-size:1.4rem;font-weight:800;font-family:var(--font-mono);color:var(--gold);letter-spacing:-0.02em}
+.crow-due b{font-size:1.7rem;font-weight:800;font-family:var(--font-display);color:var(--gold);letter-spacing:0;line-height:1}
 .crow.big .crow-btn.cb-pay{padding:12px 24px;font-size:0.95rem}
 
 /* ═══ VIEW CHIPS (ตัวกรองด่วน) ═══ */
