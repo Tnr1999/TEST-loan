@@ -106,7 +106,7 @@ function renderCustomers(){
       var viewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\''+c.id+'\')">ดู ›</button>';
       var actBtn;
       if(c.status==='closed')actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
-      else if(s.pending)actBtn=canEdit()?'<div class="row-flex" style="gap:6px;justify-content:flex-end"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button></div>':viewBtn;
+      else if(s.pending)actBtn=canEdit()?'<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button></div>':viewBtn;
       else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
