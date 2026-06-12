@@ -397,6 +397,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 
 /* ═══ BRANCH FILTER BUTTONS ═══ */
 .branch-btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#cust-group-btns:empty,#cust-branch-btns:empty{display:none}
 .branch-btn{padding:5px 14px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:0.78rem;font-weight:500;transition:all 0.15s;white-space:nowrap;font-family:inherit}
 .branch-btn:hover:not(.active){border-color:var(--border2);color:var(--text)}
 .branch-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);font-weight:600}

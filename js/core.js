@@ -13,6 +13,7 @@ var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUser
 var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [];
 var currentDetailId = null;
 var custView = 'today';
+var custGroupId = '';
 var custBranchId = '';
 var dashBranchId = '';
 
@@ -300,6 +301,7 @@ function accessibleGroups(){
 function populateFilters(){
   // ปุ่มกรองบ้าน: dashboard + หน้าลูกค้า
   if(typeof renderDashBranchBtns==='function') renderDashBranchBtns();
+  if(typeof renderCustGroupBtns==='function') renderCustGroupBtns();
   if(typeof renderCustBranchBtns==='function') renderCustBranchBtns();
 }
 // แปลง branch_id → ชื่อกอง / ชื่อบ้าน
