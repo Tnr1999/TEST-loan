@@ -119,7 +119,7 @@ function renderDashboard(){
   var total=sum.collected+sum.penalty;
   var sub=function(k,v,ex){return '<div class="sub-item"><span class="sub-k">'+k+'</span><span class="sub-v'+(ex||'')+'">฿'+fmt0(v)+'</span></div>'};
   var subs=sub('ดอก',sum.interest)+sub('ค่าปรับ',sum.penalty,sum.penalty>0?' is-pen':'')+
-    sub('ค่าแรง',sum.wage)+sub('ต้นเก็บคืน',sum.principal)+sub('ต้นคงค้าง',outstanding);
+    sub('ต้นเก็บคืน',sum.principal)+sub('ต้นคงค้าง',outstanding);
   var heroSub='';
   if(isStaff()){
     var dueN=dueToday.length;
@@ -167,7 +167,6 @@ function renderDashboard(){
         '<div class="brbox-grid">'+
           mrow('ดอกที่เก็บได้',b.interest)+
           mrow('ค่าปรับ',b.penalty,b.penalty>0?' r':'')+
-          mrow('ค่าแรง',b.wage)+
           mrow('เงินต้นเก็บคืน',b.principal)+
           '<div class="br-m"><span class="br-mk">จ่ายแล้ว</span><span class="br-mv">'+b.paid+' ราย</span></div>'+
         '</div></div>';
