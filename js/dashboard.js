@@ -83,6 +83,8 @@ function renderDashboard(){
     return{name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
       penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
+      principal:br.reduce(function(s,r){return s+ +(r.principal_reduced||0)},0),
+      collected:br.reduce(function(s,r){return s+ +r.amount_paid + +(r.penalty||0)},0),
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
@@ -128,18 +130,22 @@ function renderDashboard(){
       lostList.slice(0,12).map(function(c){return '<span class="chip" onclick="openDetail(\''+c.id+'\')">'+esc(c.full_name)+'</span>'}).join('')+'</div></div>';
   }
 
-  // by branch (มุมมองผู้บริหาร) — กราฟแท่งทอง วัดจาก "ดอกที่เก็บได้"
+  // by branch (มุมมองผู้บริหาร) — รายละเอียดครบทุกตัวเลขต่อบ้าน
   if(byBranch.length>1){
-    var maxI=byBranch.reduce(function(m,b){return Math.max(m,b.interest)},0)||1;
-    h+='<div class="section-label">ดอกที่เก็บได้ · แยกตามบ้าน</div><div class="card card-pad bar-card">'+
+    var mrow=function(k,v,cls){return '<div class="br-m"><span class="br-mk">'+k+'</span><span class="br-mv'+(cls||'')+'">฿'+fmt0(v)+'</span></div>'};
+    h+='<div class="section-label">แยกตามบ้าน</div>'+
       byBranch.map(function(b){
-        var pct=Math.max(2,Math.round(b.interest/maxI*100));
-        return '<div class="bar-row">'+
-          '<div class="bar-top"><span class="bar-name">'+esc(b.name)+'</span><span class="bar-val">฿'+fmt0(b.interest)+'</span></div>'+
-          '<div class="bar-track"><div class="bar-fill" style="width:'+(b.interest>0?pct:0)+'%"></div></div>'+
-          '<div class="bar-sub">ค่าปรับ ฿'+fmt0(b.penalty)+' · ค่าแรง ฿'+fmt0(b.wage)+' · จ่าย '+b.paid+' ราย</div>'+
-        '</div>';
-      }).join('')+'</div>';
+        return '<div class="card card-pad brbox">'+
+          '<div class="brbox-head"><span class="brbox-name">'+esc(b.name)+'</span>'+
+            '<span class="brbox-total">รวมรับ <b>฿'+fmt0(b.collected)+'</b></span></div>'+
+          '<div class="brbox-grid">'+
+            mrow('ดอกที่เก็บได้',b.interest)+
+            mrow('ค่าปรับ',b.penalty,b.penalty>0?' r':'')+
+            mrow('ค่าแรง',b.wage)+
+            mrow('เงินต้นเก็บคืน',b.principal)+
+            '<div class="br-m"><span class="br-mk">จ่ายแล้ว</span><span class="br-mv">'+b.paid+' ราย</span></div>'+
+          '</div></div>';
+      }).join('');
   }
   document.getElementById('dash-main').innerHTML=h;
 }
