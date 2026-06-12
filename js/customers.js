@@ -10,7 +10,7 @@ function renderCustGroupBtns(){
   groups.forEach(function(g){btns+='<button class="branch-btn'+(custGroupId===g.id?' active':'')+'" onclick="setCustGroup(\''+g.id+'\')">'+esc(g.name)+'</button>';});
   el.innerHTML=btns;
 }
-function setCustGroup(id){custGroupId=id;custBranchId='';renderCustGroupBtns();renderCustBranchBtns();renderCustomers();}
+function setCustGroup(id){custGroupId=id;custBranchId='';renderCustGroupBtns();renderCustBranchBtns();renderCustomers();renderDashboard();}
 
 // ── ตัวกรอง "บ้าน" — ถ้าเลือกกองแล้วโชว์เฉพาะบ้านในกองนั้น ──
 function renderCustBranchBtns(){
@@ -29,7 +29,7 @@ function renderCustBranchBtns(){
   branches.filter(function(b){return !b.group_id}).forEach(function(b){btns+='<button class="branch-btn'+(custBranchId===b.id?' active':'')+'" onclick="setCustBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
   el.innerHTML=btns;
 }
-function setCustBranch(id){custBranchId=id;renderCustBranchBtns();renderCustomers();}
+function setCustBranch(id){custBranchId=id;renderCustBranchBtns();renderCustomers();renderDashboard();}
 
 function renderCustomers(){
   var search=(document.getElementById('cust-search').value||'').toLowerCase();

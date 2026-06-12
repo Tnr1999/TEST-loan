@@ -6,6 +6,7 @@ function showPage(name){
   document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('active',p.id==='page-'+name)});
   document.querySelectorAll('.tab,.nav-item').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-page')===name)});
   window.scrollTo({top:0,behavior:'smooth'});
+  if(typeof renderDashboard==='function'&&allCustomers.length)renderDashboard(); // สรุปยอดตามหน้าที่เปิด
 }
 // ไอคอนเส้น (stroke=currentColor → เปลี่ยนเป็นทองเมื่อ active)
 var NAV_ICONS={
@@ -50,10 +51,21 @@ function renderDashBranchBtns(){
 }
 function setDashBranch(id){dashBranchId=id;renderDashBranchBtns();renderDashboard();}
 
+// ขอบเขตของแถบสรุปยอด = ตัวกรองของ "หน้าที่เปิดอยู่"
+// หน้าลูกค้า → กอง/บ้านที่เลือก · หน้ารายงาน → บ้านที่เลือก (dashBranchId)
+function currentScopeBids(){
+  var all=myBranchIds();
+  var pc=document.getElementById('page-customers');
+  if(pc&&pc.classList.contains('active')){
+    if(custBranchId)return [custBranchId];
+    if(custGroupId)return allBranches.filter(function(b){return b.group_id===custGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
+    return all;
+  }
+  return dashBranchId?[dashBranchId]:all;
+}
 function renderDashboard(){
   var date=document.getElementById('dash-date-picker').value||todayISO();
-  var bids=myBranchIds();
-  if(dashBranchId) bids=[dashBranchId];
+  var bids=currentScopeBids();
 
   var custs=allCustomers.filter(function(c){return bids.indexOf(c.branch_id)>=0});
   var recs=allRecords.filter(function(r){
