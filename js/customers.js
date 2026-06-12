@@ -61,7 +61,7 @@ function renderCustomers(){
     if(v==='overdue')return c.status==='overdue'&&!s.paid;
     if(v==='new')return s.isNew&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='closed')return c.status==='closed'&&!personHasActiveLoan(c.person_id);
+    if(v==='closed')return c.status==='closed'&&!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c);
     if(v==='dead')return c.status==='lost';
     return true;
   }
@@ -399,6 +399,16 @@ function custFormBranches(){
 // คนนี้มีสัญญาที่ยังเก็บอยู่ (เปิดใหม่ไปแล้ว) หรือไม่ — ใช้ซ่อนสัญญาเก่าที่ปิดแล้วออกจากแท็บ "ปิดยอด"
 function personHasActiveLoan(personId){
   return allLoans.some(function(l){return l.person_id===personId&&(l.status==='normal'||l.status==='overdue')});
+}
+// คนเดียวกันอาจมีสัญญาที่ปิดแล้วหลายรอบ — โชว์ในแท็บ "ปิดยอด" แค่รอบล่าสุด (กันซ้ำ)
+function isLatestClosedLoan(c){
+  var sameClosed=allLoans.filter(function(l){return l.person_id===c.person_id&&l.status==='closed'});
+  if(sameClosed.length<=1)return true;
+  var latest=sameClosed.reduce(function(a,b){
+    if(a.start_date!==b.start_date)return a.start_date>b.start_date?a:b;
+    return a.seq>b.seq?a:b;
+  });
+  return latest.id===c.id;
 }
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
 function loanRuleError(personId,branchId){
