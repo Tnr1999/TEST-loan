@@ -6,7 +6,7 @@ function openPayment(custId,date){
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
   var due=interestDue(c),close=closeAmount(c);
-  document.getElementById('modal-payment-title').textContent='#'+c.seq+' '+c.full_name;
+  document.getElementById('modal-payment-title').textContent=custCode(c)+' '+c.full_name;
   document.getElementById('modal-payment-body').innerHTML=
     '<div class="field"><label>วันที่ชำระ'+(existing?' <span style="color:var(--green)">· มีบันทึกแล้ว (แก้ไข)</span>':'')+'</label><input class="inp" id="pay-date" type="date" max="'+todayISO()+'" value="'+date+'" onchange="openPayment(\''+custId+'\',this.value)"/></div>'+
     '<div style="display:flex;gap:10px;margin-bottom:14px">'+

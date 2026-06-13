@@ -34,15 +34,19 @@ function renderBranches(){
   document.getElementById('branch-list').innerHTML=html;
 }
 var editingBranchId=null;
-function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','')}
-function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.fee_per_person,b.group_id||'',b.penalty_per_hour,b.penalty_per_day)}
-function branchForm(title,name,fee,groupId,penHour,penDay){
+function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','','')}
+function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.code||'',b.fee_per_person,b.group_id||'',b.penalty_per_hour,b.penalty_per_day)}
+function branchForm(title,name,code,fee,groupId,penHour,penDay){
   document.getElementById('modal-branch-title').textContent=title;
   document.getElementById('modal-branch-body').innerHTML=
     '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="b-group">'+
       '<option value="">— เลือกกอง —</option>'+
       allGroups.map(function(g){return '<option value="'+g.id+'" '+(g.id===groupId?'selected':'')+'>'+esc(g.name)+'</option>'}).join('')+'</select></div>'+
-    '<div class="field"><label>ชื่อบ้าน <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<div class="field" style="flex:1"><label>ชื่อบ้าน <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
+      '<div class="field" style="width:110px"><label>รหัสบ้าน</label><input class="inp mono" id="b-code" maxlength="5" value="'+esc(code||'')+'" placeholder="AA" style="text-transform:uppercase"/></div>'+
+    '</div>'+
+    '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">รหัสบ้านใช้ขึ้นต้นรหัสลูกค้า เช่น AA → ลูกค้าเป็น AA01, AA02…</div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
     '<div style="display:flex;gap:10px">'+
       '<div class="field" style="flex:1"><label>ค่าปรับ/ชั่วโมง (บาท)</label><input class="inp mono" id="b-pen-hour" type="number" min="0" value="'+(penHour||'')+'"/></div>'+
@@ -57,7 +61,7 @@ function branchForm(title,name,fee,groupId,penHour,penDay){
 async function saveBranch(){
   var name=document.getElementById('b-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
-  var payload={name:name,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,penalty_per_hour:parseFloat(document.getElementById('b-pen-hour').value)||0,penalty_per_day:parseFloat(document.getElementById('b-pen-day').value)||0,group_id:document.getElementById('b-group').value||null};
+  var payload={name:name,code:(document.getElementById('b-code').value.trim().toUpperCase())||null,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,penalty_per_hour:parseFloat(document.getElementById('b-pen-hour').value)||0,penalty_per_day:parseFloat(document.getElementById('b-pen-day').value)||0,group_id:document.getElementById('b-group').value||null};
   var res=editingBranchId?await _sb.from('branches').update(payload).eq('id',editingBranchId):await _sb.from('branches').insert(payload);
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();

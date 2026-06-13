@@ -43,6 +43,7 @@ function renderCustomers(){
     if(search){
       var hit=c.full_name.toLowerCase().indexOf(search)>=0
         || (c.phone||'').indexOf(search)>=0
+        || custCode(c).toLowerCase().indexOf(search)>=0
         || String(c.seq).indexOf(search)>=0;
       if(!hit)return false;
     }
@@ -89,7 +90,7 @@ function renderCustomers(){
   }
   // ตาราง (จอใหญ่)
   document.getElementById('cust-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>#</th><th>ชื่อ-สกุล</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ดอก/งวด</th><th class="tr-right">ยอดปิด</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    '<table class="tbl"><thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ดอก/งวด</th><th class="tr-right">ยอดปิด</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     vlist.map(function(c){var s=stMap[c.id];
       var interest=interestDue(c);
       var close=closeAmount(c);
@@ -109,7 +110,7 @@ function renderCustomers(){
       else if(s.pending)actBtn=canEdit()?'<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button></div>':viewBtn;
       else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
-      '<td class="mono" style="color:var(--muted)">'+c.seq+'</td>'+
+      '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
@@ -149,7 +150,7 @@ function custCardHTML(c,date,s){
     :(c.status==='lost'?'<span class="crow-st t-over">ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">ปิดยอด</span>':'')))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
-  var head='<div class="crow-ava">'+c.seq+'</div>'+
+  var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
     '<div class="crow-main">'+
       '<div class="crow-l1"><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
       '<div class="crow-l2">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
@@ -182,7 +183,7 @@ function openDetail(id){
   var ca=closeAmount(c);
 
   var h='<div class="page-head" style="margin-bottom:14px"><div>'+
-    '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">#'+c.seq+'</span>'+
+    '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
@@ -507,7 +508,7 @@ async function saveCustomer(){
 
   // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)
   var res=await _sb.from('loans').insert({
-    person_id:personId,branch_id:branchId,
+    person_id:personId,branch_id:branchId,cust_no:nextCustNo(branchId,personId),
     principal:principal,daily_interest_rate:0.10,
     collection_interval:interval,start_date:todayISO(),
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0,

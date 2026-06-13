@@ -260,7 +260,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow.over{border-color:rgba(251,113,133,0.4)}
 .crow.paid{opacity:0.82}
 /* avatar นำหน้า = เลขลำดับ ระบายสีตามสถานะ */
-.crow-ava{flex-shrink:0;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:0.9rem;background:var(--card2);color:var(--text2);border:1px solid var(--border)}
+.crow-ava{flex-shrink:0;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:0.8rem;letter-spacing:-0.02em;background:var(--card2);color:var(--text2);border:1px solid var(--border)}
 .crow.due .crow-ava{background:var(--amber-dim);color:var(--amber);border-color:rgba(249,115,22,0.3)}
 .crow.over .crow-ava{background:var(--red-dim);color:var(--red);border-color:rgba(251,113,133,0.3)}
 .crow.paid .crow-ava{background:var(--green-dim);color:var(--green);border-color:rgba(52,211,153,0.3)}

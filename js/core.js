@@ -330,3 +330,19 @@ function populateFilters(){
 function branchName(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'—'}
 function groupNameOfBranch(id){var b=allBranches.find(function(x){return x.id===id});if(!b||!b.group_id)return '—';var g=allGroups.find(function(x){return x.id===b.group_id});return g?g.name:'—'}
 
+// รหัสลูกค้า = รหัสบ้าน + เลขลำดับในบ้าน (เช่น AA01) — ตั้งรหัสบ้านที่หน้าตั้งค่า
+function padNo(n){n=+n||0;return n<10?'0'+n:''+n}
+function custCode(c){
+  var b=allBranches.find(function(x){return x.id===c.branch_id});
+  var code=b&&b.code?b.code:'';
+  if(code)return code+(c.cust_no?padNo(c.cust_no):'');
+  return '#'+(c.cust_no||c.seq); // ยังไม่ตั้งรหัสบ้าน → ใช้เลขสำรอง
+}
+// เลขลูกค้าถัดไปของบ้าน — ต่อคน (คนเดิมในบ้านเดิม = เลขเดิม) · ไม่ reuse ของคนอื่น
+function nextCustNo(branchId,personId){
+  var ex=allLoans.find(function(l){return l.branch_id===branchId&&l.person_id===personId&&l.cust_no});
+  if(ex)return ex.cust_no;
+  var max=0;allLoans.forEach(function(l){if(l.branch_id===branchId&&+l.cust_no>max)max=+l.cust_no});
+  return max+1;
+}
+
