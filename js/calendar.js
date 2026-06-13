@@ -20,7 +20,7 @@ function buildCalGrid(){
   for(var d=1;d<=dim;d++){
     var iso=_calY+'-'+String(_calM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var isS=iso===sel,isT=iso===today;
-    var bg=isS?'var(--gold)':isT?'var(--gold-dim)':'transparent',col=isS?'#fff':isT?'var(--gold)':'var(--text)';
+    var bg=isS?'var(--gold)':isT?'var(--gold-dim)':'transparent',col=isS?'var(--on-gold)':isT?'var(--gold)':'var(--text)';
     var bord=isS?'1px solid var(--gold)':isT?'1px solid var(--gold-dim)':'1px solid transparent';
     cells+='<button onclick="calPick(\''+iso+'\')" style="aspect-ratio:1;border-radius:8px;border:'+bord+';background:'+bg+';color:'+col+';font-weight:'+(isS?'700':'400')+';cursor:pointer;font-size:0.78rem;display:flex;align-items:center;justify-content:center">'+d+'</button>';
   }

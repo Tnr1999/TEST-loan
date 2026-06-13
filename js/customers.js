@@ -213,7 +213,7 @@ function openDetail(id){
 
   // สถานะการโอนเงินให้ลูกค้า (ลูกค้าใหม่ที่ยังรอรับเงิน)
   if(!c.disbursed){
-    h+='<div class="card card-pad" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.3);background:var(--amber-dim)">'+
+    h+='<div class="card card-pad" style="margin-bottom:14px;border:1px solid rgba(249,115,22,0.3);background:var(--amber-dim)">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
       '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">รอเปิด</div>'+
       '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดเปิดเพื่อเปลี่ยนเป็น "เปิดแล้ว"</div></div>'+
