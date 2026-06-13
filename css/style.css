@@ -105,12 +105,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .tab:hover:not(.active){color:var(--text2)}
 .header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .user-chip{display:flex;align-items:center;gap:7px;padding:5px 11px;border-radius:8px;background:var(--surface);border:1px solid var(--border);font-size:0.78rem;font-weight:500}
-.role-badge{padding:2px 8px;border-radius:99px;font-size:0.6rem;font-weight:700;letter-spacing:0.06em}
-/* ป้าย role — โทนทองล้วน ไล่น้ำหนัก: เจ้าของ(ทองเต็ม) → หัวหน้า(ทองจาง) → พนักงาน(เทาอุ่น) */
-.role-owner{background:var(--gold);color:var(--on-gold);border:1px solid var(--gold)}
-.role-manager{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,0.4)}
-.role-head{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(212,175,55,0.4)}
-.role-staff{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.role-badge{padding:2px 8px;border-radius:99px;font-size:0.6rem;font-weight:700;letter-spacing:0.06em;background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+/* ป้าย role ทุกบทบาทใช้โทนเดียวกัน (เทาอุ่น) — สีอยู่ที่ .role-badge เท่านั้น ไม่ผูกกับ .role-* เปล่าๆ เพราะ <body class="role-*"> ใช้ชื่อเดียวกัน (กันพื้นหลังเพี้ยน) */
 
 /* ═══ MOBILE BOTTOM NAV ═══ */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:200;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(19,17,13,0.96);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid rgba(212,175,55,0.14);display:none;align-items:stretch;box-shadow:0 -4px 20px rgba(0,0,0,0.4)}
