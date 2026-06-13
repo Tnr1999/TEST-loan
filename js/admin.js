@@ -81,6 +81,10 @@ async function saveBranch(){
   if(staffId){
     var prevOwned=allBranches.filter(function(b){return b.staff_id===staffId&&b.id!==bid});
     for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
+    // พนักงานเจ้าของบ้าน (role พนักงาน) ต้องเห็นบ้านนี้ด้วย — เติม "บ้านที่รับผิดชอบ" ให้อัตโนมัติถ้ายังไม่มี
+    var su=allUsers.find(function(x){return x.id===staffId});
+    if(su&&su.role==='staff'&&!allUserBranches.some(function(ub){return ub.user_id===staffId&&ub.branch_id===bid}))
+      await _sb.from('user_branches').insert({user_id:staffId,branch_id:bid});
   }
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
 }
