@@ -222,7 +222,7 @@ function renderPayoutPage(){
 
 // ── ค่าแรงของตัวเอง (พนักงาน) ──
 // แสดงเฉพาะของ currentUser · ค่าแรงเข้า "พนักงานเจ้าของบ้าน" (branches.staff_id) เสมอ ถึงคนอื่นจะเป็นคนกดรับเงิน — ไม่กำหนด = เข้าคนที่กดรับเงิน (recorded_by)
-// หักคอม 5% ของยอดเข้า เฉพาะกองที่มีหัวหน้า (เหมือนสรุปทีม)
+// หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
   var wage=0,comm=0;
@@ -232,9 +232,8 @@ function renderPayoutSelf(recs){
     var b=allBranches.find(function(x){return x.id===c.branch_id});
     var uid=(b&&b.staff_id)||r.recorded_by;
     if(uid!==currentUser.id)return;
-    var gid=b&&b.group_id;
     wage+=+r.wage;
-    if(gid&&groupHeadUser(gid))comm+=round2(+r.wage*5*COMM);
+    if(b&&lineHeadOfBranch(b.id))comm+=round2(+r.wage*5*COMM);
   });
   if(!wage)return '';
   wage=round2(wage);comm=round2(comm);
@@ -252,21 +251,21 @@ function renderPayoutSelf(recs){
       '</div></div>';
 }
 
-// หัวหน้ากอง (กติกา: 1 กอง = หัวหน้ากอง 1 คน) — ผู้รับค่าคอมของกองนั้น
-function groupHeadUser(gid){
-  if(!gid)return null;
-  var uids=allUserGroups.filter(function(ug){return ug.group_id===gid}).map(function(ug){return ug.user_id});
-  return allUsers.find(function(u){return uids.indexOf(u.id)>=0&&u.role==='head'})||null;
+// หัวหน้าสายของบ้าน (role line/manager ที่ผูกบ้านนี้ผ่าน user_branches) — ผู้รับค่าคอมของสายนั้น
+function lineHeadOfBranch(bid){
+  if(!bid)return null;
+  var uids=allUserBranches.filter(function(ub){return ub.branch_id===bid}).map(function(ub){return ub.user_id});
+  return allUsers.find(function(u){return uids.indexOf(u.id)>=0&&(u.role==='line'||u.role==='manager')})||null;
 }
 
 // ── สรุปจ่ายเงินทีมรายวัน ──
 // ค่าแรง = 20% ของ "ยอดเข้า" (ดอกเก็บได้+ค่าปรับ+ค่าธรรมเนียมตอนปิด, เก็บใน daily_records.wage)
-// คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้ากอง (รวมส่วนของหัวหน้าเองด้วย)
-// แยกตามกอง → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · กองไหนไม่มีหัวหน้ากอง = ไม่หักคอม
+// คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของสาย" → จ่ายให้หัวหน้าสาย (รวมส่วนของหัวหน้าเองด้วย)
+// แยกตามสาย (หัวหน้าสายของบ้าน = lineHeadOfBranch) → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · บ้านไหนไม่มีหัวหน้าสาย = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  // จัดกลุ่ม: กอง → คน → ค่าแรงรวมวันนี้
-  var groups={};
+  // จัดกลุ่ม: สาย (หัวหน้าสาย) → คน → ค่าแรงรวมวันนี้
+  var lines={};
   recs.forEach(function(r){
     if(!(+r.wage))return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
@@ -275,39 +274,40 @@ function renderPayout(recs){
     // เจ้าของระบบ (owner) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้าสาย + พนักงาน
     var ru=allUsers.find(function(x){return x.id===uid});
     if(ru&&ru.role==='owner')return;
-    var gid=(b&&b.group_id)||'__none';
-    var g=groups[gid]||(groups[gid]={persons:{}});
+    var lh=b?lineHeadOfBranch(b.id):null;
+    var lid=lh?lh.id:'__none';
+    var g=lines[lid]||(lines[lid]={persons:{},head:lh});
     g.persons[uid]=(g.persons[uid]||0)+ +r.wage;
   });
-  if(!Object.keys(groups).length)return '';
+  if(!Object.keys(lines).length)return '';
 
   var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
   var uName=function(uid){var u=allUsers.find(function(x){return x.id===uid});return u?u.full_name:'(ไม่ทราบชื่อ)'};
   var uRole=function(uid){var u=allUsers.find(function(x){return x.id===uid});return u?u.role:'staff'};
 
   var html='<div class="section-label" style="margin-top:24px">จ่ายเงินทีม · ค่าแรง 20% − คอม 5%</div>';
-  // เรียงกองตาม allGroups แล้วต่อด้วย "ไม่มีกอง"
-  var orderGids=allGroups.map(function(g){return g.id}).filter(function(id){return groups[id]});
-  if(groups['__none'])orderGids.push('__none');
+  // เรียงสายตามชื่อหัวหน้าสาย แล้วต่อด้วย "ไม่มีหัวหน้าสาย"
+  var orderLids=Object.keys(lines).filter(function(id){return id!=='__none'});
+  orderLids.sort(function(a,b){return (lines[a].head.full_name||'').localeCompare(lines[b].head.full_name||'','th')});
+  if(lines['__none'])orderLids.push('__none');
 
-  orderGids.forEach(function(gid){
-    var g=groups[gid];
-    var head=gid==='__none'?null:groupHeadUser(gid), hasHead=!!head;
+  orderLids.forEach(function(lid){
+    var g=lines[lid];
+    var head=g.head, hasHead=!!head;
     var persons=Object.keys(g.persons).map(function(uid){
       var wage=round2(g.persons[uid]), comm=hasHead?round2(wage*5*COMM):0;
       return {uid:uid,wage:wage,comm:comm,keep:round2(wage-comm)};
     });
-    // ให้มีแถวหัวหน้าเสมอ แม้วันนี้ไม่ได้เก็บเอง
+    // ให้มีแถวหัวหน้าสายเสมอ แม้วันนี้ไม่ได้เก็บเอง
     if(hasHead&&!persons.some(function(p){return p.uid===head.id}))persons.push({uid:head.id,wage:0,comm:0,keep:0});
     var pool=round2(persons.reduce(function(s,p){return s+p.comm},0));
     var baseTotal=round2(persons.reduce(function(s,p){return s+p.wage*5},0));
-    var gname=gid==='__none'?'ไม่มีกอง':((allGroups.find(function(x){return x.id===gid})||{}).name||'กอง');
+    var lname=hasHead?('สาย '+esc(head.full_name)):'ไม่มีหัวหน้าสาย (ไม่หักคอม)';
 
-    html+='<div class="grp-head"><span class="grp-name">'+esc(gname)+
-      '<span class="grp-count">· '+(hasHead?'หัวหน้ากอง: '+esc(head.full_name):'ไม่มีหัวหน้ากอง (ไม่หักคอม)')+'</span></span>'+
+    html+='<div class="grp-head"><span class="grp-name">'+lname+'</span>'+
       '<span class="grp-total">ยอดเข้า <b><span class="cur">฿</span>'+fmt(baseTotal)+'</b></span></div>';
 
-    // พนักงานก่อน → หัวหน้าท้ายสุด (อ่านเป็นสรุป)
+    // พนักงานก่อน → หัวหน้าสายท้ายสุด (อ่านเป็นสรุป)
     var staff=persons.filter(function(p){return !hasHead||p.uid!==head.id});
     var ordered=staff.concat(hasHead?persons.filter(function(p){return p.uid===head.id}):[]);
 
@@ -328,7 +328,7 @@ function renderPayout(recs){
         var srcRows=persons.filter(function(x){return x.comm>0}).map(function(x){
           return '<div class="pay-src-row"><span>'+esc(uName(x.uid))+(x.uid===head.id?' · ตัวเอง':'')+'</span><span class="v">฿'+fmt(x.comm)+'</span></div>';
         }).join('');
-        html+='<div class="pay-src"><div class="pay-src-h">+ ค่าคอมที่เก็บได้จากทั้งกอง · ฿'+fmt(pool)+'</div>'+srcRows+'</div>'+
+        html+='<div class="pay-src"><div class="pay-src-h">+ ค่าคอมที่เก็บได้จากทั้งสาย · ฿'+fmt(pool)+'</div>'+srcRows+'</div>'+
           '<div class="pay-lines"><div class="pay-line total"><span class="k">ได้รับสุทธิ</span><span class="v" style="color:var(--gold);font-weight:700"><span class="cur">฿</span>'+fmt(net)+'</span></div></div>';
       }
       html+='</div>';
