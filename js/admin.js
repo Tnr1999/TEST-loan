@@ -178,7 +178,7 @@ function userForm(u){
   document.getElementById('modal-user-title').textContent=u?'✏️ แก้ไขผู้ใช้':'+ เพิ่มผู้ใช้';
   document.getElementById('modal-user-body').innerHTML=
     (u?'':'<div class="field"><label>Username <span class="req">*</span></label><input class="inp" id="u-username"/></div>')+
-    (u?'<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u.full_name)+'"/></div>':'')+
+    '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u?u.full_name:'')+'"/></div>'+
     '<div class="field"><label>'+(u?'เปลี่ยนรหัสผ่าน (เว้นว่างถ้าไม่เปลี่ยน)':'รหัสผ่าน *')+'</label><input class="inp" id="u-pass" type="text"/></div>'+
     '<div class="field"><label>Role</label><div class="seg" id="u-role">'+
       ['owner','head','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
@@ -211,16 +211,15 @@ function selRole(r){
   var elOwnH=document.getElementById('u-ownbranch-hint');if(elOwnH)elOwnH.style.display=r==='head'?'':'none';
 }
 async function saveUser(){
-  var nameEl=document.getElementById('u-name');
+  var name=document.getElementById('u-name').value.trim();
   var pass=document.getElementById('u-pass').value;
   var role=document.getElementById('modal-user-body')._role;
   var branchIds=Array.prototype.slice.call(document.querySelectorAll('.u-branch:checked')).map(function(el){return el.value});
   var groupIds=Array.prototype.slice.call(document.querySelectorAll('.u-group:checked')).map(function(el){return el.value});
+  if(!name){toast('กรุณากรอกชื่อ','err');return}
 
   var uid;
   if(editingUserId){
-    var name=nameEl.value.trim();
-    if(!name){toast('กรุณากรอกชื่อ','err');return}
     var payload={full_name:name,role:role};
     if(pass)payload.password=pass;
     var res=await _sb.from('users').update(payload).eq('id',editingUserId);
@@ -229,7 +228,7 @@ async function saveUser(){
   } else {
     var username=document.getElementById('u-username').value.trim();
     if(!username||!pass){toast('กรุณากรอก Username และรหัสผ่าน','err');return}
-    var res=await _sb.from('users').insert({username:username,password:pass,full_name:username,role:role,is_active:true}).select().single();
+    var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:role,is_active:true}).select().single();
     if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
     uid=res.data.id;
   }
