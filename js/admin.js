@@ -129,7 +129,7 @@ function renderUsers(){
   var bName=function(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'?'};
   var gName=function(id){var g=allGroups.find(function(x){return x.id===id});return g?g.name:'?'};
   document.getElementById('user-list').innerHTML=
-    '<table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
+    '<div class="table-wrap"><table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     allUsers.map(function(u){
       var branches=u.role==='owner'?'ทุกกอง'
         :u.role==='staff'?('บ้าน: '+((ubByUser[u.id]||[]).map(bName).join(', ')||'—'))
@@ -140,9 +140,9 @@ function renderUsers(){
         '<td><span class="role-badge role-'+u.role+'">'+ROLE_LABEL[u.role]+'</span></td>'+
         '<td style="color:var(--text2);font-size:0.8rem">'+esc(branches)+'</td>'+
         '<td>'+(u.is_active?'<span class="st st-normal">ใช้งาน</span>':'<span class="st st-closed">ปิด</span>')+'</td>'+
-        '<td><div class="row-flex" style="gap:7px"><span class="link-gold" style="font-size:0.78rem" onclick="openEditUser(\''+u.id+'\')">แก้ไข</span>'+
-        '<span style="font-size:0.78rem;color:var(--muted);cursor:pointer" onclick="toggleUserActive(\''+u.id+'\')">'+(u.is_active?'ปิด':'เปิด')+'</span></div></td></tr>';
-    }).join('')+'</tbody></table>';
+        '<td><div class="row-flex" style="gap:7px"><button class="btn btn-ghost btn-xs" onclick="openEditUser(\''+u.id+'\')">แก้ไข</button>'+
+        '<button class="btn btn-ghost btn-xs" onclick="toggleUserActive(\''+u.id+'\')">'+(u.is_active?'ปิด':'เปิด')+'</button></div></td></tr>';
+    }).join('')+'</tbody></table></div>';
 }
 var editingUserId=null;
 function openAddUser(){editingUserId=null;userForm(null)}
