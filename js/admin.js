@@ -35,18 +35,10 @@ function renderBranches(){
   document.getElementById('branch-list').innerHTML=html;
 }
 var editingBranchId=null;
-function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','')}
-function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.code||'',b.fee_per_person,b.group_id||'',b.staff_id||'')}
-function branchForm(title,name,code,fee,groupId,staffId){
+function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','')}
+function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.code||'',b.fee_per_person,b.group_id||'')}
+function branchForm(title,name,code,fee,groupId){
   document.getElementById('modal-branch-title').textContent=title;
-  var staffField='';
-  if(isOwner()){
-    var staffOptions=allUsers.filter(function(u){return u.role==='head'||u.role==='manager'});
-    staffField='<div class="field"><label>พนักงานเจ้าของบ้าน</label><select class="inp" id="b-staff">'+
-        '<option value="">— ไม่กำหนด —</option>'+
-        staffOptions.map(function(u){return '<option value="'+u.id+'" '+(u.id===staffId?'selected':'')+'>'+esc(u.full_name)+' ('+(ROLE_LABEL[u.role]||u.role)+')</option>'}).join('')+'</select></div>'+
-      '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">ค่าแรง 20% ของบ้านนี้จะเข้าพนักงานคนนี้ ถึงแม้คนอื่นเป็นคนกดรับเงิน — ไม่กำหนด = เข้าคนที่กดรับเงินตามปกติ</div>';
-  }
   document.getElementById('modal-branch-body').innerHTML=
     '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="b-group">'+
       '<option value="">— เลือกกอง —</option>'+
@@ -57,7 +49,6 @@ function branchForm(title,name,code,fee,groupId,staffId){
     '</div>'+
     '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">รหัสบ้านใช้ขึ้นต้นรหัสลูกค้า เช่น AA → ลูกค้าเป็น AA001, AA002…</div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
-    staffField+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-branch\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveBranch()">บันทึก</button></div>';
@@ -67,8 +58,6 @@ async function saveBranch(){
   var name=document.getElementById('b-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
   var payload={name:name,code:(document.getElementById('b-code').value.trim().toUpperCase())||null,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,group_id:document.getElementById('b-group').value||null};
-  var staffEl=document.getElementById('b-staff');
-  if(staffEl)payload.staff_id=staffEl.value||null; // เฉพาะ owner เห็นช่องนี้ — หัวหน้าสาย/พนักงานแก้ "พนักงานเจ้าของบ้าน" ไม่ได้
   var res=editingBranchId?await _sb.from('branches').update(payload).eq('id',editingBranchId):await _sb.from('branches').insert(payload);
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
@@ -173,6 +162,14 @@ function userForm(u){
       ['owner','head','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
     '<div class="field" id="u-group-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>กองที่รับผิดชอบ</label>'+
       (allGroups.length?allGroups.map(function(g){return '<label class="checkbox-row"><input type="checkbox" class="u-group" value="'+g.id+'" '+(myGr.indexOf(g.id)>=0?'checked':'')+'/> '+esc(g.name)+'</label>'}).join(''):'<div class="field-hint">ยังไม่มีกอง</div>')+'</div>'+
+    '<div class="field" id="u-ownbranch-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>บ้านของตัวเอง</label><select class="inp" id="u-own-branch">'+
+      '<option value="">— ไม่มี —</option>'+
+      allBranches.map(function(b){
+        var owner=b.staff_id&&(!u||b.staff_id!==u.id)&&allUsers.find(function(x){return x.id===b.staff_id});
+        var label=esc(b.name)+' ('+esc(groupNameOfBranch(b.id))+')'+(owner?' — ปัจจุบัน: '+esc(owner.full_name):'');
+        return '<option value="'+b.id+'" '+(u&&b.staff_id===u.id?'selected':'')+'>'+label+'</option>';
+      }).join('')+'</select></div>'+
+    '<div id="u-ownbranch-hint" style="'+(role0==='head'?'':'display:none')+';font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">ค่าแรง 20% ของบ้านนี้จะเข้าคนนี้เสมอ ถึงแม้คนอื่นเป็นคนกดรับเงิน</div>'+
     '<div class="field" id="u-branch-wrap" style="'+(role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
       allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
@@ -186,6 +183,8 @@ function selRole(r){
   document.getElementById('modal-user-body')._role=r;
   document.getElementById('u-branch-wrap').style.display=r==='staff'?'':'none';
   document.getElementById('u-group-wrap').style.display=r==='head'?'':'none';
+  document.getElementById('u-ownbranch-wrap').style.display=r==='head'?'':'none';
+  document.getElementById('u-ownbranch-hint').style.display=r==='head'?'':'none';
 }
 async function saveUser(){
   var name=document.getElementById('u-name').value.trim();
@@ -219,6 +218,12 @@ async function saveUser(){
   await _sb.from('user_groups').delete().eq('user_id',uid);
   if(role==='head'&&groupIds.length)
     await _sb.from('user_groups').insert(groupIds.map(function(g){return{user_id:uid,group_id:g}}));
+
+  // sync บ้านของตัวเอง (branches.staff_id) — เฉพาะหัวหน้าสาย, 1 คนมีได้บ้านเดียว
+  var ownBranchId=role==='head'?document.getElementById('u-own-branch').value:'';
+  var prevOwned=allBranches.filter(function(b){return b.staff_id===uid&&b.id!==ownBranchId});
+  for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
+  if(ownBranchId)await _sb.from('branches').update({staff_id:uid}).eq('id',ownBranchId);
 
   toast(editingUserId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มผู้ใช้สำเร็จ','ok');closeModal('modal-user');await loadAll();
 }
