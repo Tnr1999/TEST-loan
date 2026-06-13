@@ -221,14 +221,17 @@ function renderPayoutPage(){
 }
 
 // ── ค่าแรงของตัวเอง (สตาฟ) ──
-// แสดงเฉพาะของ currentUser · หักคอม 5% ของยอดเข้า เฉพาะกองที่มีหัวหน้า (เหมือนสรุปทีม)
+// แสดงเฉพาะของ currentUser · ค่าแรงเข้า "พนักงานเจ้าของบ้าน" (branches.staff_id) เสมอ ถึงคนอื่นจะเป็นคนกดรับเงิน — ไม่กำหนด = เข้าคนที่กดรับเงิน (recorded_by)
+// หักคอม 5% ของยอดเข้า เฉพาะกองที่มีหัวหน้า (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
   var wage=0,comm=0;
   recs.forEach(function(r){
-    if(!(+r.wage)||r.recorded_by!==currentUser.id)return;
+    if(!(+r.wage))return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
     var b=allBranches.find(function(x){return x.id===c.branch_id});
+    var uid=(b&&b.staff_id)||r.recorded_by;
+    if(uid!==currentUser.id)return;
     var gid=b&&b.group_id;
     wage+=+r.wage;
     if(gid&&groupHeadUser(gid))comm+=round2(+r.wage*5*COMM);
@@ -259,21 +262,21 @@ function groupHeadUser(gid){
 // ── สรุปจ่ายเงินทีมรายวัน ──
 // ค่าแรง = 20% ของ "ยอดเข้า" (ดอกเก็บได้+ค่าปรับ+ค่าธรรมเนียมตอนปิด, เก็บใน daily_records.wage)
 // คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้ากอง (รวมส่วนของหัวหน้าเองด้วย)
-// แยกตามกอง → รายคน (recorded_by = คนที่กดรับเงิน) · กองไหนไม่มีหัวหน้า = ไม่หักคอม
+// แยกตามกอง → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · กองไหนไม่มีหัวหน้า = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
   // จัดกลุ่ม: กอง → คน → ค่าแรงรวมวันนี้
   var groups={};
   recs.forEach(function(r){
     if(!(+r.wage))return;
-    // เจ้าของระบบ (owner) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้ากอง + สตาฟ
-    var ru=allUsers.find(function(x){return x.id===r.recorded_by});
-    if(ru&&ru.role==='owner')return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
     var b=allBranches.find(function(x){return x.id===c.branch_id});
+    var uid=(b&&b.staff_id)||r.recorded_by||'__unknown';
+    // เจ้าของระบบ (owner) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้ากอง + สตาฟ
+    var ru=allUsers.find(function(x){return x.id===uid});
+    if(ru&&ru.role==='owner')return;
     var gid=(b&&b.group_id)||'__none';
     var g=groups[gid]||(groups[gid]={persons:{}});
-    var uid=r.recorded_by||'__unknown';
     g.persons[uid]=(g.persons[uid]||0)+ +r.wage;
   });
   if(!Object.keys(groups).length)return '';
