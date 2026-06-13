@@ -190,7 +190,7 @@ function openDetail(id){
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
-  if(canEdit()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
+  if(canEditCustomerInfo()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
   h+='</div>';
 
   // stats
@@ -432,7 +432,7 @@ function loanRuleError(personId,branchId){
   return null;
 }
 function openEditCustomer(id){
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
+  if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
   closeModal('modal-detail'); // กัน modal ซ้อนกัน
   editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;

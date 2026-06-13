@@ -37,6 +37,7 @@ function isHead(){return currentUser&&(currentUser.role==='head'||currentUser.ro
 function isStaff(){return currentUser&&currentUser.role==='staff'}
 function canEdit(){return isOwner()||isHead()}      // แก้/ลบลูกค้า, ปิดสินเชื่อ, จัดการบ้าน
 function canAddCustomer(){return isOwner()||isHead()||isStaff()} // เพิ่มลูกค้า (staff เพิ่มได้ แต่แก้ไขไม่ได้)
+function canEditCustomerInfo(){return isOwner()||isHead()||isStaff()} // แก้ "ข้อมูลลูกค้า" (ชื่อ/เบอร์/บัญชี) — staff แก้ได้ (ไม่รวมการเงิน/ปิด/ลบ)
 function canManageUsers(){return isOwner()}
 function canManageGroups(){return isOwner()}
 function myGroupIds(){
