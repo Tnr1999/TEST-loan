@@ -222,6 +222,9 @@ function renderPayout(recs){
   var groups={};
   recs.forEach(function(r){
     if(!(+r.wage))return;
+    // เจ้าของระบบ (owner) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้ากอง + สตาฟ
+    var ru=allUsers.find(function(x){return x.id===r.recorded_by});
+    if(ru&&ru.role==='owner')return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
     var b=allBranches.find(function(x){return x.id===c.branch_id});
     var gid=(b&&b.group_id)||'__none';
