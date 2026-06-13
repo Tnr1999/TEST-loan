@@ -317,7 +317,7 @@ function renderPayout(recs){
     ordered.forEach(function(p){
       var isHead=hasHead&&p.uid===head.id;
       var net=isHead?round2(p.keep+pool):p.keep;
-      var commLabel=isHead?'หักคอม 5% (เข้าสายตัวเอง)':('หักคอม 5% → '+esc(uName(head.id)));
+      var commLabel=!hasHead?'หักคอม 5% (ของยอดเข้า)':(isHead?'หักคอม 5% (เข้าสายตัวเอง)':('หักคอม 5% → '+esc(uName(head.id))));
       html+='<div class="pay-person'+(isHead?' is-head':'')+'">'+
         '<div class="pay-ph"><span class="pay-name">'+esc(uName(p.uid))+
           '<span class="role-badge role-'+uRole(p.uid)+'">'+(ROLE_LABEL[uRole(p.uid)]||'')+'</span></span>'+
