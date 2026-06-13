@@ -41,7 +41,7 @@ function branchForm(title,name,code,fee,groupId,staffId){
   document.getElementById('modal-branch-title').textContent=title;
   var staffField='';
   if(isOwner()){
-    var staffOptions=allUsers.filter(function(u){return u.role!=='owner'});
+    var staffOptions=allUsers.filter(function(u){return u.role==='head'||u.role==='manager'});
     staffField='<div class="field"><label>พนักงานเจ้าของบ้าน</label><select class="inp" id="b-staff">'+
         '<option value="">— ไม่กำหนด —</option>'+
         staffOptions.map(function(u){return '<option value="'+u.id+'" '+(u.id===staffId?'selected':'')+'>'+esc(u.full_name)+' ('+(ROLE_LABEL[u.role]||u.role)+')</option>'}).join('')+'</select></div>'+
