@@ -35,10 +35,17 @@ function renderBranches(){
   document.getElementById('branch-list').innerHTML=html;
 }
 var editingBranchId=null;
-function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','')}
-function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.code||'',b.fee_per_person,b.group_id||'')}
-function branchForm(title,name,code,fee,groupId){
+function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','')}
+function openEditBranch(id){var b=allBranches.find(function(x){return x.id===id});editingBranchId=id;branchForm('✏️ แก้ไขบ้าน',b.name,b.code||'',b.fee_per_person,b.group_id||'',b.staff_id||'')}
+function branchForm(title,name,code,fee,groupId,staffId){
   document.getElementById('modal-branch-title').textContent=title;
+  var staffField='';
+  if(isOwner()){
+    staffField='<div class="field"><label>พนักงานเจ้าของบ้าน</label><select class="inp" id="b-staff">'+
+        '<option value="">— ไม่กำหนด —</option>'+
+        allUsers.map(function(u){return '<option value="'+u.id+'" '+(u.id===staffId?'selected':'')+'>'+esc(u.full_name)+' ('+(ROLE_LABEL[u.role]||u.role)+')</option>'}).join('')+'</select></div>'+
+      '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">ค่าแรง 20% ของบ้านนี้จะเข้าคนนี้เสมอ ถึงแม้คนอื่นเป็นคนกดรับเงิน — เลือกคนที่มีบ้านอยู่แล้ว จะย้ายมาเป็นบ้านนี้แทน (1 คนถือได้บ้านเดียว)</div>';
+  }
   document.getElementById('modal-branch-body').innerHTML=
     '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="b-group">'+
       '<option value="">— เลือกกอง —</option>'+
@@ -49,6 +56,7 @@ function branchForm(title,name,code,fee,groupId){
     '</div>'+
     '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">รหัสบ้านใช้ขึ้นต้นรหัสลูกค้า เช่น AA → ลูกค้าเป็น AA001, AA002…</div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
+    staffField+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-branch\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveBranch()">บันทึก</button></div>';
@@ -58,8 +66,22 @@ async function saveBranch(){
   var name=document.getElementById('b-name').value.trim();
   if(!name){toast('กรุณากรอกชื่อบ้าน','err');return}
   var payload={name:name,code:(document.getElementById('b-code').value.trim().toUpperCase())||null,fee_per_person:parseFloat(document.getElementById('b-fee').value)||0,group_id:document.getElementById('b-group').value||null};
-  var res=editingBranchId?await _sb.from('branches').update(payload).eq('id',editingBranchId):await _sb.from('branches').insert(payload);
+  var staffEl=document.getElementById('b-staff');
+  var staffId=staffEl?(staffEl.value||null):null;
+  if(staffEl)payload.staff_id=staffId;
+  var bid=editingBranchId,res;
+  if(editingBranchId){
+    res=await _sb.from('branches').update(payload).eq('id',editingBranchId);
+  } else {
+    res=await _sb.from('branches').insert(payload).select().single();
+    if(!res.error)bid=res.data.id;
+  }
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+  // กฎ 1 คนถือได้บ้านเดียว — เคลียร์ staff_id เดิมของคนนี้จากบ้านอื่น
+  if(staffId){
+    var prevOwned=allBranches.filter(function(b){return b.staff_id===staffId&&b.id!==bid});
+    for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
+  }
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
 }
 async function doDeleteBranch(id){
