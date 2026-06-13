@@ -225,7 +225,7 @@ function renderPayoutPage(){
 // หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var wage=0,comm=0;
+  var wage=0,comm=0,heads={};
   recs.forEach(function(r){
     if(!(+r.wage))return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
@@ -233,11 +233,14 @@ function renderPayoutSelf(recs){
     var uid=(b&&b.staff_id)||r.recorded_by;
     if(uid!==currentUser.id)return;
     wage+=+r.wage;
-    if(b&&lineHeadOfBranch(b.id))comm+=round2(+r.wage*5*COMM);
+    var lh=b&&lineHeadOfBranch(b.id);
+    if(lh){comm+=round2(+r.wage*5*COMM);heads[lh.id]=lh.full_name;}
   });
   if(!wage)return '';
   wage=round2(wage);comm=round2(comm);
   var keep=round2(wage-comm);
+  var headNames=Object.keys(heads).map(function(k){return heads[k]});
+  var commLabel=headNames.length===1?('หักคอม 5% → '+esc(headNames[0])):'หักคอม 5% (ของยอดเข้า)';
   var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
   return '<div class="section-label" style="margin-top:24px">ค่าแรงของฉัน</div>'+
     '<div class="pay-person">'+
@@ -246,7 +249,7 @@ function renderPayoutSelf(recs){
       '<div class="pay-lines">'+
         money('ยอดเข้าวันนี้ (ฐานค่าแรง)',wage*5)+
         money('ค่าแรง 20%',wage)+
-        (comm>0?money('หักคอม 5% (ของยอดเข้า)',comm,' minus'):'')+
+        (comm>0?money(commLabel,comm,' minus'):'')+
         money('ได้รับ',keep,' total')+
       '</div></div>';
 }
@@ -314,6 +317,7 @@ function renderPayout(recs){
     ordered.forEach(function(p){
       var isHead=hasHead&&p.uid===head.id;
       var net=isHead?round2(p.keep+pool):p.keep;
+      var commLabel=isHead?'หักคอม 5% (เข้าสายตัวเอง)':('หักคอม 5% → '+esc(uName(head.id)));
       html+='<div class="pay-person'+(isHead?' is-head':'')+'">'+
         '<div class="pay-ph"><span class="pay-name">'+esc(uName(p.uid))+
           '<span class="role-badge role-'+uRole(p.uid)+'">'+(ROLE_LABEL[uRole(p.uid)]||'')+'</span></span>'+
@@ -321,7 +325,7 @@ function renderPayout(recs){
         '<div class="pay-lines">'+
           money('ยอดเข้าวันนี้ (ฐานค่าแรง)',p.wage*5)+
           money('ค่าแรง 20%',p.wage)+
-          (p.comm>0?money('หักคอม 5% (ของยอดเข้า)',p.comm,' minus'):'')+
+          (p.comm>0?money(commLabel,p.comm,' minus'):'')+
           money('คงเหลือ',p.keep,(isHead&&pool>0)?'':' total')+
         '</div>';
       if(isHead&&pool>0){
