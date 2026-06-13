@@ -185,14 +185,6 @@ function userForm(u){
     (u?(
     '<div class="field" id="u-group-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>กองที่รับผิดชอบ</label>'+
       (allGroups.length?allGroups.map(function(g){return '<label class="checkbox-row"><input type="checkbox" class="u-group" value="'+g.id+'" '+(myGr.indexOf(g.id)>=0?'checked':'')+'/> '+esc(g.name)+'</label>'}).join(''):'<div class="field-hint">ยังไม่มีกอง</div>')+'</div>'+
-    '<div class="field" id="u-ownbranch-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>บ้านของตัวเอง</label><select class="inp" id="u-own-branch">'+
-      '<option value="">— ไม่มี —</option>'+
-      allBranches.map(function(b){
-        var owner=b.staff_id&&(!u||b.staff_id!==u.id)&&allUsers.find(function(x){return x.id===b.staff_id});
-        var label=esc(b.name)+' ('+esc(groupNameOfBranch(b.id))+')'+(owner?' — ปัจจุบัน: '+esc(owner.full_name):'');
-        return '<option value="'+b.id+'" '+(u&&b.staff_id===u.id?'selected':'')+'>'+label+'</option>';
-      }).join('')+'</select></div>'+
-    '<div id="u-ownbranch-hint" style="'+(role0==='head'?'':'display:none')+';font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">ค่าแรง 20% ของบ้านนี้จะเข้าคนนี้เสมอ ถึงแม้คนอื่นเป็นคนกดรับเงิน</div>'+
     '<div class="field" id="u-branch-wrap" style="'+(role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
       allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'
     ):'')+
@@ -207,8 +199,6 @@ function selRole(r){
   document.getElementById('modal-user-body')._role=r;
   var elBranch=document.getElementById('u-branch-wrap');if(elBranch)elBranch.style.display=r==='staff'?'':'none';
   var elGroup=document.getElementById('u-group-wrap');if(elGroup)elGroup.style.display=r==='head'?'':'none';
-  var elOwnB=document.getElementById('u-ownbranch-wrap');if(elOwnB)elOwnB.style.display=r==='head'?'':'none';
-  var elOwnH=document.getElementById('u-ownbranch-hint');if(elOwnH)elOwnH.style.display=r==='head'?'':'none';
 }
 async function saveUser(){
   var name=document.getElementById('u-name').value.trim();
@@ -242,13 +232,6 @@ async function saveUser(){
   await _sb.from('user_groups').delete().eq('user_id',uid);
   if(role==='head'&&groupIds.length)
     await _sb.from('user_groups').insert(groupIds.map(function(g){return{user_id:uid,group_id:g}}));
-
-  // sync บ้านของตัวเอง (branches.staff_id) — เฉพาะหัวหน้าสาย, 1 คนมีได้บ้านเดียว
-  var ownBranchEl=document.getElementById('u-own-branch');
-  var ownBranchId=(role==='head'&&ownBranchEl)?ownBranchEl.value:'';
-  var prevOwned=allBranches.filter(function(b){return b.staff_id===uid&&b.id!==ownBranchId});
-  for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
-  if(ownBranchId)await _sb.from('branches').update({staff_id:uid}).eq('id',ownBranchId);
 
   toast(editingUserId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มผู้ใช้สำเร็จ','ok');closeModal('modal-user');await loadAll();
 }
