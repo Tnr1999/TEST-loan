@@ -156,10 +156,11 @@ function userForm(u){
   document.getElementById('modal-user-title').textContent=u?'✏️ แก้ไขผู้ใช้':'+ เพิ่มผู้ใช้';
   document.getElementById('modal-user-body').innerHTML=
     (u?'':'<div class="field"><label>Username <span class="req">*</span></label><input class="inp" id="u-username"/></div>')+
-    '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u?u.full_name:'')+'"/></div>'+
+    (u?'<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u.full_name)+'"/></div>':'')+
     '<div class="field"><label>'+(u?'เปลี่ยนรหัสผ่าน (เว้นว่างถ้าไม่เปลี่ยน)':'รหัสผ่าน *')+'</label><input class="inp" id="u-pass" type="text"/></div>'+
     '<div class="field"><label>Role</label><div class="seg" id="u-role">'+
       ['owner','head','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
+    (u?(
     '<div class="field" id="u-group-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>กองที่รับผิดชอบ</label>'+
       (allGroups.length?allGroups.map(function(g){return '<label class="checkbox-row"><input type="checkbox" class="u-group" value="'+g.id+'" '+(myGr.indexOf(g.id)>=0?'checked':'')+'/> '+esc(g.name)+'</label>'}).join(''):'<div class="field-hint">ยังไม่มีกอง</div>')+'</div>'+
     '<div class="field" id="u-ownbranch-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>บ้านของตัวเอง</label><select class="inp" id="u-own-branch">'+
@@ -171,7 +172,8 @@ function userForm(u){
       }).join('')+'</select></div>'+
     '<div id="u-ownbranch-hint" style="'+(role0==='head'?'':'display:none')+';font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">ค่าแรง 20% ของบ้านนี้จะเข้าคนนี้เสมอ ถึงแม้คนอื่นเป็นคนกดรับเงิน</div>'+
     '<div class="field" id="u-branch-wrap" style="'+(role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
-      allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'+
+      allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'
+    ):'')+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-user\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" onclick="saveUser()">บันทึก</button></div>';
@@ -181,21 +183,22 @@ function userForm(u){
 function selRole(r){
   document.querySelectorAll('#u-role button').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-v')===r)});
   document.getElementById('modal-user-body')._role=r;
-  document.getElementById('u-branch-wrap').style.display=r==='staff'?'':'none';
-  document.getElementById('u-group-wrap').style.display=r==='head'?'':'none';
-  document.getElementById('u-ownbranch-wrap').style.display=r==='head'?'':'none';
-  document.getElementById('u-ownbranch-hint').style.display=r==='head'?'':'none';
+  var elBranch=document.getElementById('u-branch-wrap');if(elBranch)elBranch.style.display=r==='staff'?'':'none';
+  var elGroup=document.getElementById('u-group-wrap');if(elGroup)elGroup.style.display=r==='head'?'':'none';
+  var elOwnB=document.getElementById('u-ownbranch-wrap');if(elOwnB)elOwnB.style.display=r==='head'?'':'none';
+  var elOwnH=document.getElementById('u-ownbranch-hint');if(elOwnH)elOwnH.style.display=r==='head'?'':'none';
 }
 async function saveUser(){
-  var name=document.getElementById('u-name').value.trim();
+  var nameEl=document.getElementById('u-name');
   var pass=document.getElementById('u-pass').value;
   var role=document.getElementById('modal-user-body')._role;
   var branchIds=Array.prototype.slice.call(document.querySelectorAll('.u-branch:checked')).map(function(el){return el.value});
   var groupIds=Array.prototype.slice.call(document.querySelectorAll('.u-group:checked')).map(function(el){return el.value});
-  if(!name){toast('กรุณากรอกชื่อ','err');return}
 
   var uid;
   if(editingUserId){
+    var name=nameEl.value.trim();
+    if(!name){toast('กรุณากรอกชื่อ','err');return}
     var payload={full_name:name,role:role};
     if(pass)payload.password=pass;
     var res=await _sb.from('users').update(payload).eq('id',editingUserId);
@@ -204,7 +207,7 @@ async function saveUser(){
   } else {
     var username=document.getElementById('u-username').value.trim();
     if(!username||!pass){toast('กรุณากรอก Username และรหัสผ่าน','err');return}
-    var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:role,is_active:true}).select().single();
+    var res=await _sb.from('users').insert({username:username,password:pass,full_name:username,role:role,is_active:true}).select().single();
     if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
     uid=res.data.id;
   }
@@ -220,7 +223,8 @@ async function saveUser(){
     await _sb.from('user_groups').insert(groupIds.map(function(g){return{user_id:uid,group_id:g}}));
 
   // sync บ้านของตัวเอง (branches.staff_id) — เฉพาะหัวหน้าสาย, 1 คนมีได้บ้านเดียว
-  var ownBranchId=role==='head'?document.getElementById('u-own-branch').value:'';
+  var ownBranchEl=document.getElementById('u-own-branch');
+  var ownBranchId=(role==='head'&&ownBranchEl)?ownBranchEl.value:'';
   var prevOwned=allBranches.filter(function(b){return b.staff_id===uid&&b.id!==ownBranchId});
   for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
   if(ownBranchId)await _sb.from('branches').update({staff_id:uid}).eq('id',ownBranchId);
