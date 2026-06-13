@@ -147,7 +147,7 @@ function custCardHTML(c,date,s){
     :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
     :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
-    :(c.status==='lost'?'<span class="crow-st t-over">ตาย</span>'
+    :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">ปิดยอด</span>':'')))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
   var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
