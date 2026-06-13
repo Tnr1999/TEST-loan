@@ -29,7 +29,7 @@ function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=[
 
 var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'ตาย',closed:'ปิดแล้ว'};
 var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)'};
-var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',manager:'หัวหน้ากอง',staff:'STAFF'};
+var ROLE_LABEL={owner:'OWNER',head:'หัวหน้าสาย',manager:'หัวหน้าสาย',staff:'พนักงาน'};
 
 /* ═══ PERMISSION ═══ */
 function isOwner(){return currentUser&&currentUser.role==='owner'}
@@ -48,7 +48,7 @@ function myBranchIds(){
   if(isOwner()) return allBranches.map(function(b){return b.id});
   if(isHead()){
     var gids=myGroupIds();
-    // หัวหน้ากองที่ยังไม่ถูกผูกกอง → เห็นทุกบ้าน (ช่วงเปลี่ยนผ่าน)
+    // หัวหน้าสายที่ยังไม่ถูกผูกกอง → เห็นทุกบ้าน (ช่วงเปลี่ยนผ่าน)
     if(!gids.length) return allBranches.map(function(b){return b.id});
     return allBranches.filter(function(b){return gids.indexOf(b.group_id)>=0}).map(function(b){return b.id});
   }
@@ -263,7 +263,7 @@ async function loadAll(){
   var dres=await _sb.from('disbursements').select('*');
   allDisbursements=dres.error?[]:(dres.data||[]);
 
-  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้ากองโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
+  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้าสายโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
   if(canEdit()&&!isOwner()){
     var ures=await _sb.from('users').select('id,username,full_name,role,is_active').order('created_at');
     if(!ures.error)allUsers=ures.data||[];
