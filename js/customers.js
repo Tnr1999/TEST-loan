@@ -75,7 +75,9 @@ function renderCustomers(){
   }).join('');
 
   // กรองตามมุมมองที่เลือก (ถ้ากำลังค้นหา → แสดงทุกผลลัพธ์ ไม่ตัดด้วยมุมมอง)
-  var vlist=list.filter(function(c){return search?true:inView(c,custView)});
+  // ตอนค้นหา → ข้ามตัวกรองมุมมอง แต่ยัง dedup สัญญา "ปิดแล้ว" ซ้ำของคนเดียวกัน (โชว์เฉพาะรอบล่าสุด กันรายการบาน)
+  function searchVisible(c){return c.status!=='closed'||(!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c));}
+  var vlist=list.filter(function(c){return search?searchVisible(c):inView(c,custView)});
   // เรียง: รอรับเงิน/ต้องเก็บวันนี้ ▸ ค้าง ▸ ปกติ ▸ จ่ายแล้ว ▸ ตาย ▸ ปิด แล้วตามลำดับเลข
   function prio(c){var s=stMap[c.id];if(c.status==='closed')return 5;if(c.status==='lost')return 4;if(s.pending||s.due)return 0;if(s.paid)return 3;if(c.status==='overdue')return 1;return 2}
   vlist.sort(function(a,b){var d=prio(a)-prio(b);return d!==0?d:a.seq-b.seq});
