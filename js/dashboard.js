@@ -7,17 +7,20 @@ function showPage(name){
   document.querySelectorAll('.tab,.nav-item').forEach(function(t){t.classList.toggle('active',t.getAttribute('data-page')===name)});
   window.scrollTo({top:0,behavior:'smooth'});
   if(typeof renderDashboard==='function'&&allCustomers.length)renderDashboard(); // สรุปยอดตามหน้าที่เปิด
+  if(name==='payout'&&typeof renderPayoutPage==='function')renderPayoutPage();
 }
 // ไอคอนเส้น (stroke=currentColor → เปลี่ยนเป็นทองเมื่อ active)
 var NAV_ICONS={
   customers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   reports:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/></svg>',
+  payout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></svg>',
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="13"/><line x1="4" y1="9" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="15"/><line x1="20" y1="11" x2="20" y2="3"/><line x1="1.5" y1="13" x2="6.5" y2="13"/><line x1="9.5" y1="8" x2="14.5" y2="8"/><line x1="17.5" y1="15" x2="22.5" y2="15"/></svg>'
 };
 // เมนูตามสิทธิ์: ลูกค้า (ทุกคน) · รายงาน (owner/head) · ตั้งค่า (ผู้มีสิทธิ์)
 function navItems(){
   var items=[{k:'customers',t:'ลูกค้า'}];
   if(canEdit())items.push({k:'reports',t:'รายงาน'});
+  if(canEdit())items.push({k:'payout',t:'ค่าแรง'});
   if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',t:'ตั้งค่า'});
   return items;
 }
@@ -200,10 +203,20 @@ function renderDashboard(){
       h+=grpBlock('ไม่มีกอง',rest);
     }
   }
-  // จ่ายเงินทีม (ค่าแรง + คอม) — รายวันตามวันที่ที่เลือก
-  h+=renderPayout(recs);
-
   document.getElementById('dash-main').innerHTML=h;
+}
+
+// หน้า "ค่าแรง" (แท็บแยก) — รายวันตามวันที่ที่เลือก, ขอบเขต = บ้านที่ตัวเองเข้าถึง
+function renderPayoutPage(){
+  var el=document.getElementById('payout-main');if(!el)return;
+  if(isStaff()){el.innerHTML='';return;}
+  var date=selDate(), bids=myBranchIds();
+  var recs=allRecords.filter(function(r){
+    if(r.record_date!==date)return false;
+    var c=allCustomers.find(function(x){return x.id===r.customer_id});
+    return c&&bids.indexOf(c.branch_id)>=0;
+  });
+  el.innerHTML=renderPayout(recs)||'<div class="empty">วันนี้ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>';
 }
 
 // หัวหน้าของกอง (กติกา: 1 กอง = หัวหน้า 1 คน) — ผู้รับค่าคอมของกองนั้น

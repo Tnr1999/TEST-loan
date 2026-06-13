@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=2026061123"/>
+<link rel="stylesheet" href="css/style.css?v=2026061124"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -83,6 +83,36 @@
         </div>
         <div id="dash-main"></div>
       </div>
+    </div>
+
+    <!-- ═══ PAYOUT (ค่าแรง) ═══ -->
+    <div class="page" id="page-payout">
+      <div class="page-head">
+        <div>
+          <div class="page-title">ค่าแรง</div>
+          <div class="page-sub">ค่าแรงทีมรายวัน · หัวหน้ากอง + สตาฟ</div>
+        </div>
+      </div>
+      <div class="cust-datebar" id="payout-datebar">
+        <button class="cal-nav" onclick="calStepDay(-1)" aria-label="วันก่อนหน้า">‹</button>
+        <button class="cust-date-btn" onclick="event.stopPropagation();togglePayoutCal()" aria-label="เลือกวันที่">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <span id="payout-date-label">—</span>
+          <svg class="caret" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        <button class="cal-nav" onclick="calStepDay(1)" aria-label="วันถัดไป">›</button>
+        <button class="btn btn-ghost btn-xs cust-today-btn" onclick="calSelectToday()">วันนี้</button>
+        <div class="cust-cal-pop" id="payout-cal-pop" hidden>
+          <div class="cal-head">
+            <button class="cal-nav" onclick="calNavMonth(-1)" aria-label="เดือนก่อนหน้า">‹</button>
+            <span class="cal-month" id="payout-cal-month-label">—</span>
+            <button class="cal-nav" onclick="calNavMonth(1)" aria-label="เดือนถัดไป">›</button>
+          </div>
+          <div class="cal-dow"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
+          <div class="cal-grid" id="payout-cal-days-grid"></div>
+        </div>
+      </div>
+      <div id="payout-main"></div>
     </div>
 
     <!-- ═══ CUSTOMERS ═══ -->
@@ -237,12 +267,12 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=2026061123"></script>
-<script src="js/dashboard.js?v=2026061123"></script>
-<script src="js/payments.js?v=2026061123"></script>
-<script src="js/customers.js?v=2026061123"></script>
-<script src="js/admin.js?v=2026061123"></script>
-<script src="js/calendar.js?v=2026061123"></script>
-<script src="js/init.js?v=2026061123"></script>
+<script src="js/core.js?v=2026061124"></script>
+<script src="js/dashboard.js?v=2026061124"></script>
+<script src="js/payments.js?v=2026061124"></script>
+<script src="js/customers.js?v=2026061124"></script>
+<script src="js/admin.js?v=2026061124"></script>
+<script src="js/calendar.js?v=2026061124"></script>
+<script src="js/init.js?v=2026061124"></script>
 </body>
 </html>

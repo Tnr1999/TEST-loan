@@ -283,6 +283,7 @@ async function loadAll(){
   populateFilters();
   renderDashboard();
   renderCustomers();
+  if(typeof renderPayoutPage==='function') renderPayoutPage();
   if(canManageGroups()) renderGroups();
   if(canEdit()) renderBranches();
   if(canManageUsers()) renderUsers();
