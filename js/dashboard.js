@@ -20,7 +20,7 @@ var NAV_ICONS={
 function navItems(){
   var items=[{k:'customers',t:'ลูกค้า'}];
   if(canEdit())items.push({k:'reports',t:'รายงาน'});
-  if(canEdit())items.push({k:'payout',t:'ค่าแรง'});
+  items.push({k:'payout',t:'ค่าแรง'});
   if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',t:'ตั้งค่า'});
   return items;
 }
@@ -207,16 +207,46 @@ function renderDashboard(){
 }
 
 // หน้า "ค่าแรง" (แท็บแยก) — รายวันตามวันที่ที่เลือก, ขอบเขต = บ้านที่ตัวเองเข้าถึง
+// สตาฟเห็นแค่ของตัวเอง · owner/head เห็นสรุปทั้งทีม
 function renderPayoutPage(){
   var el=document.getElementById('payout-main');if(!el)return;
-  if(isStaff()){el.innerHTML='';return;}
   var date=selDate(), bids=myBranchIds();
   var recs=allRecords.filter(function(r){
     if(r.record_date!==date)return false;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});
     return c&&bids.indexOf(c.branch_id)>=0;
   });
-  el.innerHTML=renderPayout(recs)||'<div class="empty">วันนี้ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>';
+  var html=isStaff()?renderPayoutSelf(recs):renderPayout(recs);
+  el.innerHTML=html||'<div class="empty">วันนี้ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>';
+}
+
+// ── ค่าแรงของตัวเอง (สตาฟ) ──
+// แสดงเฉพาะของ currentUser · หักคอม 5% ของยอดเข้า เฉพาะกองที่มีหัวหน้า (เหมือนสรุปทีม)
+function renderPayoutSelf(recs){
+  var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
+  var wage=0,comm=0;
+  recs.forEach(function(r){
+    if(!(+r.wage)||r.recorded_by!==currentUser.id)return;
+    var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
+    var b=allBranches.find(function(x){return x.id===c.branch_id});
+    var gid=b&&b.group_id;
+    wage+=+r.wage;
+    if(gid&&groupHeadUser(gid))comm+=round2(+r.wage*5*COMM);
+  });
+  if(!wage)return '';
+  wage=round2(wage);comm=round2(comm);
+  var keep=round2(wage-comm);
+  var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
+  return '<div class="section-label" style="margin-top:24px">ค่าแรงของฉัน</div>'+
+    '<div class="pay-person">'+
+      '<div class="pay-ph"><span class="pay-name">'+esc(currentUser.full_name)+'</span>'+
+        '<span class="pay-net"><span class="cur">฿</span>'+fmt(keep)+'</span></div>'+
+      '<div class="pay-lines">'+
+        money('ยอดเข้าวันนี้ (ฐานค่าแรง)',wage*5)+
+        money('ค่าแรง 20%',wage)+
+        (comm>0?money('หักคอม 5% (ของยอดเข้า)',comm,' minus'):'')+
+        money('ได้รับ',keep,' total')+
+      '</div></div>';
 }
 
 // หัวหน้าของกอง (กติกา: 1 กอง = หัวหน้า 1 คน) — ผู้รับค่าคอมของกองนั้น
