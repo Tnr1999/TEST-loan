@@ -21,7 +21,7 @@ function navItems(){
   var items=[{k:'customers',t:'ลูกค้า'}];
   if(canEdit())items.push({k:'reports',t:'รายงาน'});
   items.push({k:'payout',t:'ค่าแรง'});
-  if(canEdit()||canManageGroups()||canManageUsers())items.push({k:'settings',t:'ตั้งค่า'});
+  if(canManageBranches()||canManageGroups()||canManageUsers())items.push({k:'settings',t:'ตั้งค่า'});
   return items;
 }
 function renderNav(){
@@ -252,17 +252,17 @@ function renderPayoutSelf(recs){
       '</div></div>';
 }
 
-// หัวหน้าของกอง (กติกา: 1 กอง = หัวหน้า 1 คน) — ผู้รับค่าคอมของกองนั้น
+// หัวหน้ากอง (กติกา: 1 กอง = หัวหน้ากอง 1 คน) — ผู้รับค่าคอมของกองนั้น
 function groupHeadUser(gid){
   if(!gid)return null;
   var uids=allUserGroups.filter(function(ug){return ug.group_id===gid}).map(function(ug){return ug.user_id});
-  return allUsers.find(function(u){return uids.indexOf(u.id)>=0&&(u.role==='head'||u.role==='manager')})||null;
+  return allUsers.find(function(u){return uids.indexOf(u.id)>=0&&u.role==='head'})||null;
 }
 
 // ── สรุปจ่ายเงินทีมรายวัน ──
 // ค่าแรง = 20% ของ "ยอดเข้า" (ดอกเก็บได้+ค่าปรับ+ค่าธรรมเนียมตอนปิด, เก็บใน daily_records.wage)
-// คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้าสาย (รวมส่วนของหัวหน้าเองด้วย)
-// แยกตามกอง → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · กองไหนไม่มีหัวหน้าสาย = ไม่หักคอม
+// คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้ากอง (รวมส่วนของหัวหน้าเองด้วย)
+// แยกตามกอง → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · กองไหนไม่มีหัวหน้ากอง = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
   // จัดกลุ่ม: กอง → คน → ค่าแรงรวมวันนี้
@@ -304,7 +304,7 @@ function renderPayout(recs){
     var gname=gid==='__none'?'ไม่มีกอง':((allGroups.find(function(x){return x.id===gid})||{}).name||'กอง');
 
     html+='<div class="grp-head"><span class="grp-name">'+esc(gname)+
-      '<span class="grp-count">· '+(hasHead?'หัวหน้า: '+esc(head.full_name):'ไม่มีหัวหน้าสาย (ไม่หักคอม)')+'</span></span>'+
+      '<span class="grp-count">· '+(hasHead?'หัวหน้ากอง: '+esc(head.full_name):'ไม่มีหัวหน้ากอง (ไม่หักคอม)')+'</span></span>'+
       '<span class="grp-total">ยอดเข้า <b><span class="cur">฿</span>'+fmt(baseTotal)+'</b></span></div>';
 
     // พนักงานก่อน → หัวหน้าท้ายสุด (อ่านเป็นสรุป)

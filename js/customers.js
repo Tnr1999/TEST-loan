@@ -232,7 +232,7 @@ function openDetail(id){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
   }
 
-  // actions — พนักงานกดได้เฉพาะปุ่ม "ตาย" · เพิ่มยอด/ปิด/ลบ เฉพาะ owner/หัวหน้าสาย
+  // actions — พนักงานกดได้เฉพาะปุ่ม "ตาย" · เพิ่มยอด/ปิด/ลบ เฉพาะ owner/หัวหน้ากอง/หัวหน้าสาย
   if(c.status!=='closed'){
     var acts='';
     if(c.status==='normal'||c.status==='overdue')acts+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';

@@ -29,15 +29,22 @@ function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=[
 
 var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'ตาย',closed:'ปิดแล้ว'};
 var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)'};
-var ROLE_LABEL={owner:'OWNER',head:'หัวหน้าสาย',manager:'หัวหน้าสาย',staff:'พนักงาน'};
+var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',line:'หัวหน้าสาย',manager:'หัวหน้าสาย',staff:'พนักงาน'};
 
-/* ═══ PERMISSION ═══ */
+/* ═══ PERMISSION ═══
+   owner        = เห็น/จัดการทั้งระบบ
+   head         = หัวหน้ากอง — เห็นทุกบ้านในกองตัวเอง (ผูกผ่าน user_groups)
+   line/manager = หัวหน้าสาย — เห็นเฉพาะบ้านที่ดูแล (ผูกผ่าน user_branches) · แก้ไข/รับเงินได้
+   staff        = พนักงาน — เห็นเฉพาะบ้านตัวเอง (user_branches) · สิทธิ์จำกัด
+*/
 function isOwner(){return currentUser&&currentUser.role==='owner'}
-function isHead(){return currentUser&&(currentUser.role==='head'||currentUser.role==='manager')}
+function isHead(){return currentUser&&currentUser.role==='head'}                                    // หัวหน้ากอง
+function isLineHead(){return currentUser&&(currentUser.role==='line'||currentUser.role==='manager')} // หัวหน้าสาย
 function isStaff(){return currentUser&&currentUser.role==='staff'}
-function canEdit(){return isOwner()||isHead()}      // แก้/ลบลูกค้า, ปิดสินเชื่อ, จัดการบ้าน
-function canAddCustomer(){return isOwner()||isHead()||isStaff()} // เพิ่มลูกค้า (staff เพิ่มได้ แต่แก้ไขไม่ได้)
-function canEditCustomerInfo(){return isOwner()||isHead()||isStaff()} // แก้ "ข้อมูลลูกค้า" (ชื่อ/เบอร์/บัญชี) — staff แก้ได้ (ไม่รวมการเงิน/ปิด/ลบ)
+function canEdit(){return isOwner()||isHead()||isLineHead()}   // แก้/ลบลูกค้า, ปิดสินเชื่อ, รับเงิน
+function canManageBranches(){return isOwner()||isHead()}       // จัดการโครงสร้าง กอง→บ้าน (หัวหน้าสาย/พนักงานไม่ได้)
+function canAddCustomer(){return isOwner()||isHead()||isLineHead()||isStaff()} // เพิ่มลูกค้า (พนักงานเพิ่มได้ แต่แก้ไขไม่ได้)
+function canEditCustomerInfo(){return isOwner()||isHead()||isLineHead()||isStaff()} // แก้ "ข้อมูลลูกค้า" (ชื่อ/เบอร์/บัญชี) — พนักงานแก้ได้ (ไม่รวมการเงิน/ปิด/ลบ)
 function canManageUsers(){return isOwner()}
 function canManageGroups(){return isOwner()}
 function myGroupIds(){
@@ -46,12 +53,13 @@ function myGroupIds(){
 }
 function myBranchIds(){
   if(isOwner()) return allBranches.map(function(b){return b.id});
-  if(isHead()){
+  if(isHead()){   // หัวหน้ากอง → ทุกบ้านในกองที่ผูกไว้
     var gids=myGroupIds();
-    // หัวหน้าสายที่ยังไม่ถูกผูกกอง → เห็นทุกบ้าน (ช่วงเปลี่ยนผ่าน)
+    // หัวหน้ากองที่ยังไม่ถูกผูกกอง → เห็นทุกบ้าน (ช่วงเปลี่ยนผ่าน)
     if(!gids.length) return allBranches.map(function(b){return b.id});
     return allBranches.filter(function(b){return gids.indexOf(b.group_id)>=0}).map(function(b){return b.id});
   }
+  // หัวหน้าสาย / พนักงาน → เฉพาะบ้านที่ผูกไว้
   return allUserBranches.filter(function(ub){return ub.user_id===currentUser.id}).map(function(ub){return ub.branch_id});
 }
 function canAccessBranch(bid){return myBranchIds().indexOf(bid)>=0}
@@ -203,14 +211,14 @@ function startApp(){
   document.getElementById('hdr-name').textContent=currentUser.full_name;
   var rb=document.getElementById('hdr-role');
   rb.textContent=ROLE_LABEL[currentUser.role];rb.className='role-badge role-'+currentUser.role;
-  // role class ที่ body → ใช้สลับ UX/UI ตามบทบาท (CSS/JS)
-  document.body.className='role-'+(currentUser.role==='manager'?'head':currentUser.role);
+  // role class ที่ body → ใช้สลับ UX/UI ตามบทบาท (CSS/JS) · เฉพาะ role-staff มี CSS ซ่อนตัวกรองบ้าน
+  document.body.className='role-'+currentUser.role;
   // permission-based UI: แท็บย่อยในหน้าตั้งค่า
   var sgb=document.getElementById('stab-btn-groups');if(sgb)sgb.style.display=canManageGroups()?'':'none';
-  var sbb=document.getElementById('stab-btn-branches');if(sbb)sbb.style.display=canEdit()?'':'none';
+  var sbb=document.getElementById('stab-btn-branches');if(sbb)sbb.style.display=canManageBranches()?'':'none';
   var sub=document.getElementById('stab-btn-users');if(sub)sub.style.display=canManageUsers()?'':'none';
   if(typeof showSettingsTab==='function'){
-    if(canEdit()) showSettingsTab('branches');
+    if(canManageBranches()) showSettingsTab('branches');
     else if(canManageGroups()) showSettingsTab('groups');
     else if(canManageUsers()) showSettingsTab('users');
   }
@@ -263,7 +271,7 @@ async function loadAll(){
   var dres=await _sb.from('disbursements').select('*');
   allDisbursements=dres.error?[]:(dres.data||[]);
 
-  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้าสายโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
+  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้ากอง/หัวหน้าสายโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
   if(canEdit()&&!isOwner()){
     var ures=await _sb.from('users').select('id,username,full_name,role,is_active').order('created_at');
     if(!ures.error)allUsers=ures.data||[];
@@ -286,7 +294,7 @@ async function loadAll(){
   renderCustomers();
   if(typeof renderPayoutPage==='function') renderPayoutPage();
   if(canManageGroups()) renderGroups();
-  if(canEdit()) renderBranches();
+  if(canManageBranches()) renderBranches();
   if(canManageUsers()) renderUsers();
 }
 

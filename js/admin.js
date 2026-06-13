@@ -24,15 +24,22 @@ function renderBranches(){
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditBranch(\''+b.id+'\')">แก้ไข</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteBranch(\''+b.id+'\')">ลบ</button></div></div>';
   };
+  // หัวหน้ากอง (ไม่ใช่ owner) → เห็นเฉพาะกอง/บ้านของตัวเอง
+  var gids=isOwner()?null:myGroupIds();
+  var bids=isOwner()?null:myBranchIds();
+  var inScope=function(b){return bids?bids.indexOf(b.id)>=0:true};
   var html='';
   allGroups.forEach(function(g){
-    var bs=allBranches.filter(function(b){return b.group_id===g.id});
+    if(gids&&gids.indexOf(g.id)<0)return;
+    var bs=allBranches.filter(function(b){return b.group_id===g.id&&inScope(b)});
     if(!bs.length)return;
     html+='<div class="section-label">'+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+bs.map(renderCard).join('');
   });
-  var ungrouped=allBranches.filter(function(b){return !b.group_id});
-  if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+ungrouped.map(renderCard).join('');
-  document.getElementById('branch-list').innerHTML=html;
+  if(isOwner()){
+    var ungrouped=allBranches.filter(function(b){return !b.group_id});
+    if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+ungrouped.map(renderCard).join('');
+  }
+  document.getElementById('branch-list').innerHTML=html||'<div class="empty">ยังไม่มีบ้านในขอบเขตของคุณ</div>';
 }
 var editingBranchId=null;
 function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','')}
@@ -81,9 +88,9 @@ async function saveBranch(){
   if(staffId){
     var prevOwned=allBranches.filter(function(b){return b.staff_id===staffId&&b.id!==bid});
     for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
-    // พนักงานเจ้าของบ้าน (role พนักงาน) ต้องเห็นบ้านนี้ด้วย — เติม "บ้านที่รับผิดชอบ" ให้อัตโนมัติถ้ายังไม่มี
+    // พนักงานเจ้าของบ้าน (หัวหน้าสาย/พนักงาน) ต้องเห็นบ้านนี้ด้วย — เติม "บ้านที่รับผิดชอบ" ให้อัตโนมัติถ้ายังไม่มี
     var su=allUsers.find(function(x){return x.id===staffId});
-    if(su&&su.role==='staff'&&!allUserBranches.some(function(ub){return ub.user_id===staffId&&ub.branch_id===bid}))
+    if(su&&(su.role==='staff'||su.role==='line')&&!allUserBranches.some(function(ub){return ub.user_id===staffId&&ub.branch_id===bid}))
       await _sb.from('user_branches').insert({user_id:staffId,branch_id:bid});
   }
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
@@ -158,8 +165,8 @@ function renderUsers(){
     '<div class="table-wrap"><table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     allUsers.map(function(u){
       var branches=u.role==='owner'?'ทุกกอง'
-        :u.role==='staff'?('บ้าน: '+((ubByUser[u.id]||[]).map(bName).join(', ')||'—'))
-        :('กอง: '+((ugByUser[u.id]||[]).map(gName).join(', ')||'— (เห็นทุกบ้าน)'));
+        :u.role==='head'?('กอง: '+((ugByUser[u.id]||[]).map(gName).join(', ')||'— (เห็นทุกบ้าน)'))
+        :('บ้าน: '+((ubByUser[u.id]||[]).map(bName).join(', ')||'—'));
       return '<tr style="'+(u.is_active?'':'opacity:0.5')+'">'+
         '<td style="font-weight:500">'+esc(u.full_name)+'</td>'+
         '<td class="mono" style="color:var(--text2)">'+esc(u.username)+'</td>'+
@@ -178,18 +185,18 @@ function userForm(u){
   var ugByUser={};allUserGroups.forEach(function(ug){(ugByUser[ug.user_id]=ugByUser[ug.user_id]||[]).push(ug.group_id)});
   var myBr=u?(ubByUser[u.id]||[]):[];
   var myGr=u?(ugByUser[u.id]||[]):[];
-  var role0=u?(u.role==='manager'?'head':u.role):'staff';   // map manager เดิม → head
+  var role0=u?(u.role==='manager'?'line':u.role):'staff';   // map manager เดิม → หัวหน้าสาย (line)
   document.getElementById('modal-user-title').textContent=u?'✏️ แก้ไขผู้ใช้':'+ เพิ่มผู้ใช้';
   document.getElementById('modal-user-body').innerHTML=
     '<div class="field"><label>Username <span class="req">*</span></label><input class="inp" id="u-username" value="'+esc(u?u.username:'')+'"/></div>'+
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="u-name" value="'+esc(u?u.full_name:'')+'"/></div>'+
     '<div class="field"><label>'+(u?'เปลี่ยนรหัสผ่าน (เว้นว่างถ้าไม่เปลี่ยน)':'รหัสผ่าน *')+'</label><input class="inp" id="u-pass" type="text"/></div>'+
     '<div class="field"><label>Role</label><div class="seg" id="u-role">'+
-      ['owner','head','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
+      ['owner','head','line','staff'].map(function(r){return '<button data-v="'+r+'" class="'+(role0===r?'sel':'')+'" onclick="selRole(\''+r+'\')">'+ROLE_LABEL[r]+'</button>'}).join('')+'</div></div>'+
     (u?(
     '<div class="field" id="u-group-wrap" style="'+(role0==='head'?'':'display:none')+'"><label>กองที่รับผิดชอบ</label>'+
       (allGroups.length?allGroups.map(function(g){return '<label class="checkbox-row"><input type="checkbox" class="u-group" value="'+g.id+'" '+(myGr.indexOf(g.id)>=0?'checked':'')+'/> '+esc(g.name)+'</label>'}).join(''):'<div class="field-hint">ยังไม่มีกอง</div>')+'</div>'+
-    '<div class="field" id="u-branch-wrap" style="'+(role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
+    '<div class="field" id="u-branch-wrap" style="'+(role0==='line'||role0==='staff'?'':'display:none')+'"><label>บ้านที่รับผิดชอบ</label>'+
       allBranches.map(function(b){return '<label class="checkbox-row"><input type="checkbox" class="u-branch" value="'+b.id+'" '+(myBr.indexOf(b.id)>=0?'checked':'')+'/> '+esc(b.name)+' <span style="color:var(--muted)">('+esc(groupNameOfBranch(b.id))+')</span></label>'}).join('')+'</div>'
     ):'')+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
@@ -201,7 +208,7 @@ function userForm(u){
 function selRole(r){
   document.querySelectorAll('#u-role button').forEach(function(b){b.classList.toggle('sel',b.getAttribute('data-v')===r)});
   document.getElementById('modal-user-body')._role=r;
-  var elBranch=document.getElementById('u-branch-wrap');if(elBranch)elBranch.style.display=r==='staff'?'':'none';
+  var elBranch=document.getElementById('u-branch-wrap');if(elBranch)elBranch.style.display=(r==='line'||r==='staff')?'':'none';
   var elGroup=document.getElementById('u-group-wrap');if(elGroup)elGroup.style.display=r==='head'?'':'none';
 }
 async function saveUser(){
@@ -228,12 +235,12 @@ async function saveUser(){
     uid=res.data.id;
   }
 
-  // sync user_branches (staff)
+  // sync user_branches (หัวหน้าสาย/พนักงาน — ผูกบ้าน)
   await _sb.from('user_branches').delete().eq('user_id',uid);
-  if(role==='staff'&&branchIds.length)
+  if((role==='line'||role==='staff')&&branchIds.length)
     await _sb.from('user_branches').insert(branchIds.map(function(b){return{user_id:uid,branch_id:b}}));
 
-  // sync user_groups (head)
+  // sync user_groups (หัวหน้ากอง — ผูกกอง)
   await _sb.from('user_groups').delete().eq('user_id',uid);
   if(role==='head'&&groupIds.length)
     await _sb.from('user_groups').insert(groupIds.map(function(g){return{user_id:uid,group_id:g}}));
