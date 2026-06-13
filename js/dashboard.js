@@ -227,7 +227,8 @@ function groupHeadUser(gid){
 }
 
 // ── สรุปจ่ายเงินทีมรายวัน ──
-// ค่าแรง 20% (จาก daily_records.wage) − หักคอม 5% ของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้ากอง (รวมส่วนของหัวหน้าเองด้วย)
+// ค่าแรง = 20% ของ "ยอดเข้า" (ดอกเก็บได้+ค่าปรับ+ค่าธรรมเนียมตอนปิด, เก็บใน daily_records.wage)
+// คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของกอง" → จ่ายให้หัวหน้ากอง (รวมส่วนของหัวหน้าเองด้วย)
 // แยกตามกอง → รายคน (recorded_by = คนที่กดรับเงิน) · กองไหนไม่มีหัวหน้า = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
@@ -260,7 +261,7 @@ function renderPayout(recs){
     var g=groups[gid];
     var head=gid==='__none'?null:groupHeadUser(gid), hasHead=!!head;
     var persons=Object.keys(g.persons).map(function(uid){
-      var wage=round2(g.persons[uid]), comm=hasHead?round2(wage*COMM):0;
+      var wage=round2(g.persons[uid]), comm=hasHead?round2(wage*5*COMM):0;
       return {uid:uid,wage:wage,comm:comm,keep:round2(wage-comm)};
     });
     // ให้มีแถวหัวหน้าเสมอ แม้วันนี้ไม่ได้เก็บเอง
@@ -287,7 +288,7 @@ function renderPayout(recs){
         '<div class="pay-lines">'+
           money('ยอดเข้าวันนี้ (ฐานค่าแรง)',p.wage*5)+
           money('ค่าแรง 20%',p.wage)+
-          (p.comm>0?money('หักคอม 5%',p.comm,' minus'):'')+
+          (p.comm>0?money('หักคอม 5% (ของยอดเข้า)',p.comm,' minus'):'')+
           money('คงเหลือ',p.keep,(isHead&&pool>0)?'':' total')+
         '</div>';
       if(isHead&&pool>0){
