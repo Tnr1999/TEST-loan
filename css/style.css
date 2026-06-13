@@ -388,6 +388,25 @@ table.tbl tbody tr:hover{background:var(--surface)}
 #toast.err{background:var(--red);color:#fff}
 #toast.info{background:var(--card2);color:var(--text);border:1px solid var(--border2)}
 
+/* ═══ จ่ายเงินทีม (ค่าแรง + คอม) ═══ */
+.pay-person{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;margin-bottom:10px}
+.pay-person.is-head{border-color:rgba(212,175,55,0.4);background:linear-gradient(180deg,var(--gold-dim),transparent 55%),var(--card)}
+.pay-ph{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.pay-name{font-weight:600;font-size:0.96rem;display:flex;align-items:center;gap:8px;min-width:0}
+.pay-net{font-family:var(--font-mono);font-weight:700;font-size:1.18rem;color:var(--gold);white-space:nowrap}
+.pay-lines{display:flex;flex-direction:column;gap:5px;font-size:0.82rem}
+.pay-line{display:flex;justify-content:space-between;gap:10px}
+.pay-line .k{color:var(--text2)}
+.pay-line .v{font-family:var(--font-mono);font-weight:600;white-space:nowrap}
+.pay-line.minus .v{color:var(--red)}
+.pay-line.plus .v{color:var(--green)}
+.pay-line.total{border-top:1px solid var(--border2);margin-top:4px;padding-top:7px}
+.pay-line.total .k{font-weight:600;color:var(--text)}
+.pay-src{margin:9px 0;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:11px;font-size:0.78rem}
+.pay-src-h{color:var(--gold);font-weight:600;margin-bottom:7px}
+.pay-src-row{display:flex;justify-content:space-between;gap:10px;padding:2px 0;color:var(--text2)}
+.pay-src-row .v{font-family:var(--font-mono)}
+
 /* ═══ MISC ═══ */
 .empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:0.85rem}
 

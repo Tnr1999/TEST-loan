@@ -262,6 +262,12 @@ async function loadAll(){
   var dres=await _sb.from('disbursements').select('*');
   allDisbursements=dres.error?[]:(dres.data||[]);
 
+  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้ากองโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
+  if(canEdit()&&!isOwner()){
+    var ures=await _sb.from('users').select('id,username,full_name,role,is_active').order('created_at');
+    if(!ures.error)allUsers=ures.data||[];
+  }
+
   // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
   allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});
   // ประกอบ allCustomers = สัญญา (loan) + ข้อมูลคน (person)
