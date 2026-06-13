@@ -46,7 +46,7 @@ function branchForm(title,name,code,fee,groupId,penHour,penDay){
       '<div class="field" style="flex:1"><label>ชื่อบ้าน <span class="req">*</span></label><input class="inp" id="b-name" value="'+esc(name)+'"/></div>'+
       '<div class="field" style="width:110px"><label>รหัสบ้าน</label><input class="inp mono" id="b-code" maxlength="5" value="'+esc(code||'')+'" placeholder="AA" style="text-transform:uppercase"/></div>'+
     '</div>'+
-    '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">รหัสบ้านใช้ขึ้นต้นรหัสลูกค้า เช่น AA → ลูกค้าเป็น AA01, AA02…</div>'+
+    '<div style="font-size:0.72rem;color:var(--muted);margin:-6px 0 12px">รหัสบ้านใช้ขึ้นต้นรหัสลูกค้า เช่น AA → ลูกค้าเป็น AA001, AA002…</div>'+
     '<div class="field"><label>ค่าธรรมเนียม (บาท/คน)</label><input class="inp mono" id="b-fee" type="number" min="0" value="'+(fee||'')+'"/></div>'+
     '<div style="display:flex;gap:10px">'+
       '<div class="field" style="flex:1"><label>ค่าปรับ/ชั่วโมง (บาท)</label><input class="inp mono" id="b-pen-hour" type="number" min="0" value="'+(penHour||'')+'"/></div>'+

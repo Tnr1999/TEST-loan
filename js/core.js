@@ -331,7 +331,7 @@ function branchName(id){var b=allBranches.find(function(x){return x.id===id});re
 function groupNameOfBranch(id){var b=allBranches.find(function(x){return x.id===id});if(!b||!b.group_id)return '—';var g=allGroups.find(function(x){return x.id===b.group_id});return g?g.name:'—'}
 
 // รหัสลูกค้า = รหัสบ้าน + เลขลำดับในบ้าน (เช่น AA01) — ตั้งรหัสบ้านที่หน้าตั้งค่า
-function padNo(n){n=+n||0;return n<10?'0'+n:''+n}
+function padNo(n){return String(+n||0).padStart(3,'0')}
 function custCode(c){
   var b=allBranches.find(function(x){return x.id===c.branch_id});
   var code=b&&b.code?b.code:'';
