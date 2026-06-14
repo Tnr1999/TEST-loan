@@ -232,10 +232,15 @@ function openDetail(id){
 
   // actions (manager/owner)
   if(canEdit()&&c.status!=='closed'){
-    h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">';
+    h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div>';
+    // กลุ่มหลัก: เพิ่มยอด (ปุ่มหลัก/ทอง) + ปิดสินเชื่อ
+    h+='<div class="row-flex" style="flex-wrap:wrap;gap:8px">'+
+      '<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>'+
+      '<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>'+
+    '</div>';
+    // กลุ่มอันตราย: แยกด้วยเส้นคั่น (ตาย/ลบ)
+    h+='<div class="row-flex" style="flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">';
     if(c.status==='normal'||c.status==='overdue')h+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
-    h+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
-    h+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     h+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     h+='</div></div>';
   }

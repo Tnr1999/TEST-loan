@@ -165,7 +165,11 @@ document.getElementById('confirm-ok-btn').onclick=function(){document.getElement
 document.getElementById('confirm-cancel-btn').onclick=function(){document.getElementById('confirm-overlay').classList.remove('open');if(_confirmResolve){_confirmResolve(false);_confirmResolve=null}};
 
 /* ═══ MODAL HELPERS ═══ */
-function openModal(id){document.getElementById(id).classList.add('open')}
+function openModal(id){
+  // ปิด modal หลักอื่นที่เปิดอยู่ก่อน กันซ้อนกัน (confirm-overlay เป็นเลเยอร์แยก ซ้อนทับได้)
+  document.querySelectorAll('.modal-overlay.open').forEach(function(m){if(m.id!==id&&m.id!=='confirm-overlay')m.classList.remove('open')});
+  document.getElementById(id).classList.add('open');
+}
 function closeModal(id){document.getElementById(id).classList.remove('open')}
 ['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','modal-topup','confirm-overlay'].forEach(function(id){
   document.getElementById(id).addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});

@@ -343,13 +343,15 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width 0.5s}
 
 /* ═══ MODAL ═══ */
-.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex;animation:fadeIn 0.2s}
-.modal{background:var(--card);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp 0.28s cubic-bezier(0.16,1,0.3,1)}
-.modal-head{position:sticky;top:0;background:var(--card);padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;z-index:1}
+/* กล่องยืนยัน = เลเยอร์สูงกว่า modal หลัก เพื่อให้ซ้อนทับได้ถูกต้อง */
+#confirm-overlay{z-index:600}
+.modal{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-lg);width:100%;max-width:460px;max-height:calc(100dvh - 40px);overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp 0.28s cubic-bezier(0.16,1,0.3,1)}
+.modal-head{position:sticky;top:0;background:var(--card);padding:18px 20px 14px;border-bottom:1px solid rgba(212,175,55,0.14);display:flex;align-items:center;justify-content:space-between;z-index:1}
 .modal-head h3{font-size:1rem;font-weight:600;display:flex;align-items:center;gap:8px}
 .modal-x{width:30px;height:30px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
-.modal-x:hover{color:var(--red)}
+.modal-x:hover{color:var(--gold);border-color:var(--gold)}
 .modal-body{padding:20px}
 .modal-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px}
 /* ฟอร์ม 2 คอลัมน์ (เพิ่มลูกค้า) — มือถือ = คอลัมน์เดียว */
@@ -510,8 +512,12 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .cols-3 .stat .label{font-size:0.58rem;letter-spacing:0.02em}
   .stat .value{font-size:1.15rem}
   .detail-grid{grid-template-columns:1fr}
-  .modal{border-radius:20px;margin:auto 12px;max-height:88vh}
-  .modal-overlay{align-items:center;padding:12px}
+  /* มือถือ = bottom sheet เด้งจากล่าง (มุมบนโค้ง) ตาม DESIGN.md */
+  .modal-overlay{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;margin:0;max-height:90dvh;padding-bottom:env(safe-area-inset-bottom)}
+  /* กล่องยืนยันคงเป็น dialog กึ่งกลาง (กล่องเล็ก ไม่ใช่ sheet) */
+  #confirm-overlay{align-items:center;padding:14px}
+  #confirm-overlay .modal{border-radius:20px;margin:auto;max-height:88vh;padding-bottom:0}
   /* ยุบ dashboard เป็นคอลัมน์เดียว (ปฏิทินอยู่บน สรุปอยู่ล่าง) */
   #dash-layout{grid-template-columns:1fr!important}
   #dash-cal-wrap{max-width:none}
