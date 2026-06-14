@@ -141,6 +141,8 @@ async function doDeleteBranch(id){
   if(total){toast('ลบไม่ได้ บ้านนี้มีประวัติสินเชื่อที่ปิดแล้ว '+total+' รายการ','err');return}
   var ok=await showConfirm({icon:'🏠',title:'ลบบ้าน',msg:'ลบบ้าน "'+b.name+'"?',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
+  // เคลียร์สิทธิ์เห็นบ้าน (พนักงาน/หัวหน้าสายที่ผูกไว้) ก่อน — เป็นแค่ mapping จึงลบได้ปลอดภัย ไม่งั้น FK กันลบ
+  await _sb.from('user_branches').delete().eq('branch_id',id);
   var res=await _sb.from('branches').delete().eq('id',id);
   if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
   toast('✅ ลบบ้านแล้ว','ok');await loadAll();
