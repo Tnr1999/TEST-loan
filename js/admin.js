@@ -231,20 +231,22 @@ async function saveUser(){
   var username=document.getElementById('u-username').value.trim();
   var pass=document.getElementById('u-pass').value;
   var role=document.getElementById('modal-user-body')._role;
+  // DB enum user_role ไม่มีค่า 'line' (มีแต่ 'manager' เดิม) → เก็บเป็น 'manager' · ตอนแสดงผลโค้ดแปลงกลับเป็น 'line' ให้เอง
+  var roleDb=(role==='line')?'manager':role;
   var groupIds=Array.prototype.slice.call(document.querySelectorAll('.u-group:checked')).map(function(el){return el.value});
   if(!name){toast('กรุณากรอกชื่อ','err');return}
   if(!username){toast('กรุณากรอก Username','err');return}
 
   var uid;
   if(editingUserId){
-    var payload={full_name:name,username:username,role:role};
+    var payload={full_name:name,username:username,role:roleDb};
     if(pass)payload.password=pass;
     var res=await _sb.from('users').update(payload).eq('id',editingUserId);
     if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
     uid=editingUserId;
   } else {
     if(!pass){toast('กรุณากรอกรหัสผ่าน','err');return}
-    var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:role,is_active:true}).select().single();
+    var res=await _sb.from('users').insert({username:username,password:pass,full_name:name,role:roleDb,is_active:true}).select().single();
     if(res.error){toast(res.error.code==='23505'?'Username นี้มีอยู่แล้ว':'บันทึกล้มเหลว: '+res.error.message,'err');return}
     uid=res.data.id;
   }
