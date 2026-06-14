@@ -96,11 +96,14 @@ async function savePayment(custId,date,recId){
 
   // update customer
   var upd={remaining_principal:calc.remaining_principal};
-  if(amt>0){upd.last_collection_date=date;upd.status='normal';}
-  // จ่ายครบยอดปิด → ปิดสัญญาทันที
-  if(calc.closing){upd.status='closed';upd.close_amount=closeAmount(baseC);}
-  // lost + จ่ายเงิน → ปิดสินเชื่อทันที (ตามที่ตกลง)
-  else if(c.status==='lost'&&amt>0){upd.status='closed';upd.close_amount=closeAmount(Object.assign({},c,{remaining_principal:calc.remaining_principal}));}
+  if(amt>0)upd.last_collection_date=date;
+  if(calc.closing){
+    // จ่ายครบยอดปิด → ปิดสัญญา (ลูกค้าตายที่จ่ายเต็ม = "คืนเครดิต" · was_lost ยังคงไว้เป็นประวัติ)
+    upd.status='closed';upd.close_amount=closeAmount(baseC);
+  } else if(c.status!=='lost'&&amt>0){
+    // ลูกค้าปกติจ่ายแล้ว → ปกติ · ลูกค้าตายต้องจ่ายเต็ม (ต้น+ดอก+ค่าปรับ) ถึงปิด — จ่ายไม่ครบ = คงสถานะตาย
+    upd.status='normal';
+  }
   await _sb.from('loans').update(upd).eq('id',custId);
 
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');

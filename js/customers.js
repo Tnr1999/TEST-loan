@@ -150,7 +150,7 @@ function custCardHTML(c,date,s){
     :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
-    :(c.status==='closed'?'<span class="crow-st t-paid">ปิดยอด</span>':'')))));
+    :(c.status==='closed'?'<span class="crow-st t-paid">'+(c.was_lost?'คืนเครดิต':'ปิดยอด')+'</span>':'')))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
   var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
     '<div class="crow-main">'+
@@ -188,6 +188,7 @@ function openDetail(id){
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
+    (c.was_lost&&c.status==='closed'?'<span class="st" style="background:rgba(34,197,94,0.15);color:var(--green)">คืนเครดิต (เคยตาย)</span>':'')+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
   if(canEditCustomerInfo()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
@@ -229,19 +230,25 @@ function openDetail(id){
       '<div><div style="font-size:0.84rem;font-weight:500">ยอดปิดสินเชื่อ</div><div style="font-size:0.72rem;color:var(--muted)">ต้น + ดอกวันนี้ + ค่าธรรมเนียม</div></div>'+
       '<div style="font-size:1.3rem;font-weight:700;font-family:var(--font-mono);color:var(--gold)">฿'+fmt(ca)+'</div></div>';
   } else if(c.close_amount){
-    h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
+    h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว'+(c.was_lost?' <span style="color:var(--green)">· คืนเครดิต (เคยตาย)</span>':'')+'</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
   }
 
-  // actions — พนักงานกดได้เฉพาะปุ่ม "ตาย" · เพิ่มยอด/ปิด/ลบ เฉพาะ owner/หัวหน้ากอง/หัวหน้าสาย
+  // actions — พนักงานกดได้เฉพาะปุ่ม "ตาย" · คืนเครดิต/เพิ่มยอด/ปิด/ลบ เฉพาะ owner/หัวหน้ากอง/หัวหน้าสาย
   if(c.status!=='closed'){
-    var acts='';
+    var acts='',hint='';
     if(c.status==='normal'||c.status==='overdue')acts+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
+    if(c.status==='lost'&&canEdit()){
+      acts+='<button class="btn btn-green btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
+      hint='<div class="field-hint" style="margin-top:8px">คืนเครดิต = ลูกค้าจ่าย <b>ต้น + ดอก + ค่าปรับ</b> ครบยอดปิด → ปิดสัญญา (ระบบเก็บประวัติว่าเคยตาย) · จ่ายไม่ครบจะยังคงสถานะตาย</div>';
+    }
     if(canEdit()){
-      acts+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
-      acts+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
+      if(c.status!=='lost'){
+        acts+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
+        acts+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
+      }
       acts+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     }
-    if(acts)h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">'+acts+'</div></div>';
+    if(acts)h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">'+acts+'</div>'+hint+'</div>';
   }
   // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — เฉพาะ owner/head
   if(canEdit()&&c.status==='closed'){
@@ -278,6 +285,8 @@ async function changeStatus(id,status){
   if(!ok)return;
   var res=await _sb.from('loans').update({status:status}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  // เก็บประวัติ "เคยตาย" ไว้ถาวร (ใช้โชว์ป้ายคืนเครดิตหลังปิด) — แยก update แบบ fail-safe เผื่อยังไม่รัน migration phase7
+  if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
 }
 // ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
