@@ -259,7 +259,8 @@ function renderPayoutSelf(recs){
   if(!wage)return '';
   wage=round2(wage);comm=round2(comm);interest=round2(interest);penalty=round2(penalty);fee=round2(fee);
   var keep=round2(wage-comm);
-  var headNames=Object.keys(heads).map(function(k){return heads[k]});
+  var basein=round2(wage*5);                        // ยอดเข้า (ฐานค่าแรง)
+  var pct=basein>0?Math.round(keep/basein*100):20;  // 15% เมื่อมีหัวหน้าสาย (หักคอมแล้ว) · 20% เมื่อไม่มี
   var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
   var sub=function(k,v){return '<div class="pay-src-row"><span>'+k+'</span><span class="v">฿'+fmt(v)+'</span></div>'};
 
@@ -268,15 +269,6 @@ function renderPayoutSelf(recs){
     sub('ดอกที่เก็บได้',interest)+
     (penalty>0?sub('ค่าปรับ',penalty):'')+
     (fee>0?sub('ค่าธรรมเนียม (ปิดยอด)',fee):'')+'</div>';
-
-  // สถานะค่าคอม — จ่ายให้ใคร / หรือไม่มีหัวหน้าสาย
-  var commRow;
-  if(comm>0){
-    var to=headNames.length===1?('จ่ายให้ '+esc(headNames[0])):('จ่ายให้หัวหน้าสาย '+headNames.length+' คน');
-    commRow=money('หักคอม 5% · '+to,comm,' minus');
-  } else {
-    commRow='<div class="pay-line"><span class="k">หักคอม 5%</span><span class="v" style="color:var(--muted)">ไม่มีหัวหน้าสาย — ไม่หัก</span></div>';
-  }
 
   // รายการที่เก็บวันนี้ รายคน
   var rows=items.map(function(it){
@@ -292,13 +284,9 @@ function renderPayoutSelf(recs){
     '<div class="pay-person">'+
       '<div class="pay-ph"><span class="pay-name">'+esc(currentUser.full_name)+'</span>'+
         '<span class="pay-net"><span class="cur">฿</span>'+fmt(keep)+'</span></div>'+
-      '<div class="pay-lines">'+money('ยอดเข้า'+PW+' (ฐานค่าแรง)',round2(wage*5))+'</div>'+
+      '<div class="pay-lines">'+money('ยอดเข้า'+PW+' (ฐานค่าแรง)',basein)+'</div>'+
       breakdown+
-      '<div class="pay-lines">'+
-        money('ค่าแรง 20%',wage)+
-        commRow+
-        money('ได้รับ',keep,' total')+
-      '</div></div>'+
+      '<div class="pay-lines">'+money('ค่าแรง '+pct+'%',keep,' total')+'</div></div>'+
     '<div class="section-label" style="margin-top:20px">รายการที่เก็บ'+PW+' · '+items.length+' รายการ</div>'+
     '<div class="pay-person"><div class="pay-src" style="margin-top:0">'+rows+'</div></div>';
 }
