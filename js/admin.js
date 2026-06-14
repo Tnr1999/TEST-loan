@@ -213,7 +213,8 @@ function renderUsers(){
         '<td style="color:var(--text2);font-size:0.8rem">'+esc(branches)+'</td>'+
         '<td>'+(u.is_active?'<span class="st st-normal">ใช้งาน</span>':'<span class="st st-closed">ปิด</span>')+'</td>'+
         '<td><div class="row-flex" style="gap:7px"><button class="btn btn-ghost btn-xs" onclick="openEditUser(\''+u.id+'\')">แก้ไข</button>'+
-        '<button class="btn btn-ghost btn-xs" onclick="toggleUserActive(\''+u.id+'\')">'+(u.is_active?'ปิด':'เปิด')+'</button></div></td></tr>';
+        '<button class="btn btn-ghost btn-xs" onclick="toggleUserActive(\''+u.id+'\')">'+(u.is_active?'ปิด':'เปิด')+'</button>'+
+        (u.id===currentUser.id?'':'<button class="btn btn-red btn-xs" onclick="doDeleteUser(\''+u.id+'\')">ลบ</button>')+'</div></td></tr>';
     }).join('')+'</tbody></table></div>';
 }
 var editingUserId=null;
@@ -285,5 +286,22 @@ async function toggleUserActive(id){
   var res=await _sb.from('users').update({is_active:!u.is_active}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast(u.is_active?'ปิดบัญชีแล้ว':'เปิดบัญชีแล้ว','ok');await loadAll();
+}
+async function doDeleteUser(id){
+  var u=allUsers.find(function(x){return x.id===id});if(!u)return;
+  if(id===currentUser.id){toast('ลบบัญชีตัวเองไม่ได้','err');return}
+  // กันลบคนที่มีประวัติรับเงิน (รักษาประวัติการเงิน) — แนะนำให้ปิดบัญชีแทน
+  var nRec=allRecords.filter(function(r){return r.recorded_by===id}).length;
+  if(nRec){toast('ลบไม่ได้ "'+u.full_name+'" มีประวัติรับเงิน '+nRec+' รายการ — ใช้ปุ่ม "ปิด" แทน','err');return}
+  var ok=await showConfirm({icon:'👤',title:'ลบผู้ใช้',msg:'ลบผู้ใช้ "'+u.full_name+'" ถาวร?',okText:'ลบ',okClass:'btn-red'});
+  if(!ok)return;
+  // เคลียร์ความเชื่อมโยงก่อน (กัน FK): สิทธิ์เห็นบ้าน/กอง + ถอดออกจากการเป็นพนักงานเจ้าของบ้าน
+  await _sb.from('user_branches').delete().eq('user_id',id);
+  await _sb.from('user_groups').delete().eq('user_id',id);
+  var owned=allBranches.filter(function(b){return b.staff_id===id});
+  for(var i=0;i<owned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',owned[i].id);
+  var res=await _sb.from('users').delete().eq('id',id);
+  if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
+  toast('✅ ลบผู้ใช้แล้ว','ok');await loadAll();
 }
 

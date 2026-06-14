@@ -208,16 +208,32 @@ function renderDashboard(){
 
 // หน้า "ค่าแรง" (แท็บแยก) — รายวันตามวันที่ที่เลือก, ขอบเขต = บ้านที่ตัวเองเข้าถึง
 // พนักงานเห็นแค่ของตัวเอง · owner/หัวหน้าสาย เห็นสรุปทั้งทีม
+// ช่วงเวลาค่าแรง: 'day' (วันที่เลือก) | 'week' (จันทร์–อาทิตย์ของสัปดาห์นั้น)
+var payoutPeriod='day';
+function weekRange(iso){
+  var d=new Date(iso+'T00:00:00'),dow=d.getDay();
+  var mon=new Date(d);mon.setDate(d.getDate()+(dow===0?-6:1-dow)); // เริ่มวันจันทร์
+  var sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  return [toISO(mon),toISO(sun)];
+}
+function setPayoutPeriod(p){payoutPeriod=p;renderPayoutPage();}
 function renderPayoutPage(){
   var el=document.getElementById('payout-main');if(!el)return;
-  var date=selDate(), bids=myBranchIds();
+  var bids=myBranchIds(),from,to;
+  if(payoutPeriod==='week'){var wr=weekRange(selDate());from=wr[0];to=wr[1];}
+  else{from=to=selDate();}
   var recs=allRecords.filter(function(r){
-    if(r.record_date!==date)return false;
+    if(r.record_date<from||r.record_date>to)return false;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});
     return c&&bids.indexOf(c.branch_id)>=0;
   });
-  var html=isStaff()?renderPayoutSelf(recs):renderPayout(recs);
-  el.innerHTML=html||'<div class="empty">วันนี้ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>';
+  var seg='<div class="seg" style="margin-bottom:14px">'+
+    '<button class="'+(payoutPeriod==='day'?'sel':'')+'" onclick="setPayoutPeriod(\'day\')">รายวัน</button>'+
+    '<button class="'+(payoutPeriod==='week'?'sel':'')+'" onclick="setPayoutPeriod(\'week\')">รายสัปดาห์</button>'+
+    '</div>';
+  var rangeLabel=payoutPeriod==='week'?'<div class="section-label" style="margin:0 0 12px">ช่วง '+thDate(from)+' – '+thDate(to)+'</div>':'';
+  var body=isStaff()?renderPayoutSelf(recs):renderPayout(recs);
+  el.innerHTML=seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='week'?'สัปดาห์นี้':'วันนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
 }
 
 // ── ค่าแรงของตัวเอง (พนักงาน) ──
@@ -225,6 +241,7 @@ function renderPayoutPage(){
 // หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
+  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='week')?'สัปดาห์นี้':'วันนี้';
   var wage=0,comm=0,interest=0,penalty=0,fee=0,heads={},items=[];
   recs.forEach(function(r){
     if(!(+r.wage))return;
@@ -275,14 +292,14 @@ function renderPayoutSelf(recs){
     '<div class="pay-person">'+
       '<div class="pay-ph"><span class="pay-name">'+esc(currentUser.full_name)+'</span>'+
         '<span class="pay-net"><span class="cur">฿</span>'+fmt(keep)+'</span></div>'+
-      '<div class="pay-lines">'+money('ยอดเข้าวันนี้ (ฐานค่าแรง)',round2(wage*5))+'</div>'+
+      '<div class="pay-lines">'+money('ยอดเข้า'+PW+' (ฐานค่าแรง)',round2(wage*5))+'</div>'+
       breakdown+
       '<div class="pay-lines">'+
         money('ค่าแรง 20%',wage)+
         commRow+
         money('ได้รับ',keep,' total')+
       '</div></div>'+
-    '<div class="section-label" style="margin-top:20px">รายการที่เก็บวันนี้ · '+items.length+' รายการ</div>'+
+    '<div class="section-label" style="margin-top:20px">รายการที่เก็บ'+PW+' · '+items.length+' รายการ</div>'+
     '<div class="pay-person"><div class="pay-src" style="margin-top:0">'+rows+'</div></div>';
 }
 
@@ -299,6 +316,7 @@ function lineHeadOfBranch(bid){
 // แยกตามสาย (หัวหน้าสายของบ้าน = lineHeadOfBranch) → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · บ้านไหนไม่มีหัวหน้าสาย = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
+  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='week')?'สัปดาห์นี้':'วันนี้';
   // จัดกลุ่ม: สาย (หัวหน้าสาย) → คน → ค่าแรงรวมวันนี้
   var lines={};
   recs.forEach(function(r){
@@ -355,7 +373,7 @@ function renderPayout(recs){
           '<span class="role-badge role-'+uRole(p.uid)+'">'+(ROLE_LABEL[uRole(p.uid)]||'')+'</span></span>'+
           '<span class="pay-net"><span class="cur">฿</span>'+fmt(net)+'</span></div>'+
         '<div class="pay-lines">'+
-          money('ยอดเข้าวันนี้ (ฐานค่าแรง)',p.wage*5)+
+          money('ยอดเข้า'+PW+' (ฐานค่าแรง)',p.wage*5)+
           money('ค่าแรง 20%',p.wage)+
           (p.comm>0?money(commLabel,p.comm,' minus'):'')+
           money('คงเหลือ',p.keep,(isHead&&pool>0)?'':' total')+
