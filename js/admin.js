@@ -113,22 +113,19 @@ async function saveBranch(){
     if(!res.error)bid=res.data.id;
   }
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
-  // ── พนักงานเจ้าของบ้าน (staff_id) ── กฎ 1 คน 1 บ้าน + ให้สิทธิ์เห็นบ้านนี้อัตโนมัติ
+  // ── กฎ 1 คน 1 บ้าน: ถ้าตั้งพนักงานเจ้าของบ้านคนนี้ ให้ถอดเขาออกจากบ้านอื่นก่อน
   if(staffId){
     var prevOwned=allBranches.filter(function(b){return b.staff_id===staffId&&b.id!==bid});
     for(var i=0;i<prevOwned.length;i++)await _sb.from('branches').update({staff_id:null}).eq('id',prevOwned[i].id);
-    if(!allUserBranches.some(function(ub){return ub.user_id===staffId&&ub.branch_id===bid}))
-      await _sb.from('user_branches').insert({user_id:staffId,branch_id:bid});
   }
-  // ── หัวหน้าสายของบ้านนี้ ── บ้าน 1 หลัง = หัวหน้าสาย 1 คน (จัดการ user_branches ของ role line)
-  var oldLineUB=allUserBranches.filter(function(ub){
-    if(ub.branch_id!==bid||ub.user_id===lineHeadId||ub.user_id===staffId)return false;
-    var u=allUsers.find(function(x){return x.id===ub.user_id});
-    return u&&(u.role==='line'||u.role==='manager');
-  });
-  for(var j=0;j<oldLineUB.length;j++)await _sb.from('user_branches').delete().eq('user_id',oldLineUB[j].user_id).eq('branch_id',bid);
-  if(lineHeadId&&!allUserBranches.some(function(ub){return ub.user_id===lineHeadId&&ub.branch_id===bid}))
-    await _sb.from('user_branches').insert({user_id:lineHeadId,branch_id:bid});
+  // ── จัดสิทธิ์เห็นบ้าน (user_branches) ให้ตรงกับ staff + หัวหน้าสาย ที่เลือกพอดี ──
+  // ลบ row อื่นของบ้านนี้ที่ไม่ใช่คนที่เลือก (รวมของค้างจากระบบเดิม) แล้วเติมคนที่เลือกให้ครบ
+  var keep=[staffId,lineHeadId].filter(function(x){return x});
+  var stale=allUserBranches.filter(function(ub){return ub.branch_id===bid&&keep.indexOf(ub.user_id)<0});
+  for(var j=0;j<stale.length;j++)await _sb.from('user_branches').delete().eq('user_id',stale[j].user_id).eq('branch_id',bid);
+  for(var k=0;k<keep.length;k++)
+    if(!allUserBranches.some(function(ub){return ub.user_id===keep[k]&&ub.branch_id===bid}))
+      await _sb.from('user_branches').insert({user_id:keep[k],branch_id:bid});
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
 }
 async function doDeleteBranch(id){
