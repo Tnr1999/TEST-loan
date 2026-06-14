@@ -41,10 +41,12 @@ function isOwner(){return currentUser&&currentUser.role==='owner'}
 function isHead(){return currentUser&&currentUser.role==='head'}                                    // หัวหน้ากอง
 function isLineHead(){return currentUser&&(currentUser.role==='line'||currentUser.role==='manager')} // หัวหน้าสาย
 function isStaff(){return currentUser&&currentUser.role==='staff'}
-function canEdit(){return isOwner()||isHead()||isLineHead()}   // แก้/ลบลูกค้า, ปิดสินเชื่อ, รับเงิน, คืนเครดิต
-function canDisburse(){return isOwner()}                       // "เปิดยอด" — ปล่อยกู้ใหม่/เปิดยอดใหม่/เพิ่มยอด/ยืนยันโอนเงิน = Owner เท่านั้น
+function canEdit(){return isOwner()||isHead()||isLineHead()||isStaff()}   // รับเงิน/ปิดสินเชื่อ/เพิ่มยอด — ทุก role (ในขอบเขตที่เห็น)
+function canDisburse(){return isOwner()}                       // ยืนยันโอนเงิน ("เปิด") — Owner เท่านั้น
+function canReturnCredit(){return isOwner()}                   // คืนเครดิต (ลูกค้าตายจ่ายเต็มยอด) — Owner เท่านั้น
+function canDelete(){return isOwner()}                         // ลบลูกค้า — Owner เท่านั้น
 function canManageBranches(){return isOwner()||isHead()}       // จัดการโครงสร้าง กอง→บ้าน (หัวหน้าสาย/พนักงานไม่ได้)
-function canAddCustomer(){return isOwner()} // เพิ่มลูกค้าใหม่ = เปิดยอด → Owner เท่านั้น
+function canAddCustomer(){return isOwner()||isHead()||isLineHead()||isStaff()} // เพิ่มลูกค้าใหม่/เปิดยอดใหม่ — ทุก role
 function canEditCustomerInfo(){return isOwner()||isHead()||isLineHead()} // แก้ "ข้อมูลลูกค้า" (ชื่อ/เบอร์/บัญชี) — พนักงานแก้ไม่ได้
 function canManageUsers(){return isOwner()}
 function canManageGroups(){return isOwner()}

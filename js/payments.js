@@ -3,8 +3,9 @@
 ═══════════════════════════════════════════════ */
 
 function openPayment(custId,date){
-  if(!canEdit()){toast('รับเงิน/แก้ไขการชำระ ได้เฉพาะเจ้าของระบบ/หัวหน้ากอง/หัวหน้าสาย','err');return}
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
+  if(c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
   var due=interestDue(c),close=closeAmount(c);
   document.getElementById('modal-payment-title').textContent=custCode(c)+' '+c.full_name;
@@ -71,6 +72,7 @@ function updatePayCalc(custId){
 async function savePayment(custId,date,recId){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
   var c=allCustomers.find(function(x){return x.id===custId});
+  if(c&&c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0); // กันยอดติดลบ
   if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return;}     // กันบันทึกวันอนาคต
   // ค่าปรับ — กรอกเอง

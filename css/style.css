@@ -149,9 +149,7 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .page-sub{font-size:0.82rem;color:var(--muted);margin-top:2px}
 
 /* ═══ ROLE-BASED UX (แยกตามบทบาท) ═══ */
-/* "เปิดยอด" = เพิ่มลูกค้าใหม่ → เฉพาะ Owner · role อื่นซ่อนปุ่ม + เพิ่มลูกค้า */
-body:not(.role-owner) #btn-add-customer{display:none}
-/* staff (คนเก็บเงิน): ซ่อนมุมมองผู้บริหาร */
+/* staff (คนเก็บเงิน): ซ่อนมุมมองผู้บริหาร (เพิ่มลูกค้าได้ จึงไม่ซ่อน #btn-add-customer) */
 body.role-staff #dash-branch-btns{display:none}
 body.role-staff #dash-cal-wrap{display:none}
 body.role-staff #dash-layout{display:block!important}
