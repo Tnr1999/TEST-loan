@@ -379,7 +379,7 @@ function openAddCustomer(reloanCust){
       '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
       '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
       '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
-      '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13"/></div>'+
+      '<div class="field"><label>เลขบัตรประชาชน <span class="req">*</span></label><input class="inp" id="f-idcard" maxlength="13" inputmode="numeric" placeholder="13 หลัก"/><div class="field-err"></div></div>'+
       '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์..."/></div>'+
       '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
       '<div class="form-col-title" style="margin-top:20px">ข้อมูลสัญญา</div>'+
@@ -492,9 +492,17 @@ async function saveCustomer(){
   if(editingCustId){
     if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
     var cc=allCustomers.find(function(x){return x.id===editingCustId});
+    if(idcard&&!validThaiId(idcard))toast('⚠️ เลขบัตรอาจไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน)','err');
     var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+    // กันแก้ข้อมูลให้ไป "ชนคนอื่น" — log ให้ Owner ตรวจ (ไม่บล็อก)
+    var nd=findNearDuplicates({id_card:idcard,name:name,phone:phone,bank_account:bankAccount},cc.person_id);
+    if(nd.length){
+      var cd=nd.slice(0,3).map(function(x){return (x.person.full_name||'(ไม่ทราบชื่อ)')+' ['+x.reasons.join(', ')+']'}).join(' · ');
+      logAlert('maybe_dup',{person_id:cc.person_id,person_name:name,branch_id:cc.branch_id,loan_id:cc.id,
+        message:'แก้ไขข้อมูลลูกค้าแล้วใกล้เคียงกับคนอื่น: '+cd,meta:{candidate_ids:nd.map(function(x){return x.person.id}),edited:true}});
+    }
     toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(editingCustId);return;
   }
 
@@ -506,8 +514,10 @@ async function saveCustomer(){
   var branch=allBranches.find(function(b){return b.id===branchId});
   var interval=document.getElementById('modal-customer-body')._interval||1;
 
+  // บังคับกรอกเลขบัตร 13 หลัก — จุดยึดของระบบกันโกง (ทุก role รวม Owner)
+  if(normDigits(idcard).length!==13){toast('ต้องกรอกเลขบัตรประชาชนให้ครบ 13 หลัก','err');return}
   // เตือน checksum เลขบัตร (ไม่บล็อก — กรอกต่อได้)
-  if(idcard&&!validThaiId(idcard))toast('⚠️ เลขบัตรอาจไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน)','err');
+  if(!validThaiId(idcard))toast('⚠️ เลขบัตรอาจไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน)','err');
 
   // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาคนเดิม (เลขบัตรตรง หรือ ชื่อ+เบอร์ตรง) เพื่อบังคับกฎกู้หลายที่
   var existing=reloanPersonId?{id:reloanPersonId}:findExistingPerson({id_card:idcard,name:name,phone:phone});
