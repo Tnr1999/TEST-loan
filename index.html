@@ -8,7 +8,7 @@
 <title>ระบบสินเชื่อรายวัน</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="css/style.css?v=2026061149"/>
+<link rel="stylesheet" href="css/style.css?v=2026061460"/>
 </head>
 <body>
 <!-- ═══════════ LOGIN ═══════════ -->
@@ -201,6 +201,18 @@
         <div class="card"><div class="table-wrap"><div id="user-list"></div></div></div>
       </div>
     </div>
+
+    <!-- ═══ ALERTS (แจ้งเตือน — owner เท่านั้น) ═══ -->
+    <div class="page" id="page-alerts">
+      <div class="page-head">
+        <div>
+          <div class="page-title">แจ้งเตือน</div>
+          <div class="page-sub">เหตุการณ์น่าสงสัย · กันลูกน้องโกง</div>
+        </div>
+        <div id="alerts-head-actions"></div>
+      </div>
+      <div id="alerts-list" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
   </div>
 
   <button id="scroll-top" class="fab-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="ขึ้นบนสุด">↑</button>
@@ -267,12 +279,13 @@
 <div id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/core.js?v=2026061149"></script>
-<script src="js/dashboard.js?v=2026061149"></script>
-<script src="js/payments.js?v=2026061149"></script>
-<script src="js/customers.js?v=2026061149"></script>
-<script src="js/admin.js?v=2026061149"></script>
-<script src="js/calendar.js?v=2026061149"></script>
-<script src="js/init.js?v=2026061149"></script>
+<script src="js/core.js?v=2026061460"></script>
+<script src="js/dashboard.js?v=2026061460"></script>
+<script src="js/payments.js?v=2026061460"></script>
+<script src="js/customers.js?v=2026061460"></script>
+<script src="js/alerts.js?v=2026061460"></script>
+<script src="js/admin.js?v=2026061460"></script>
+<script src="js/calendar.js?v=2026061460"></script>
+<script src="js/init.js?v=2026061460"></script>
 </body>
 </html>

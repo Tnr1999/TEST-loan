@@ -539,3 +539,17 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .btn-sm{min-height:40px}
   .crow-btn{min-height:44px}
 }
+
+/* ═══ แจ้งเตือน (กันโกง) ═══ */
+.nav-badge{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 5px;margin-left:5px;border-radius:99px;background:var(--red);color:#1a0608;font-size:0.66rem;font-weight:700;line-height:1;vertical-align:middle}
+.alert-card{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border2);border-radius:var(--radius-lg);padding:14px 16px}
+.alert-card.al-danger{border-left-color:var(--red);background:linear-gradient(90deg,var(--red-dim),transparent 60%),var(--card)}
+.alert-card.al-warn{border-left-color:var(--gold);background:linear-gradient(90deg,var(--gold-dim),transparent 60%),var(--card)}
+.alert-card.read{opacity:0.55;border-left-color:var(--border2);background:var(--card)}
+.alert-card .al-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
+.alert-card .al-tag{font-weight:700;font-size:0.82rem;color:var(--text)}
+.alert-card .al-time{font-size:0.72rem;color:var(--muted);white-space:nowrap}
+.alert-card .al-msg{font-size:0.88rem;color:var(--text2);line-height:1.5}
+.alert-card .al-meta{font-size:0.75rem;color:var(--muted);margin-top:7px}
+.alert-card .al-meta b{color:var(--text2);font-weight:600}
+.alert-card .al-act{margin-top:11px}

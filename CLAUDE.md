@@ -14,6 +14,7 @@
 | `js/payments.js` | บันทึก/แก้ไขการรับเงิน | `openPayment`, `updatePayCalc`, `savePayment` |
 | `js/customers.js` | **หน้าลูกค้า** (ลิสต์, ชิปกรอง, รายละเอียด, เพิ่ม/แก้) | `renderCustomers`, `setCustView`, `openDetail`, `openAddCustomer`, `saveCustomer` |
 | `js/admin.js` | บ้าน + กอง + ผู้ใช้ | `renderBranches`, `renderGroups`, `renderUsers`, `saveBranch`, `saveGroup`, `saveUser` |
+| `js/alerts.js` | **หน้าแจ้งเตือน Owner** (กันลูกน้องโกง) | `renderAlerts`, `markAlertRead`, `markAllAlertsRead` |
 | `js/calendar.js` | ปฏิทินเลือกวันบน dashboard | `initCalendar`, `renderCalendar`, `calPick` |
 | `js/init.js` | จุดเริ่มแอป (`DOMContentLoaded`) — **โหลดเป็นไฟล์สุดท้าย** | — |
 | `supabase-migration-phase1.sql` | สร้างตาราง DB (รันครั้งเดียวตอนตั้งระบบ) | — |
@@ -71,6 +72,13 @@
 - **ยอดเบิก** (disbursement) — เงินที่โอนให้ลูกค้า: เปิดสัญญาใหม่ (auto บันทึกตอนกด "เปิด" ยืนยันโอนเงิน) + เพิ่มยอด/โอนเพิ่ม (ปุ่ม "+ เพิ่มยอด" ในรายละเอียดลูกค้า, เพิ่มเข้าเงินต้นด้วย) *(ต้องรัน `supabase-migration-phase4-disbursements.sql` ก่อน)*
 
 - **รหัสลูกค้า** = รหัสบ้าน + เลขลำดับในบ้าน 3 หลัก (เช่น `AA001`) — `branches.code` (กรอกเองหน้าตั้งค่า) + `loans.cust_no` (ต่อคน · คงที่ถาวร · เปิดยอดใหม่ใช้เลขเดิม) · helper `custCode`/`nextCustNo` ใน `js/core.js` · แสดงแทน seq ในตาราง/การ์ด/รายละเอียด/หัวข้อรับเงิน · ยังไม่ตั้งรหัสบ้าน = fallback เป็น `#seq` *(ต้องรัน `supabase-migration-phase5-codes.sql` ก่อน)*
+
+- **กันลูกน้องโกง (กู้หลายที่/คนตายซ้ำ)** — ลิมิตเดิม `loanRuleError` (≤2 กอง · 1 บ้าน/กอง) + เสริมการตรวจตัวตนตอนเปิดสัญญาใหม่/เปิดยอดใหม่ใน `js/customers.js` `saveCustomer`:
+  - **หาคนเดิมแบบ normalize** (`findExistingPerson` ใน core.js): เลขบัตรตรง **หรือ** ชื่อ+เบอร์ตรง (ตัดคำนำหน้า/เว้นวรรค, เบอร์เทียบ 9 หลักท้าย) → บังคับลิมิตได้แม้ลูกน้องไม่กรอกเลขบัตร
+  - **บล็อกแข็ง 2 เคส (ทุก role รวม Owner):** เกินลิมิตกอง · เปิดสัญญาให้คนที่มีสัญญาสถานะ **"ตาย" ค้างอยู่** (ต้องผ่าน Owner คืนเครดิตเท่านั้น) → เคสตายยิง alert `dup_lost`
+  - **near-duplicate = log เงียบๆ** (ไม่ขัดจังหวะลูกน้อง): `findNearDuplicates` (เลขบัตรต่าง 1 หลัก / ชื่อใกล้เคียง Levenshtein≤2 / เบอร์-บัญชีตรง) → alert `maybe_dup` ให้ Owner ไล่ตรวจย้อนหลัง
+  - **checksum เลขบัตร** (`validThaiId`, mod 11) → เตือน toast แต่กรอกต่อได้
+  - **หน้า "แจ้งเตือน" (เฉพาะ owner)** `js/alerts.js` + `page-alerts` · badge เลข unread บนเมนู · ปุ่ม "อ่านแล้ว"/"อ่านทั้งหมด" · เก็บที่ตาราง `alerts` *(ต้องรัน `supabase-migration-phase8-alerts.sql` ก่อน)*
 
 **ค้างอยู่ (ยังไม่ทำ)**
 - *(ครบตามแผนแล้ว — เพิ่มเติมตามต้องการ)*

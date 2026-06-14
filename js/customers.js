@@ -506,9 +506,23 @@ async function saveCustomer(){
   var branch=allBranches.find(function(b){return b.id===branchId});
   var interval=document.getElementById('modal-customer-body')._interval||1;
 
-  // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาจากเลขบัตร เพื่อบังคับกฎกู้หลายที่
-  var existing=reloanPersonId?{id:reloanPersonId}:(idcard?allPersons.find(function(p){return p.id_card===idcard}):null);
-  var ruleErr=loanRuleError(existing?existing.id:null,branchId);
+  // เตือน checksum เลขบัตร (ไม่บล็อก — กรอกต่อได้)
+  if(idcard&&!validThaiId(idcard))toast('⚠️ เลขบัตรอาจไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน)','err');
+
+  // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาคนเดิม (เลขบัตรตรง หรือ ชื่อ+เบอร์ตรง) เพื่อบังคับกฎกู้หลายที่
+  var existing=reloanPersonId?{id:reloanPersonId}:findExistingPerson({id_card:idcard,name:name,phone:phone});
+  var exId=existing?existing.id:null;
+
+  // บล็อก + แจ้ง Owner: เปิดสัญญาใหม่ให้คนที่มีสัญญาสถานะ "ตาย" ค้างอยู่ (ต้องผ่าน Owner คืนเครดิตเท่านั้น)
+  if(exId&&!reloanPersonId&&allLoans.some(function(l){return l.person_id===exId&&l.status==='lost'})){
+    var lp=allPersons.find(function(p){return p.id===exId})||{};
+    logAlert('dup_lost',{person_id:exId,person_name:lp.full_name||name,branch_id:branchId,
+      message:'พยายามเปิดสัญญาใหม่ให้ลูกค้าที่มีสถานะ "ตาย" ค้างอยู่'});
+    toast('ลูกค้ารายนี้มีสัญญาสถานะ "ตาย" ค้างอยู่ — เปิดสัญญาใหม่ไม่ได้ (แจ้ง Owner แล้ว)','err');
+    return;
+  }
+
+  var ruleErr=loanRuleError(exId,branchId);
   if(ruleErr){toast(ruleErr,'err');return}
 
   var saveLabel=reloanPersonId?'เปิดยอดใหม่':'เพิ่มลูกค้า';
@@ -539,6 +553,18 @@ async function saveCustomer(){
     disbursed:false
   }).select().single();
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
+
+  // กันโกง (เงียบๆ): สร้างลูกค้า "ใหม่" ที่ใกล้เคียงคนเดิม → แจ้ง Owner ไว้ตรวจย้อนหลัง
+  if(!existing&&!reloanPersonId){
+    var near=findNearDuplicates({id_card:idcard,name:name,phone:phone,bank_account:bankAccount},personId);
+    if(near.length){
+      var cand=near.slice(0,3).map(function(x){return (x.person.full_name||'(ไม่ทราบชื่อ)')+' ['+x.reasons.join(', ')+']'}).join(' · ');
+      logAlert('maybe_dup',{person_id:personId,person_name:name,branch_id:branchId,loan_id:res.data.id,
+        message:'ลูกค้าใหม่คล้ายกับที่มีอยู่: '+cand,
+        meta:{candidate_ids:near.map(function(x){return x.person.id})}});
+    }
+  }
+
   var okMsg=reloanPersonId?'เปิดยอดใหม่สำเร็จ':'✅ เพิ่มลูกค้าสำเร็จ';
   reloanPersonId=null;
   toast(okMsg,'ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);

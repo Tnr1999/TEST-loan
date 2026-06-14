@@ -11,6 +11,7 @@ var SESSION_KEY = 'loan_session_v1';
 var currentUser = null;
 var allBranches = [], allCustomers = [], allRecords = [], allUsers = [], allUserBranches = [];
 var allGroups = [], allPersons = [], allLoans = [], allUserGroups = [], allDisbursements = [];
+var allAlerts = []; // แจ้งเตือน Owner (กันโกง) — โหลดเฉพาะ owner
 var currentDetailId = null;
 var custView = 'today';
 var custGroupId = '';
@@ -66,6 +67,73 @@ function myBranchIds(){
   return allUserBranches.filter(function(ub){return ub.user_id===currentUser.id}).map(function(ub){return ub.branch_id});
 }
 function canAccessBranch(bid){return myBranchIds().indexOf(bid)>=0}
+
+/* ═══ กันโกง: ตรวจตัวตนลูกค้า / แจ้งเตือน Owner ═══ */
+// normalize ก่อนเทียบ — กันพิมพ์เว้นวรรค/คำนำหน้า/อักขระแปลกปลอม
+function normDigits(s){return String(s==null?'':s).replace(/\D/g,'')}
+function normPhone(s){var d=normDigits(s);return d.length>9?d.slice(-9):d} // เทียบ 9 หลักท้าย
+function normName(s){return String(s==null?'':s).replace(/^(นาย|นางสาว|นาง|น\.ส\.|ด\.ช\.|ด\.ญ\.)\s*/,'').replace(/\s+/g,'').trim()}
+// ระยะแก้ไข (Levenshtein) — ใช้จับ "ใกล้เคียง"
+function levenshtein(a,b){
+  a=String(a||'');b=String(b||'');
+  if(a===b)return 0; if(!a.length)return b.length; if(!b.length)return a.length;
+  var prev=[],cur=[],i,j;
+  for(j=0;j<=b.length;j++)prev[j]=j;
+  for(i=1;i<=a.length;i++){
+    cur[0]=i;
+    for(j=1;j<=b.length;j++){
+      var cost=a.charAt(i-1)===b.charAt(j-1)?0:1;
+      cur[j]=Math.min(cur[j-1]+1,prev[j]+1,prev[j-1]+cost);
+    }
+    for(j=0;j<=b.length;j++)prev[j]=cur[j];
+  }
+  return cur[b.length];
+}
+// checksum เลขบัตรประชาชนไทย 13 หลัก (mod 11) — เตือนเฉยๆ ไม่บล็อก
+function validThaiId(s){
+  var d=normDigits(s); if(d.length!==13)return false;
+  var sum=0; for(var i=0;i<12;i++)sum+=parseInt(d.charAt(i),10)*(13-i);
+  return ((11-(sum%11))%10)===parseInt(d.charAt(12),10);
+}
+// หา person เดิม "ตรงเป๊ะ" → ใช้บังคับลิมิตกู้หลายที่ (เลขบัตรตรง หรือ ชื่อ+เบอร์ตรง)
+function findExistingPerson(o){
+  o=o||{};
+  var idc=normDigits(o.id_card);
+  if(idc.length>=13){var byId=allPersons.find(function(p){return normDigits(p.id_card)===idc});if(byId)return byId;}
+  var nm=normName(o.name),ph=normPhone(o.phone);
+  if(nm&&ph&&ph.length>=9){var byNP=allPersons.find(function(p){return normName(p.full_name)===nm&&normPhone(p.phone)===ph});if(byNP)return byNP;}
+  return null;
+}
+// หา person ที่ "ใกล้เคียง" → ไม่บล็อก แค่ส่งแจ้งเตือนให้ Owner ไล่ตรวจ
+function findNearDuplicates(o,excludeId){
+  o=o||{}; var out=[];
+  var idc=normDigits(o.id_card),nm=normName(o.name),ph=normPhone(o.phone),ba=normDigits(o.bank_account);
+  allPersons.forEach(function(p){
+    if(excludeId&&p.id===excludeId)return;
+    var pid=normDigits(p.id_card),pnm=normName(p.full_name),pph=normPhone(p.phone),pba=normDigits(p.bank_account);
+    var reasons=[];
+    if(idc.length>=13&&pid.length>=13&&idc!==pid&&levenshtein(idc,pid)<=1)reasons.push('เลขบัตรต่างกัน 1 หลัก');
+    if(ph&&pph&&ph.length>=9&&ph===pph&&nm!==pnm)reasons.push('เบอร์เดียวกัน ชื่อต่าง');
+    if(ba&&pba&&ba===pba)reasons.push('เลขบัญชีเดียวกัน');
+    if(nm&&pnm&&nm!==pnm&&levenshtein(nm,pnm)<=2&&(ph===pph||ba===pba))reasons.push('ชื่อใกล้เคียง');
+    if(reasons.length)out.push({person:p,reasons:reasons});
+  });
+  return out;
+}
+// บันทึกแจ้งเตือน (fire-and-forget) — ทุก role insert ได้ (RLS ปิด) แต่เห็นเฉพาะ owner
+async function logAlert(type,o){
+  o=o||{};
+  try{
+    await _sb.from('alerts').insert({
+      type:type,
+      actor_user_id:currentUser?currentUser.id:null,
+      actor_name:currentUser?(currentUser.full_name||currentUser.username):null,
+      person_id:o.person_id||null, person_name:o.person_name||null,
+      branch_id:o.branch_id||null, loan_id:o.loan_id||null,
+      message:o.message||null, meta:o.meta||null
+    });
+  }catch(e){/* แจ้งเตือนล้มเหลวไม่ควรขัดการทำงานหลัก */}
+}
 
 /* ═══ CALCULATIONS (ตาม Spec) ═══ */
 function interestDue(c){return +(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
@@ -278,6 +346,13 @@ async function loadAll(){
   var dres=await _sb.from('disbursements').select('*');
   allDisbursements=dres.error?[]:(dres.data||[]);
 
+  // แจ้งเตือน (กันโกง) — เฉพาะ owner · fail-safe ถ้ายังไม่รัน migration phase8-alerts
+  allAlerts=[];
+  if(isOwner()){
+    var ares=await _sb.from('alerts').select('*').order('created_at',{ascending:false});
+    allAlerts=ares.error?[]:(ares.data||[]);
+  }
+
   // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · role อื่น (หัวหน้ากอง/หัวหน้าสาย/พนักงาน) โหลดแยกแบบ fail-safe
   // (พนักงานก็ต้องใช้ เพื่อหา/แสดงหัวหน้าสายของตัวเอง + คำนวณคอมในหน้าค่าแรง)
   if(!isOwner()){
@@ -304,6 +379,8 @@ async function loadAll(){
   if(canManageGroups()) renderGroups();
   if(canManageBranches()) renderBranches();
   if(canManageUsers()) renderUsers();
+  if(typeof renderNav==='function') renderNav();        // อัปเดต badge แจ้งเตือน
+  if(typeof renderAlerts==='function') renderAlerts();
 }
 
 // ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons
