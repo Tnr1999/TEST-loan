@@ -133,8 +133,12 @@ async function saveBranch(){
 }
 async function doDeleteBranch(id){
   var b=allBranches.find(function(x){return x.id===id});
-  var n=allCustomers.filter(function(c){return c.branch_id===id&&c.status!=='closed'}).length;
-  if(n){toast('ลบไม่ได้ มีลูกค้าใช้งานอยู่ '+n+' ราย','err');return}
+  // มีลูกค้า active → ห้ามลบ
+  var active=allLoans.filter(function(l){return l.branch_id===id&&l.status!=='closed'}).length;
+  if(active){toast('ลบไม่ได้ มีลูกค้าใช้งานอยู่ '+active+' ราย','err');return}
+  // ยังมีประวัติสินเชื่อ (รวมที่ปิดแล้ว) อ้างถึงบ้านนี้ → DB มี FK กันลบ
+  var total=allLoans.filter(function(l){return l.branch_id===id}).length;
+  if(total){toast('ลบไม่ได้ บ้านนี้มีประวัติสินเชื่อที่ปิดแล้ว '+total+' รายการ','err');return}
   var ok=await showConfirm({icon:'🏠',title:'ลบบ้าน',msg:'ลบบ้าน "'+b.name+'"?',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
   var res=await _sb.from('branches').delete().eq('id',id);
