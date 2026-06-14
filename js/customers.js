@@ -234,21 +234,27 @@ function openDetail(id){
   }
 
   // actions — พนักงานกดได้เฉพาะปุ่ม "ตาย" · คืนเครดิต/เพิ่มยอด/ปิด/ลบ เฉพาะ owner/หัวหน้ากอง/หัวหน้าสาย
+  // จัดกลุ่ม: ปุ่มหลัก (คืนเครดิต/เพิ่มยอด/ปิด) แยกจากโซนอันตราย (ตาย/ลบ) ด้วยเส้นคั่น
   if(c.status!=='closed'){
-    var acts='',hint='';
-    if(c.status==='normal'||c.status==='overdue')acts+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
+    var ops='',danger='',hint='';
+    // กลุ่มหลัก
     if(c.status==='lost'&&canEdit()){
-      acts+='<button class="btn btn-green btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
+      ops+='<button class="btn btn-green btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
       hint='<div class="field-hint" style="margin-top:8px">คืนเครดิต = ลูกค้าจ่าย <b>ต้น + ดอก + ค่าปรับ</b> ครบยอดปิด → ปิดสัญญา (ระบบเก็บประวัติว่าเคยตาย) · จ่ายไม่ครบจะยังคงสถานะตาย</div>';
     }
-    if(canEdit()){
-      if(c.status!=='lost'){
-        acts+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
-        acts+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
-      }
-      acts+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
+    if(canEdit()&&c.status!=='lost'){
+      ops+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
+      ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     }
-    if(acts)h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div><div class="row-flex" style="flex-wrap:wrap;gap:8px">'+acts+'</div>'+hint+'</div>';
+    // โซนอันตราย — "ตาย" พนักงานกดได้ · "ลบ" เฉพาะ owner/หัวหน้า
+    if(c.status==='normal'||c.status==='overdue')danger+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
+    if(canEdit())danger+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
+    if(ops||danger){
+      h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div>';
+      if(ops)h+='<div class="row-flex" style="flex-wrap:wrap;gap:8px">'+ops+'</div>'+hint;
+      if(danger)h+='<div class="row-flex" style="flex-wrap:wrap;gap:8px'+(ops?';margin-top:10px;padding-top:10px;border-top:1px solid var(--border)':'')+'">'+danger+'</div>';
+      h+='</div>';
+    }
   }
   // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — เฉพาะ owner/head
   if(canEdit()&&c.status==='closed'){
