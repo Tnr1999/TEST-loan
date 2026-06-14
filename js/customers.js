@@ -110,6 +110,7 @@ function renderCustomers(){
       var actBtn;
       if(c.status==='closed')actBtn=canAddCustomer()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
       else if(s.pending)actBtn='<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'')+'</div>';
+      else if(c.status==='lost')actBtn=canReturnCredit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">คืนเครดิต</button>':viewBtn;
       else actBtn=canEdit()?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>':viewBtn;
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
@@ -173,6 +174,7 @@ function custCardHTML(c,date,s){
   if(c.status==='closed')btn=canAddCustomer()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
   else if(s.pending)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'');
   else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">แก้</button>';
+  else if(c.status==='lost')btn=canReturnCredit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">คืนเครดิต</button>':'';
   else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
