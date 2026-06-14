@@ -271,8 +271,9 @@ async function loadAll(){
   var dres=await _sb.from('disbursements').select('*');
   allDisbursements=dres.error?[]:(dres.data||[]);
 
-  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · หัวหน้ากอง/หัวหน้าสายโหลดแยกแบบ fail-safe (ใช้โชว์ชื่อทีมในหน้าจ่ายเงิน)
-  if(canEdit()&&!isOwner()){
+  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · role อื่น (หัวหน้ากอง/หัวหน้าสาย/พนักงาน) โหลดแยกแบบ fail-safe
+  // (พนักงานก็ต้องใช้ เพื่อหา/แสดงหัวหน้าสายของตัวเอง + คำนวณคอมในหน้าค่าแรง)
+  if(!isOwner()){
     var ures=await _sb.from('users').select('id,username,full_name,role,is_active').order('created_at');
     if(!ures.error)allUsers=ures.data||[];
   }
