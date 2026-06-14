@@ -225,33 +225,65 @@ function renderPayoutPage(){
 // หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var wage=0,comm=0,heads={};
+  var wage=0,comm=0,interest=0,penalty=0,fee=0,heads={},items=[];
   recs.forEach(function(r){
     if(!(+r.wage))return;
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
     var b=allBranches.find(function(x){return x.id===c.branch_id});
     var uid=(b&&b.staff_id)||r.recorded_by;
     if(uid!==currentUser.id)return;
-    wage+=+r.wage;
+    var w=round2(+r.wage), rIn=round2(w*5);
+    var rInt=+r.interest_collected||0, rPen=+r.penalty||0, rFee=round2(rIn-rInt-rPen); // ส่วนที่เหลือ = ค่าธรรมเนียมตอนปิด
+    wage+=w; interest+=rInt; penalty+=rPen; fee+=rFee;
     var lh=b&&lineHeadOfBranch(b.id);
-    if(lh){comm+=round2(+r.wage*5*COMM);heads[lh.id]=lh.full_name;}
+    if(lh){comm+=round2(w*5*COMM);heads[lh.id]=lh.full_name;}
+    items.push({c:c,interest:rInt,penalty:rPen,fee:rFee,wage:w});
   });
   if(!wage)return '';
-  wage=round2(wage);comm=round2(comm);
+  wage=round2(wage);comm=round2(comm);interest=round2(interest);penalty=round2(penalty);fee=round2(fee);
   var keep=round2(wage-comm);
   var headNames=Object.keys(heads).map(function(k){return heads[k]});
-  var commLabel=headNames.length===1?('หักคอม 5% → '+esc(headNames[0])):'หักคอม 5% (ของยอดเข้า)';
   var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
+  var sub=function(k,v){return '<div class="pay-src-row"><span>'+k+'</span><span class="v">฿'+fmt(v)+'</span></div>'};
+
+  // กล่องแตกรายละเอียด "ยอดเข้า" → ดอก + ค่าปรับ + ค่าธรรมเนียม
+  var breakdown='<div class="pay-src"><div class="pay-src-h">ยอดเข้าประกอบด้วย</div>'+
+    sub('ดอกที่เก็บได้',interest)+
+    (penalty>0?sub('ค่าปรับ',penalty):'')+
+    (fee>0?sub('ค่าธรรมเนียม (ปิดยอด)',fee):'')+'</div>';
+
+  // สถานะค่าคอม — จ่ายให้ใคร / หรือไม่มีหัวหน้าสาย
+  var commRow;
+  if(comm>0){
+    var to=headNames.length===1?('จ่ายให้ '+esc(headNames[0])):('จ่ายให้หัวหน้าสาย '+headNames.length+' คน');
+    commRow=money('หักคอม 5% · '+to,comm,' minus');
+  } else {
+    commRow='<div class="pay-line"><span class="k">หักคอม 5%</span><span class="v" style="color:var(--muted)">ไม่มีหัวหน้าสาย — ไม่หัก</span></div>';
+  }
+
+  // รายการที่เก็บวันนี้ รายคน
+  var rows=items.map(function(it){
+    var parts=['ดอก ฿'+fmt(it.interest)];
+    if(it.penalty>0)parts.push('ค่าปรับ ฿'+fmt(it.penalty));
+    if(it.fee>0)parts.push('ค่าธรรมเนียม ฿'+fmt(it.fee));
+    return '<div class="pay-src-row"><span>'+esc(custCode(it.c))+' '+esc(it.c.full_name)+
+      '<br><span style="color:var(--muted);font-size:0.72rem">'+parts.join(' · ')+'</span></span>'+
+      '<span class="v">ค่าแรง ฿'+fmt(it.wage)+'</span></div>';
+  }).join('');
+
   return '<div class="section-label" style="margin-top:24px">ค่าแรงของฉัน</div>'+
     '<div class="pay-person">'+
       '<div class="pay-ph"><span class="pay-name">'+esc(currentUser.full_name)+'</span>'+
         '<span class="pay-net"><span class="cur">฿</span>'+fmt(keep)+'</span></div>'+
+      '<div class="pay-lines">'+money('ยอดเข้าวันนี้ (ฐานค่าแรง)',round2(wage*5))+'</div>'+
+      breakdown+
       '<div class="pay-lines">'+
-        money('ยอดเข้าวันนี้ (ฐานค่าแรง)',wage*5)+
         money('ค่าแรง 20%',wage)+
-        (comm>0?money(commLabel,comm,' minus'):'')+
+        commRow+
         money('ได้รับ',keep,' total')+
-      '</div></div>';
+      '</div></div>'+
+    '<div class="section-label" style="margin-top:20px">รายการที่เก็บวันนี้ · '+items.length+' รายการ</div>'+
+    '<div class="pay-person"><div class="pay-src" style="margin-top:0">'+rows+'</div></div>';
 }
 
 // หัวหน้าสายของบ้าน (role line/manager ที่ผูกบ้านนี้ผ่าน user_branches) — ผู้รับค่าคอมของสายนั้น
