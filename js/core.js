@@ -115,7 +115,7 @@ function findNearDuplicates(o,excludeId){
     if(idc.length>=13&&pid.length>=13&&idc!==pid&&levenshtein(idc,pid)<=1)reasons.push('เลขบัตรต่างกัน 1 หลัก');
     if(ph&&pph&&ph.length>=9&&ph===pph&&nm!==pnm)reasons.push('เบอร์เดียวกัน ชื่อต่าง');
     if(ba&&pba&&ba===pba)reasons.push('เลขบัญชีเดียวกัน');
-    if(nm&&pnm&&nm!==pnm&&levenshtein(nm,pnm)<=2&&(ph===pph||ba===pba))reasons.push('ชื่อใกล้เคียง');
+    if(nm&&pnm&&nm!==pnm&&levenshtein(nm,pnm)<=2&&((ph&&ph===pph)||(ba&&ba===pba)))reasons.push('ชื่อใกล้เคียง');
     if(reasons.length)out.push({person:p,reasons:reasons});
   });
   return out;
