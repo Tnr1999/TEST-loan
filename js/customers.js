@@ -108,9 +108,9 @@ function renderCustomers(){
       // ปุ่ม action ในคอลัมน์เดียว — ใช้ปุ่มทรงเดียวกันทุกสถานะ (ดู ›/เปิด/รับเงิน/แก้ไข) เพื่อความสม่ำเสมอ
       var viewBtn='<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openDetail(\''+c.id+'\')">ดู ›</button>';
       var actBtn;
-      if(c.status==='closed')actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
-      else if(s.pending)actBtn=canEdit()?'<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button></div>':viewBtn;
-      else actBtn='<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>';
+      if(c.status==='closed')actBtn=canDisburse()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
+      else if(s.pending)actBtn=canDisburse()?'<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button></div>':viewBtn;
+      else actBtn=canEdit()?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>':viewBtn;
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -164,16 +164,16 @@ function custCardHTML(c,date,s){
       '<div class="crow-top">'+head+'</div>'+
       '<div class="crow-act" onclick="event.stopPropagation()">'+
         '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b><span class="cur">฿</span>'+fmt(interestDue(c))+'</b></div>'+
-        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">รับเงิน</button>'+
+        (canEdit()?'<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">รับเงิน</button>':'')+
       '</div></div>';
   }
 
   // อื่นๆ = แถวกระชับ
   var btn;
-  if(c.status==='closed')btn=canEdit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
-  else if(s.pending)btn=canEdit()?'<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'';
-  else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">แก้</button>';
-  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
+  if(c.status==='closed')btn=canDisburse()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
+  else if(s.pending)btn=canDisburse()?'<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button><button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'';
+  else if(s.paid)btn=canEdit()?'<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">แก้</button>':'';
+  else btn=canEdit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>':'';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
 
@@ -220,7 +220,7 @@ function openDetail(id){
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
       '<div><div style="font-size:0.9rem;font-weight:600;color:var(--amber)">รอเปิด</div>'+
       '<div style="font-size:0.74rem;color:var(--text2)">ลูกค้าใหม่ — เมื่อโอนเงินให้ลูกค้าแล้ว กดเปิดเพื่อเปลี่ยนเป็น "เปิดแล้ว"</div></div>'+
-      (canEdit()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">เปิด</button>':'')+
+      (canDisburse()?'<button class="btn btn-green btn-sm" style="flex-shrink:0" onclick="setDisbursed(\''+id+'\')">เปิด</button>':'')+
       '</div></div>';
   }
 
@@ -242,9 +242,9 @@ function openDetail(id){
       ops+='<button class="btn btn-green btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
       hint='<div class="field-hint" style="margin-top:8px">คืนเครดิต = ลูกค้าจ่าย <b>ต้น + ดอก + ค่าปรับ</b> ครบยอดปิด → ปิดสัญญา (ระบบเก็บประวัติว่าเคยตาย) · จ่ายไม่ครบจะยังคงสถานะตาย</div>';
     }
-    if(canEdit()&&c.status!=='lost'){
-      ops+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
-      ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
+    if(c.status!=='lost'){
+      if(canDisburse())ops+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
+      if(canEdit())ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
     }
     // โซนอันตราย — "ตาย" พนักงานกดได้ · "ลบ" เฉพาะ owner/หัวหน้า
     if(c.status==='normal'||c.status==='overdue')danger+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
@@ -256,8 +256,8 @@ function openDetail(id){
       h+='</div>';
     }
   }
-  // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — เฉพาะ owner/head
-  if(canEdit()&&c.status==='closed'){
+  // ปิดยอดแล้ว → เปิดยอดใหม่ (ปล่อยกู้รอบใหม่ให้คนเดิม) — "เปิดยอด" = Owner เท่านั้น
+  if(canDisburse()&&c.status==='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px"><div class="section-label" style="margin:0 0 10px">การดำเนินการ</div>'+
       '<button class="btn btn-gold btn-sm" onclick="openReloan(\''+id+'\')">เปิดยอดใหม่ (ปล่อยกู้รอบใหม่)</button>'+
       '<div class="field-hint" style="margin-top:8px">สร้างสัญญาใหม่ให้ลูกค้าคนนี้ — ประวัติสัญญาเดิมยังเก็บไว้</div></div>';
@@ -297,6 +297,7 @@ async function changeStatus(id,status){
 }
 // ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
 async function setDisbursed(id){
+  if(!canDisburse()){toast('เปิดยอด (ยืนยันโอนเงิน) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'✅',title:'ยืนยันการโอนเงิน',msg:'ยืนยันว่าได้โอนเงินให้ "'+c.full_name+'" แล้ว?',okText:'เปิด',okClass:'btn-green'});
   if(!ok)return;
@@ -308,6 +309,7 @@ async function setDisbursed(id){
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์ปิดสินเชื่อ','err');return}
   var c=allCustomers.find(function(x){return x.id===id});var ca=closeAmount(c);
   var ok=await showConfirm({icon:'✓',title:'ปิดสินเชื่อ',msg:'ยอดปิดสินเชื่อ ฿'+fmt(ca)+'\nการปิดไม่สามารถยกเลิกได้',okText:'ปิดสินเชื่อ',okClass:'btn-green'});
   if(!ok)return;
@@ -318,7 +320,7 @@ async function doCloseLoan(id){
 // เพิ่มยอด — ลูกค้าเดิมขอยอดเพิ่ม (เช่น เปิด 1000 ขอเพิ่มเป็น 2000 → โอนเพิ่ม 1000)
 // บันทึกเป็น "ยอดเบิก" (kind=topup) + เพิ่มเข้าเงินต้น/เงินต้นคงเหลือ
 function openTopup(id){
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
+  if(!canDisburse()){toast('เพิ่มยอดได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   closeModal('modal-detail'); // กัน modal ซ้อนกัน
   document.getElementById('modal-topup-body').innerHTML=
@@ -330,6 +332,7 @@ function openTopup(id){
   openModal('modal-topup');
 }
 async function saveTopup(id){
+  if(!canDisburse()){toast('เพิ่มยอดได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var amt=Math.max(0,parseFloat(document.getElementById('topup-amount').value)||0);
   if(amt<=0){toast('กรุณากรอกยอดที่จะเพิ่ม','err');return}
@@ -340,6 +343,7 @@ async function saveTopup(id){
   toast('✅ เพิ่มยอดสำเร็จ ฿'+fmt(amt),'ok');closeModal('modal-topup');await loadAll();openDetail(id);
 }
 async function doDeleteCustomer(id){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์ลบลูกค้า','err');return}
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'🗑',title:'ลบลูกค้า',msg:'ลบ "'+c.full_name+'" และประวัติทั้งหมด?\nไม่สามารถกู้คืนได้',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
@@ -358,12 +362,12 @@ var editingCustId=null;
 var reloanPersonId=null; // โหมด "เปิดยอดใหม่" = ปล่อยกู้รอบใหม่ให้ person เดิม
 // เปิดยอดใหม่ให้ลูกค้าที่ปิดสินเชื่อแล้ว (เฉพาะ owner/head) — สร้างสัญญาใหม่ เก็บประวัติเดิมไว้
 function openReloan(id){
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์เปิดยอดใหม่','err');return}
+  if(!canDisburse()){toast('เปิดยอดใหม่ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   openAddCustomer(c);
 }
 function openAddCustomer(reloanCust){
-  if(reloanCust?!canEdit():!canAddCustomer()){toast('คุณไม่มีสิทธิ์ทำรายการนี้','err');return}
+  if(!canDisburse()){toast('เปิดยอด/เพิ่มลูกค้าได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   closeModal('modal-detail'); // กัน modal ซ้อนกัน (เปิดยอดใหม่จากหน้ารายละเอียด)
   editingCustId=null;
   reloanPersonId=reloanCust?reloanCust.person_id:null;
@@ -486,6 +490,7 @@ async function saveCustomer(){
 
   // โหมดแก้ไข → แก้ที่ตาราง persons (ตัวตนของคน)
   if(editingCustId){
+    if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
     var cc=allCustomers.find(function(x){return x.id===editingCustId});
     var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
@@ -493,6 +498,7 @@ async function saveCustomer(){
     toast('✅ แก้ไขสำเร็จ','ok');closeModal('modal-customer');await loadAll();openDetail(editingCustId);return;
   }
 
+  if(!canDisburse()){toast('เปิดยอด/เพิ่มลูกค้าได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var principal=document.getElementById('modal-customer-body')._principal;
   if(!principal||principal<=0){toast('กรุณาเลือกวงเงิน','err');return}
   var branchId=document.getElementById('f-branch').value;

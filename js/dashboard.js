@@ -312,9 +312,9 @@ function renderPayout(recs){
     var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
     var b=allBranches.find(function(x){return x.id===c.branch_id});
     var uid=(b&&b.staff_id)||r.recorded_by||'__unknown';
-    // เจ้าของระบบ (owner) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้าสาย + พนักงาน
+    // owner + หัวหน้ากอง (head) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้าสาย + พนักงาน
     var ru=allUsers.find(function(x){return x.id===uid});
-    if(ru&&ru.role==='owner')return;
+    if(ru&&(ru.role==='owner'||ru.role==='head'))return;
     var lh=b?lineHeadOfBranch(b.id):null;
     var lid=lh?lh.id:'__none';
     var g=lines[lid]||(lines[lid]={persons:{},head:lh});

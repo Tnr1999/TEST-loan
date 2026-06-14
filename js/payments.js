@@ -3,6 +3,7 @@
 ═══════════════════════════════════════════════ */
 
 function openPayment(custId,date){
+  if(!canEdit()){toast('รับเงิน/แก้ไขการชำระ ได้เฉพาะเจ้าของระบบ/หัวหน้ากอง/หัวหน้าสาย','err');return}
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
   var existing=allRecords.find(function(r){return r.customer_id===custId&&r.record_date===date});
   var due=interestDue(c),close=closeAmount(c);
@@ -68,6 +69,7 @@ function updatePayCalc(custId){
   document.getElementById('pay-calc').innerHTML=h;
 }
 async function savePayment(custId,date,recId){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
   var c=allCustomers.find(function(x){return x.id===custId});
   var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0); // กันยอดติดลบ
   if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return;}     // กันบันทึกวันอนาคต
