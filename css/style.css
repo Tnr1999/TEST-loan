@@ -324,11 +324,10 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .fab-top{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:150;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--gold);font-size:1.4rem;font-weight:700;box-shadow:var(--shadow-lg);display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .fab-top.show{display:flex}
 .fab-top:active{transform:scale(0.92)}
-/* ปุ่มรีเฟรช (เฉพาะมือถือ) — เด้งขึ้นเหนือปุ่มขึ้นบนสุดเมื่อปุ่มนั้นโชว์ */
-.fab-refresh{position:fixed;right:16px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);z-index:150;width:46px;height:46px;border-radius:50%;border:1px solid var(--border2);background:var(--card);color:var(--gold);box-shadow:var(--shadow-lg);display:none;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:bottom .2s ease}
-.fab-refresh svg{width:22px;height:22px}
-.fab-refresh:active{transform:scale(0.92)}
-.fab-refresh.spin svg{animation:fab-spin .8s linear infinite}
+/* ปุ่มไอคอน (รีเฟรชหน้า) บน header — สี่เหลี่ยมจัตุรัส ไอคอนกลาง */
+.btn-icon{padding:0!important;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.btn-icon svg{width:18px;height:18px}
+.btn-icon:active svg{animation:fab-spin .6s linear}
 @keyframes fab-spin{to{transform:rotate(360deg)}}
 
 /* ═══ STATUS BADGE ═══ */
@@ -522,9 +521,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
 /* ── มือถือ (≤767, แนวตั้ง): การ์ด + bottom nav ── */
 @media (max-width:767px){
   .bottom-nav{display:flex}
-  .fab-refresh{display:flex}
-  /* เมื่อปุ่ม "ขึ้นบนสุด" โผล่ขึ้นมา ดันปุ่มรีเฟรชขึ้นไปวางซ้อนด้านบน */
-  .fab-top.show ~ .fab-refresh{bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 70px)}
   .desktop-only{display:none!important}
   .header-center{display:none}
   /* คืนชื่อผู้ใช้บนมือถือ (ตัดด้วย ellipsis) + ซ่อนซับโลโก้เพื่อให้พื้นที่พอ */
