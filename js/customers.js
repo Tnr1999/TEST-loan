@@ -252,8 +252,8 @@ function openDetail(id){
     if(c.status!=='lost'){
       ops+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
       if(canEdit())ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
-      // โหมดผ่อนต้น (หยุดคิดดอก) — owner/หัวหน้ากอง/หัวหน้าสาย
-      if(canEditCustomerInfo()){
+      // โหมดผ่อนต้น (หยุดคิดดอก) — Owner เท่านั้น
+      if(isOwner()){
         if(c.principal_only){ops+='<button class="btn btn-ghost btn-sm" onclick="setPrincipalOnly(\''+id+'\',false)">↩️ ยกเลิกผ่อนต้น (คิดดอกปกติ)</button>';
           hint='<div class="field-hint" style="margin-top:8px"><b style="color:var(--cyan)">โหมดผ่อนต้น</b> = หยุดคิดดอก · เงินที่จ่ายลดต้นทั้งหมด · ปิดสัญญาอัตโนมัติเมื่อต้นหมด</div>';}
         else ops+='<button class="btn btn-cyan btn-sm" onclick="setPrincipalOnly(\''+id+'\',true)">📉 เปลี่ยนเป็นผ่อนต้น</button>';
@@ -308,9 +308,9 @@ async function changeStatus(id,status){
   if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
 }
-// สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — owner/หัวหน้ากอง/หัวหน้าสาย
+// สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — Owner เท่านั้น
 async function setPrincipalOnly(id,on){
-  if(!canEditCustomerInfo()){toast('ปรับโหมดผ่อนต้นได้เฉพาะ Owner / หัวหน้ากอง / หัวหน้าสาย','err');return}
+  if(!isOwner()){toast('ปรับโหมดผ่อนต้นได้เฉพาะเจ้าของระบบ (Owner)','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var ok=await showConfirm({icon:on?'📉':'↩️',title:on?'เปลี่ยนเป็นผ่อนต้น':'ยกเลิกผ่อนต้น',
     msg:on?'"'+c.full_name+'" จะ "หยุดคิดดอก" ตั้งแต่นี้ไป — เงินที่จ่ายจะลดต้นทั้งหมด จนต้นหมดแล้วปิดสัญญาอัตโนมัติ\n\nยืนยัน?'
