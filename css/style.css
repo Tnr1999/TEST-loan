@@ -129,7 +129,7 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .sbar-hero{flex-shrink:0}
 .sbar-hero-lbl{font-size:0.68rem;color:var(--muted);letter-spacing:0.03em}
 .sbar-hero-lbl .sbar-date{color:var(--dim)}
-.sbar-hero-val{font-family:var(--font-display);font-size:2.7rem;font-weight:800;color:var(--gold);line-height:1.02;letter-spacing:0;margin-top:2px}
+.sbar-hero-val{font-family:var(--font-display);font-size:2.05rem;font-weight:800;color:var(--gold);line-height:1.02;letter-spacing:0;margin-top:2px}
 /* ฿ เป็นพรีฟิกซ์เล็ก-ยกขึ้น (สัญลักษณ์ใช้ฟอนต์ไทยที่มี ฿) */
 .cur{font-family:var(--font-serif);font-weight:600;font-size:0.5em;opacity:0.8;vertical-align:0.32em;margin-right:2px}
 .sbar-prog{font-size:0.68rem;color:var(--text2);margin-top:6px}
