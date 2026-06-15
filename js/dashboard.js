@@ -100,8 +100,9 @@ function renderDashboard(){
 
   var sum=recs.reduce(function(a,r){
     a.collected+=+r.amount_paid;a.interest+=+r.interest_collected;a.wage+=+r.wage;a.principal+=+r.principal_reduced;a.penalty+=+(r.penalty||0);
+    a.fee+=Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+r.principal_reduced))); // ส่วนที่จ่ายเกินดอก+ต้น = ค่าธรรมเนียม (เก็บตอนปิดสัญญา)
     if(r.payment_status!=='unpaid')a.paid++;return a;
-  },{collected:0,interest:0,wage:0,principal:0,penalty:0,paid:0});
+  },{collected:0,interest:0,wage:0,principal:0,penalty:0,fee:0,paid:0});
   // เงินต้นคงค้างในตลาด (ปัจจุบัน) = สัญญาที่ยังไม่ปิด
   var outstanding=custs.filter(function(c){return c.status!=='closed'}).reduce(function(s,c){return s+ +c.remaining_principal},0);
   // ยอดเบิก — เงินที่โอนให้ลูกค้าวันนี้ (เปิดใหม่ + เพิ่มยอด)
@@ -122,6 +123,7 @@ function renderDashboard(){
     return{id:b.id,group_id:b.group_id,name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
       penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
+      fee:br.reduce(function(s,r){return s+Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+(r.principal_reduced||0))))},0),
       principal:br.reduce(function(s,r){return s+ +(r.principal_reduced||0)},0),
       collected:br.reduce(function(s,r){return s+ +r.amount_paid + +(r.penalty||0)},0),
       disbursed:allDisbursements.filter(function(d){return d.branch_id===b.id&&d.disburse_date===date}).reduce(function(s,d){return s+ +d.amount},0),
@@ -131,9 +133,12 @@ function renderDashboard(){
   // ── สรุปยอดดำ-ทอง: "รวมรับวันนี้" เป็นพระเอก + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) ──
   var total=sum.collected+sum.penalty;
   var sub=function(k,v,ex){return '<div class="sub-item"><span class="sub-k">'+k+'</span><span class="sub-v'+(ex||'')+'">฿'+fmt0(v)+'</span></div>'};
-  var subs=sub('ดอก',sum.interest)+sub('ค่าปรับ',sum.penalty,sum.penalty>0?' is-pen':'')+
+  var subs=sub('ต้นเก็บคืน',sum.principal)+
     sub('ยอดเบิก',disbTotal,disbTotal>0?' is-out':'')+
-    sub('ต้นเก็บคืน',sum.principal)+sub('ต้นคงค้าง',outstanding);
+    sub('ดอก',sum.interest)+
+    sub('ค่าปรับ',sum.penalty,sum.penalty>0?' is-pen':'')+
+    sub('ค่าธรรมเนียม',sum.fee)+
+    sub('ต้นคงเหลือ',outstanding);
   var heroSub='';
   if(isStaff()){
     var dueN=dueToday.length;
@@ -179,10 +184,11 @@ function renderDashboard(){
         '<div class="brbox-head"><span class="brbox-name">'+esc(b.name)+'</span>'+
           '<span class="brbox-total">รวมรับ <b>฿'+fmt0(b.collected)+'</b></span></div>'+
         '<div class="brbox-grid">'+
+          mrow('เงินต้นเก็บคืน',b.principal)+
+          mrow('ยอดเบิก',b.disbursed,b.disbursed>0?' out':'')+
           mrow('ดอกที่เก็บได้',b.interest)+
           mrow('ค่าปรับ',b.penalty,b.penalty>0?' r':'')+
-          mrow('ยอดเบิก',b.disbursed,b.disbursed>0?' out':'')+
-          mrow('เงินต้นเก็บคืน',b.principal)+
+          mrow('ค่าธรรมเนียม',b.fee)+
           '<div class="br-m"><span class="br-mk">จ่ายแล้ว</span><span class="br-mv">'+b.paid+' ราย</span></div>'+
         '</div></div>';
     };
