@@ -370,6 +370,14 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .calc-row{display:flex;justify-content:space-between;font-size:0.82rem;padding:4px 0}
 .calc-row .k{color:var(--text2)}
 .calc-row .v{font-weight:600;font-family:var(--font-mono)}
+.paid-today{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px}
+.paid-today-head{display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text2);margin-bottom:6px}
+.paid-today-head b{font-family:var(--font-mono);color:var(--green);font-size:0.92rem}
+.paid-today-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-top:1px solid var(--border)}
+.paid-today-row.editing{color:var(--gold)}
+.paid-today-row .pt-i{font-size:0.72rem;color:var(--muted)}
+.paid-today-row .pt-amt{font-size:0.84rem;font-weight:600;margin-left:auto;margin-right:8px}
+.paid-today-row .pt-edit{font-size:0.72rem;padding:3px 10px;border-radius:7px;background:var(--card2);border:1px solid var(--border2);color:var(--gold);cursor:pointer}
 .quick-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .quick-btn{font-size:0.76rem;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all 0.15s}
 .quick-btn.sel,.quick-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}

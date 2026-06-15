@@ -23,6 +23,7 @@ var dashBranchId = '';
 function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayISO(){return toISO(new Date())}
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(86400000))}
+function round2(n){return Math.round((+n||0)*100)/100}
 function fmt(n){return (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmt0(n){return (parseFloat(n)||0).toLocaleString('th-TH')}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -326,7 +327,7 @@ async function loadAll(){
     _sb.from('branches').select('*').order('created_at'),
     _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,bank_name,bank_account'),
     _sb.from('loans').select('*').order('seq'),
-    _sb.from('daily_records').select('*').order('record_date'),
+    _sb.from('daily_records').select('*').order('record_date').order('created_at'),
     _sb.from('user_branches').select('*'),
     _sb.from('user_groups').select('*')
   ];

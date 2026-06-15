@@ -111,7 +111,7 @@ function renderCustomers(){
       if(c.status==='closed')actBtn=canAddCustomer()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
       else if(s.pending)actBtn='<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'')+'</div>';
       else if(c.status==='lost')actBtn=canReturnCredit()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">คืนเครดิต</button>':viewBtn;
-      else actBtn=canEdit()?'<button class="btn '+(s.paid?'btn-ghost':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'แก้ไข':'รับเงิน')+'</button>':viewBtn;
+      else actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'จ่ายเพิ่ม':'รับเงิน')+'</button>':viewBtn;
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -129,10 +129,14 @@ function setCustView(v){custView=v;renderCustomers()}
 
 // สถานะของลูกค้า ณ วันที่กำหนด (ใช้ร่วมหน้าลูกค้า + หน้าเก็บเงินของ staff)
 function custDayStatus(c,date){
-  var rec=allRecords.find(function(r){return r.customer_id===c.id&&r.record_date===date});
+  // วันหนึ่งอาจมีหลายรายการ (จ่ายเพิ่ม) — รวมยอด
+  var recs=allRecords.filter(function(r){return r.customer_id===c.id&&r.record_date===date});
+  var paidAmount=recs.reduce(function(s,r){return s+ +(r.amount_paid||0)},0);
   return {
-    rec:rec,
-    paid:!!(rec&&rec.payment_status!=='unpaid'),
+    recs:recs,
+    paidAmount:round2(paidAmount),
+    recCount:recs.length,
+    paid:paidAmount>0,
     due:c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,date),
     isNew:c.start_date===date,   // ลูกค้าที่เข้ามาในวันนี้
     pending:!c.disbursed         // รอเปิด — รอแอดมินโอนเงินให้
@@ -147,7 +151,7 @@ function custCardHTML(c,date,s){
   var daysOver=ref?(daysBetween(ref,date)-c.collection_interval):0;
   var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
   var chip=s.pending?'<span class="crow-st t-pending">รอเปิด</span>'
-    :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.rec.amount_paid)+'</span>'
+    :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.paidAmount)+(s.recCount>1?' ('+s.recCount+')':'')+'</span>'
     :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
@@ -173,7 +177,7 @@ function custCardHTML(c,date,s){
   var btn;
   if(c.status==='closed')btn=canAddCustomer()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
   else if(s.pending)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'');
-  else if(s.paid)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">แก้</button>';
+  else if(s.paid)btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">จ่ายเพิ่ม</button>';
   else if(c.status==='lost')btn=canReturnCredit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">คืนเครดิต</button>':'';
   else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
@@ -183,7 +187,7 @@ function openDetail(id){
   currentDetailId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var b=allBranches.find(function(x){return x.id===c.branch_id});
-  var recs=allRecords.filter(function(r){return r.customer_id===id}).sort(function(a,b){return b.record_date.localeCompare(a.record_date)});
+  var recs=allRecords.filter(function(r){return r.customer_id===id}).sort(function(a,b){return b.record_date.localeCompare(a.record_date)||(b.created_at||'').localeCompare(a.created_at||'')});
   var ca=closeAmount(c);
 
   var h='<div class="page-head" style="margin-bottom:14px"><div>'+
@@ -270,7 +274,7 @@ function openDetail(id){
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
-      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+'</td>'+
+      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+
