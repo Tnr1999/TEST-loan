@@ -244,7 +244,7 @@ function openDetail(id){
   // จัดกลุ่ม: ปุ่มหลัก (คืนเครดิต/เพิ่มยอด/ปิด) แยกจากโซนอันตราย (ตาย/ลบ) ด้วยเส้นคั่น
   if(c.status!=='closed'){
     var ops='',danger='',hint='';
-    // กลุ่มหลัก — คืนเครดิต (รับเงินเต็มยอดลูกค้าตาย) = Owner เท่านั้น
+    // กลุ่มหลัก — คืนเครดิต (รับเงินเต็มยอดลูกค้าตาย) = Owner + หัวหน้ากอง
     if(c.status==='lost'&&canReturnCredit()){
       ops+='<button class="btn btn-cyan btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
       hint='<div class="field-hint" style="margin-top:8px">คืนเครดิต = ลูกค้าจ่าย <b>ต้น + ดอก + ค่าปรับ</b> ครบยอดปิด → ปิดสัญญา (ระบบเก็บประวัติว่าเคยตาย) · จ่ายไม่ครบจะยังคงสถานะตาย</div>';
@@ -252,14 +252,14 @@ function openDetail(id){
     if(c.status!=='lost'){
       ops+='<button class="btn btn-purple btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
       if(canEdit())ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
-      // โหมดผ่อนต้น (หยุดคิดดอก) — Owner เท่านั้น
-      if(isOwner()){
+      // โหมดผ่อนต้น (หยุดคิดดอก) — Owner + หัวหน้ากอง (ในกองตัวเอง)
+      if(isOwner()||isHead()){
         if(c.principal_only){ops+='<button class="btn btn-ghost btn-sm" onclick="setPrincipalOnly(\''+id+'\',false)">↩️ ยกเลิกผ่อนต้น (คิดดอกปกติ)</button>';
           hint='<div class="field-hint" style="margin-top:8px"><b style="color:var(--cyan)">โหมดผ่อนต้น</b> = หยุดคิดดอก · เงินที่จ่ายลดต้นทั้งหมด · ปิดสัญญาอัตโนมัติเมื่อต้นหมด</div>';}
         else ops+='<button class="btn btn-cyan btn-sm" onclick="setPrincipalOnly(\''+id+'\',true)">📉 เปลี่ยนเป็นผ่อนต้น</button>';
       }
     }
-    // โซนอันตราย — "ตาย" ทุก role กดได้ · "ลบลูกค้า" = Owner เท่านั้น
+    // โซนอันตราย — "ตาย" ทุก role กดได้ · "ลบลูกค้า" = Owner + หัวหน้ากอง
     if(c.status==='normal'||c.status==='overdue')danger+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
     if(canDelete())danger+='<button class="btn btn-red btn-sm" onclick="doDeleteCustomer(\''+id+'\')">🗑 ลบลูกค้า</button>';
     if(ops||danger){
@@ -308,9 +308,9 @@ async function changeStatus(id,status){
   if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
 }
-// สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — Owner เท่านั้น
+// สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — Owner + หัวหน้ากอง
 async function setPrincipalOnly(id,on){
-  if(!isOwner()){toast('ปรับโหมดผ่อนต้นได้เฉพาะเจ้าของระบบ (Owner)','err');return}
+  if(!isOwner()&&!isHead()){toast('ปรับโหมดผ่อนต้นได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var ok=await showConfirm({icon:on?'📉':'↩️',title:on?'เปลี่ยนเป็นผ่อนต้น':'ยกเลิกผ่อนต้น',
     msg:on?'"'+c.full_name+'" จะ "หยุดคิดดอก" ตั้งแต่นี้ไป — เงินที่จ่ายจะลดต้นทั้งหมด จนต้นหมดแล้วปิดสัญญาอัตโนมัติ\n\nยืนยัน?'
@@ -323,7 +323,7 @@ async function setPrincipalOnly(id,on){
 }
 // ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
 async function setDisbursed(id){
-  if(!canDisburse()){toast('เปิดยอด (ยืนยันโอนเงิน) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
+  if(!canDisburse()){toast('เปิดยอด (ยืนยันโอนเงิน) ได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'✅',title:'ยืนยันการโอนเงิน',msg:'ยืนยันว่าได้โอนเงินให้ "'+c.full_name+'" แล้ว?',okText:'เปิด',okClass:'btn-green'});
   if(!ok)return;
@@ -369,7 +369,7 @@ async function saveTopup(id){
   toast('✅ เพิ่มยอดสำเร็จ ฿'+fmt(amt),'ok');closeModal('modal-topup');await loadAll();openDetail(id);
 }
 async function doDeleteCustomer(id){
-  if(!canDelete()){toast('ลบลูกค้าได้เฉพาะเจ้าของระบบ (Owner)','err');return}
+  if(!canDelete()){toast('ลบลูกค้าได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   var c=allCustomers.find(function(x){return x.id===id});
   var ok=await showConfirm({icon:'🗑',title:'ลบลูกค้า',msg:'ลบ "'+c.full_name+'" และประวัติทั้งหมด?\nไม่สามารถกู้คืนได้',okText:'ลบ',okClass:'btn-red'});
   if(!ok)return;
@@ -519,8 +519,8 @@ async function saveCustomer(){
     if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
     var cc=allCustomers.find(function(x){return x.id===editingCustId});
     if(idcard&&!validThaiId(idcard)){
-      if(!isOwner()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
-      toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ Owner','err');
+      if(!isOwner()&&!isHead()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+      toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ '+(isOwner()?'Owner':'หัวหน้ากอง'),'err');
     }
     var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
@@ -545,10 +545,10 @@ async function saveCustomer(){
 
   // บังคับกรอกเลขบัตร 13 หลัก — จุดยึดของระบบกันโกง (ทุก role รวม Owner)
   if(normDigits(idcard).length!==13){toast('ต้องกรอกเลขบัตรประชาชนให้ครบ 13 หลัก','err');return}
-  // บล็อก checksum เลขบัตร — กรอกผิดบันทึกไม่ได้ (Owner ข้ามได้คนเดียว)
+  // บล็อก checksum เลขบัตร — กรอกผิดบันทึกไม่ได้ (Owner + หัวหน้ากอง ข้ามได้)
   if(!validThaiId(idcard)){
-    if(!isOwner()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
-    toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ Owner','err');
+    if(!isOwner()&&!isHead()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+    toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ '+(isOwner()?'Owner':'หัวหน้ากอง'),'err');
   }
 
   // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาคนเดิม (เลขบัตรตรง หรือ ชื่อ+เบอร์ตรง) เพื่อบังคับกฎกู้หลายที่

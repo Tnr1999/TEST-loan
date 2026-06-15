@@ -43,7 +43,7 @@ function computeDayDeltas(baseC0,entries){
 function openPayment(custId,date,editId){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
   var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
-  if(c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
+  if(c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   var recs=dayRecords(custId,date);
   var editRec=editId?recs.find(function(r){return r.id===editId}):null;
   var mode=editRec?'edit':(recs.length?'add':'new');
@@ -177,7 +177,7 @@ async function savePayment(){
   if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
   var custId=_payCtx.custId,date=_payCtx.date,recId=_payCtx.recId;
   var c=allCustomers.find(function(x){return x.id===custId});
-  if(c&&c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะเจ้าของระบบ (Owner)','err');return}
+  if(c&&c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return;}
   var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
   var penEl=document.getElementById('pay-penalty');

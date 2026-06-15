@@ -35,7 +35,7 @@ var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',line:'หั
 
 /* ═══ PERMISSION ═══
    owner        = เห็น/จัดการทั้งระบบ
-   head         = หัวหน้ากอง — เห็นทุกบ้านในกองตัวเอง (ผูกผ่าน user_groups)
+   head         = หัวหน้ากอง — เห็นทุกบ้านในกองตัวเอง (ผูกผ่าน user_groups) · ทำได้เกือบทุกอย่างเหมือน Owner เฉพาะในกองตัวเอง (ยืนยันโอน/คืนเครดิต/ลบ/ผ่อนต้น/ข้าม checksum) · ยกเว้น "หน้าตั้งค่า" (บ้าน/กอง/ผู้ใช้) = Owner เท่านั้น
    line/manager = หัวหน้าสาย — เห็นเฉพาะบ้านที่ดูแล (ผูกผ่าน user_branches) · แก้ไข/รับเงินได้
    staff        = พนักงาน — เห็นเฉพาะบ้านตัวเอง (user_branches) · สิทธิ์จำกัด
 */
@@ -44,14 +44,14 @@ function isHead(){return currentUser&&currentUser.role==='head'}                
 function isLineHead(){return currentUser&&(currentUser.role==='line'||currentUser.role==='manager')} // หัวหน้าสาย
 function isStaff(){return currentUser&&currentUser.role==='staff'}
 function canEdit(){return isOwner()||isHead()||isLineHead()||isStaff()}   // รับเงิน/ปิดสินเชื่อ/เพิ่มยอด — ทุก role (ในขอบเขตที่เห็น)
-function canDisburse(){return isOwner()}                       // ยืนยันโอนเงิน ("เปิด") — Owner เท่านั้น
-function canReturnCredit(){return isOwner()}                   // คืนเครดิต (ลูกค้าตายจ่ายเต็มยอด) — Owner เท่านั้น
-function canDelete(){return isOwner()}                         // ลบลูกค้า — Owner เท่านั้น
-function canManageBranches(){return isOwner()||isHead()}       // จัดการโครงสร้าง กอง→บ้าน (หัวหน้าสาย/พนักงานไม่ได้)
+function canDisburse(){return isOwner()||isHead()}             // ยืนยันโอนเงิน ("เปิด") — Owner + หัวหน้ากอง (ในกองตัวเอง)
+function canReturnCredit(){return isOwner()||isHead()}         // คืนเครดิต (ลูกค้าตายจ่ายเต็มยอด) — Owner + หัวหน้ากอง
+function canDelete(){return isOwner()||isHead()}               // ลบลูกค้า — Owner + หัวหน้ากอง
+function canManageBranches(){return isOwner()}                 // จัดการโครงสร้าง กอง→บ้าน (หน้าตั้งค่า) — Owner เท่านั้น
 function canAddCustomer(){return isOwner()||isHead()||isLineHead()||isStaff()} // เพิ่มลูกค้าใหม่/เปิดยอดใหม่ — ทุก role
 function canEditCustomerInfo(){return isOwner()||isHead()||isLineHead()} // แก้ "ข้อมูลลูกค้า" (ชื่อ/เบอร์/บัญชี) — พนักงานแก้ไม่ได้
-function canManageUsers(){return isOwner()}
-function canManageGroups(){return isOwner()}
+function canManageUsers(){return isOwner()}                    // จัดการผู้ใช้ (หน้าตั้งค่า) — Owner เท่านั้น
+function canManageGroups(){return isOwner()}                   // จัดการกอง (หน้าตั้งค่า) — Owner เท่านั้น
 function myGroupIds(){
   if(isOwner()) return allGroups.map(function(g){return g.id});
   return allUserGroups.filter(function(ug){return ug.user_id===currentUser.id}).map(function(ug){return ug.group_id});
