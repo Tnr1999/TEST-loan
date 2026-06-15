@@ -540,6 +540,13 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .btn-icon svg{width:14px;height:14px}
   /* เว้นช่องให้ห่างจากปุ่มไอคอนรีเฟรช — ไม่ให้ชิดปุ่ม "ออก" */
   #btn-refresh{margin-right:4px}
+  /* ── สรุปยอดมือถือ: ย่อยอดรวม + รายละเอียดให้กะทัดรัด ── */
+  .sbar{padding:9px 12px;gap:7px}
+  .sbar-hero-val{font-size:1.6rem}
+  .sbar-hero-lbl{font-size:0.64rem}
+  .sbar-sub{gap:13px}
+  .sub-v{font-size:0.76rem}
+  .sub-k{font-size:0.58rem}
   .page-title{font-size:1.2rem}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .cols-3{grid-template-columns:repeat(3,1fr);gap:8px}
