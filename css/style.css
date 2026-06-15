@@ -9,6 +9,7 @@
   --green:#34d399; --green-dim:rgba(52,211,153,0.14);
   --amber:#f97316; --amber-dim:rgba(249,115,22,0.15);
   --cyan:#38bdf8; --cyan-dim:rgba(56,189,248,0.12);
+  --purple:#a78bfa; --purple-dim:rgba(167,139,250,0.14);
   --radius:14px; --radius-lg:20px;
   color-scheme:dark;
   --shadow:0 4px 20px rgba(0,0,0,0.5); --shadow-lg:0 18px 50px rgba(0,0,0,0.7);
@@ -61,6 +62,8 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .btn:disabled{opacity:0.5;cursor:not-allowed}
 .btn-gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--on-gold);font-weight:700}
 .btn-gold:hover:not(:disabled){background:var(--gold2);box-shadow:0 6px 18px rgba(212,175,55,0.38)}
+.btn-purple{background:var(--purple);color:#1c1530;font-weight:700}
+.btn-purple:hover:not(:disabled){background:#bda6fc;box-shadow:0 6px 18px rgba(167,139,250,0.38)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
 .btn-ghost:hover{color:var(--text);border-color:var(--border2);background:var(--surface)}
 .btn-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.25)}
@@ -282,6 +285,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-btn:active{transform:scale(.96)}
 .crow-btn.cb-pay{background:var(--gold);color:var(--on-gold)}
 .crow-btn.cb-pay:hover{filter:brightness(1.07)}
+.crow-btn.cb-pay-extra{background:var(--purple);color:#1c1530}
+.crow-btn.cb-pay-extra:hover{filter:brightness(1.07)}
 .crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
 .crow-btn.cb-confirm{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
 /* ★ การ์ดพระเอก "ต้องเก็บวันนี้" — โชว์ยอด + ปุ่มรับเงินเด่น */
