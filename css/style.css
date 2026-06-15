@@ -524,20 +524,20 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .desktop-only{display:none!important}
   .header-center{display:none}
   /* ── header มือถือ: ย่อให้เตี้ย/กะทัดรัด + พอดีจอ ไม่ให้ปุ่ม "ออก" ล้นขอบ ── */
-  :root{--header-h:50px}                                    /* ย่อความสูง header (สรุปยอด sticky ขยับตามอัตโนมัติ) */
-  header{padding:0 10px;gap:7px}
+  :root{--header-h:42px}                                    /* ย่อความสูง header (สรุปยอด sticky ขยับตามอัตโนมัติ) */
+  header{padding:0 10px;gap:6px}
   .logo{min-width:0}
-  .logo-icon{width:30px;height:30px;border-radius:9px;font-size:1.1rem}
+  .logo-icon{width:26px;height:26px;border-radius:8px;font-size:0.95rem}
   .logo-sub{display:none}                                  /* ซ่อนซับโลโก้ */
   .logo-name{display:none}                                 /* มือถือเหลือแค่ไอคอน B พอ — เว้นที่ให้แถบขวา */
-  .header-right{gap:6px;min-width:0;margin-left:auto}
-  .user-chip{padding:3px 7px;gap:5px;min-width:0;font-size:0.72rem}
-  .user-chip .uname{display:inline-block;max-width:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .role-badge{flex-shrink:0;padding:1px 6px;font-size:0.55rem}
+  .header-right{gap:5px;min-width:0;margin-left:auto}
+  .user-chip{padding:2px 7px;gap:5px;min-width:0;font-size:0.7rem}
+  .user-chip .uname{display:inline-block;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .role-badge{flex-shrink:0;padding:1px 6px;font-size:0.54rem}
   /* ปุ่มบน header เตี้ยลง (ยกเว้นปุ่มในฟอร์ม/หน้าอื่นที่ยังแตะง่าย) */
-  header .btn-sm{min-height:30px;padding:4px 9px;font-size:0.74rem}
-  .btn-icon{width:30px;height:30px}
-  .btn-icon svg{width:16px;height:16px}
+  header .btn-sm{min-height:26px;padding:3px 8px;font-size:0.72rem}
+  .btn-icon{width:26px;height:26px}
+  .btn-icon svg{width:15px;height:15px}
   /* เว้นช่องให้ห่างจากปุ่มไอคอนรีเฟรช — ไม่ให้ชิดปุ่ม "ออก" */
   #btn-refresh{margin-right:4px}
   .page-title{font-size:1.2rem}
