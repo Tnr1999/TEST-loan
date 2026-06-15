@@ -137,7 +137,7 @@ async function logAlert(type,o){
 }
 
 /* ═══ CALCULATIONS (ตาม Spec) ═══ */
-function interestDue(c){return +(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
+function interestDue(c){return c.principal_only?0:+(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
 function calcPayment(c, amountPaid, penalty){
   var due=interestDue(c), ic, pr, ps;
   amountPaid=+amountPaid||0;
@@ -150,7 +150,7 @@ function calcPayment(c, amountPaid, penalty){
     remaining_principal:+(c.remaining_principal-pr).toFixed(2),
     wage:+((ic+penalty)*0.20).toFixed(2),payment_status:ps};
 }
-function closeAmount(c){return +(c.remaining_principal + interestDue(c) + (c.branch_fee||0)).toFixed(2)}
+function closeAmount(c){return c.principal_only?+(c.remaining_principal).toFixed(2):+(c.remaining_principal + interestDue(c) + (c.branch_fee||0)).toFixed(2)}
 function isPaymentDueToday(c, iso){
   if(c.status==='closed') return false;
   var ref=c.last_collection_date||c.start_date;

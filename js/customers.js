@@ -114,7 +114,7 @@ function renderCustomers(){
       else actBtn=canEdit()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'จ่ายเพิ่ม':'รับเงิน')+'</button>':viewBtn;
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
-      '<td><div style="font-weight:500">'+esc(c.full_name)+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
+      '<td><div style="font-weight:500">'+esc(c.full_name)+(c.principal_only?' <span style="font-size:0.62rem;font-weight:700;color:var(--cyan);border:1px solid var(--cyan);border-radius:99px;padding:1px 6px;vertical-align:middle">ผ่อนต้น</span>':'')+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
@@ -160,7 +160,7 @@ function custCardHTML(c,date,s){
   var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
     '<div class="crow-main">'+
       '<div class="crow-l1"><span class="crow-name">'+esc(c.full_name)+'</span>'+chip+'</div>'+
-      '<div class="crow-l2">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+ival+'</div>'+
+      '<div class="crow-l2">คงเหลือ <b>฿'+fmt(c.remaining_principal)+'</b> · '+esc(branchName(c.branch_id))+' · '+(c.principal_only?'<span style="color:var(--cyan)">ผ่อนต้น</span>':ival)+'</div>'+
     '</div>';
 
   // ★ ต้องเก็บวันนี้ (ยังไม่จ่าย) = การ์ดพระเอก: โชว์ยอดดอกที่ต้องเก็บตัวโต + ปุ่มรับเงินเด่น
@@ -168,8 +168,8 @@ function custCardHTML(c,date,s){
     return '<div class="crow due big" onclick="openDetail(\''+c.id+'\')">'+
       '<div class="crow-top">'+head+'</div>'+
       '<div class="crow-act" onclick="event.stopPropagation()">'+
-        '<div class="crow-due"><span>ดอกที่ต้องเก็บวันนี้</span><b><span class="cur">฿</span>'+fmt(interestDue(c))+'</b></div>'+
-        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">รับเงิน</button>'+
+        '<div class="crow-due"><span>'+(c.principal_only?'ผ่อนต้น (เหลือ)':'ดอกที่ต้องเก็บวันนี้')+'</span><b><span class="cur">฿</span>'+fmt(c.principal_only?c.remaining_principal:interestDue(c))+'</b></div>'+
+        '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">'+(c.principal_only?'ผ่อนต้น':'รับเงิน')+'</button>'+
       '</div></div>';
   }
 
@@ -194,6 +194,7 @@ function openDetail(id){
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
     '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
+    (c.principal_only&&c.status!=='closed'?'<span class="st" style="background:rgba(34,211,238,0.15);color:var(--cyan)">ผ่อนต้น · ไม่คิดดอก</span>':'')+
     (c.was_lost&&c.status==='closed'?'<span class="st" style="background:rgba(34,197,94,0.15);color:var(--green)">คืนเครดิต (เคยตาย)</span>':'')+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
@@ -233,7 +234,7 @@ function openDetail(id){
   // close amount
   if(c.status!=='closed'){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">'+
-      '<div><div style="font-size:0.84rem;font-weight:500">ยอดปิดสินเชื่อ</div><div style="font-size:0.72rem;color:var(--muted)">ต้น + ดอกวันนี้ + ค่าธรรมเนียม</div></div>'+
+      '<div><div style="font-size:0.84rem;font-weight:500">'+(c.principal_only?'เหลือผ่อนต้น':'ยอดปิดสินเชื่อ')+'</div><div style="font-size:0.72rem;color:var(--muted)">'+(c.principal_only?'เงินต้นคงเหลือ (ไม่คิดดอก)':'ต้น + ดอกวันนี้ + ค่าธรรมเนียม')+'</div></div>'+
       '<div style="font-size:1.3rem;font-weight:700;font-family:var(--font-mono);color:var(--gold)">฿'+fmt(ca)+'</div></div>';
   } else if(c.close_amount){
     h+='<div class="card card-pad" style="margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:0.84rem;font-weight:500">ปิดสินเชื่อแล้ว'+(c.was_lost?' <span style="color:var(--green)">· คืนเครดิต (เคยตาย)</span>':'')+'</div><div style="font-size:1.2rem;font-weight:700;font-family:var(--font-mono);color:var(--muted)">฿'+fmt(c.close_amount)+'</div></div>';
@@ -251,6 +252,12 @@ function openDetail(id){
     if(c.status!=='lost'){
       ops+='<button class="btn btn-gold btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
       if(canEdit())ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
+      // โหมดผ่อนต้น (หยุดคิดดอก) — owner/หัวหน้ากอง/หัวหน้าสาย
+      if(canEditCustomerInfo()){
+        if(c.principal_only){ops+='<button class="btn btn-ghost btn-sm" onclick="setPrincipalOnly(\''+id+'\',false)">↩️ ยกเลิกผ่อนต้น (คิดดอกปกติ)</button>';
+          hint='<div class="field-hint" style="margin-top:8px"><b style="color:var(--cyan)">โหมดผ่อนต้น</b> = หยุดคิดดอก · เงินที่จ่ายลดต้นทั้งหมด · ปิดสัญญาอัตโนมัติเมื่อต้นหมด</div>';}
+        else ops+='<button class="btn btn-cyan btn-sm" onclick="setPrincipalOnly(\''+id+'\',true)">📉 เปลี่ยนเป็นผ่อนต้น</button>';
+      }
     }
     // โซนอันตราย — "ตาย" ทุก role กดได้ · "ลบลูกค้า" = Owner เท่านั้น
     if(c.status==='normal'||c.status==='overdue')danger+='<button class="btn btn-amber btn-sm" onclick="changeStatus(\''+id+'\',\'lost\')">เปลี่ยนเป็น "ตาย"</button>';
@@ -300,6 +307,19 @@ async function changeStatus(id,status){
   // เก็บประวัติ "เคยตาย" ไว้ถาวร (ใช้โชว์ป้ายคืนเครดิตหลังปิด) — แยก update แบบ fail-safe เผื่อยังไม่รัน migration phase7
   if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
   toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
+}
+// สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — owner/หัวหน้ากอง/หัวหน้าสาย
+async function setPrincipalOnly(id,on){
+  if(!canEditCustomerInfo()){toast('ปรับโหมดผ่อนต้นได้เฉพาะ Owner / หัวหน้ากอง / หัวหน้าสาย','err');return}
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  var ok=await showConfirm({icon:on?'📉':'↩️',title:on?'เปลี่ยนเป็นผ่อนต้น':'ยกเลิกผ่อนต้น',
+    msg:on?'"'+c.full_name+'" จะ "หยุดคิดดอก" ตั้งแต่นี้ไป — เงินที่จ่ายจะลดต้นทั้งหมด จนต้นหมดแล้วปิดสัญญาอัตโนมัติ\n\nยืนยัน?'
+          :'กลับมาคิดดอกตามปกติให้ "'+c.full_name+'" — ยืนยัน?',
+    okText:'ยืนยัน',okClass:on?'btn-cyan':'btn-gold'});
+  if(!ok)return;
+  var res=await _sb.from('loans').update({principal_only:on}).eq('id',id);
+  if(res.error){toast('ล้มเหลว: '+res.error.message+' — รัน migration phase10 หรือยัง?','err');return}
+  toast('✅ '+(on?'เปลี่ยนเป็นผ่อนต้นแล้ว':'ยกเลิกผ่อนต้นแล้ว'),'ok');await loadAll();openDetail(id);
 }
 // ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
 async function setDisbursed(id){

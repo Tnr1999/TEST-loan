@@ -69,6 +69,8 @@ select.inp{cursor:pointer;appearance:none;background-image:url("data:image/svg+x
 .btn-red:hover{background:rgba(248,113,113,0.2)}
 .btn-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(249,115,22,0.25)}
 .btn-amber:hover{background:rgba(249,115,22,0.2)}
+.btn-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.25)}
+.btn-cyan:hover{background:rgba(56,189,248,0.2)}
 .btn-block{width:100%}
 .btn-sm{padding:6px 12px;font-size:0.78rem;border-radius:7px}
 .btn-xs{padding:4px 9px;font-size:0.72rem;border-radius:6px}

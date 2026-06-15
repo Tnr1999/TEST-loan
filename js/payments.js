@@ -78,14 +78,14 @@ function openPayment(custId,date,editId){
   // ── ปุ่มลัด ──
   var quick='<button class="quick-btn" onclick="setPayAmt(0)">↺ รีเซ็ต</button>';
   if(mode==='new'){
-    quick+='<button class="quick-btn" onclick="setPayAmt('+due+')">ดอก ฿'+fmt(due)+'</button>'+
-      '<button class="quick-btn" onclick="setPayAmt('+close+')">ปิดยอด ฿'+fmt(close)+'</button>';
+    if(!c.principal_only)quick+='<button class="quick-btn" onclick="setPayAmt('+due+')">ดอก ฿'+fmt(due)+'</button>';
+    quick+='<button class="quick-btn" onclick="setPayAmt('+close+')">'+(c.principal_only?'ผ่อนหมด':'ปิดยอด')+' ฿'+fmt(close)+'</button>';
   }else if(mode==='add'){
     if(remInt>0)quick+='<button class="quick-btn" onclick="setPayAmt('+remInt+')">ดอกที่เหลือ ฿'+fmt(remInt)+'</button>';
     if(remClose>0)quick+='<button class="quick-btn" onclick="setPayAmt('+remClose+')">ปิดยอด ฿'+fmt(remClose)+'</button>';
   }
 
-  var amtLabel=mode==='edit'?'แก้ไขจำนวนรายการนี้ (บาท)':(mode==='add'?'จ่ายเพิ่ม (บาท)':'จำนวนที่จ่าย (บาท)');
+  var amtLabel=mode==='edit'?'แก้ไขจำนวนรายการนี้ (บาท)':(c.principal_only?(mode==='add'?'ผ่อนต้นเพิ่ม (บาท)':'ผ่อนต้น (บาท)'):(mode==='add'?'จ่ายเพิ่ม (บาท)':'จำนวนที่จ่าย (บาท)'));
   var amtVal=editRec?editRec.amount_paid:'';
   var penVal=editRec&&editRec.penalty>0?editRec.penalty:'';
   var saveLabel=mode==='edit'?'บันทึกการแก้ไข':(mode==='add'?'จ่ายเพิ่ม':'บันทึก');
@@ -97,7 +97,9 @@ function openPayment(custId,date,editId){
     listHtml+
     '<div style="display:flex;gap:10px;margin-bottom:14px">'+
       '<div class="stat" style="flex:1"><span class="label">เงินต้นคงเหลือ</span><span class="value" style="font-size:1.1rem">฿'+fmt(c.remaining_principal)+'</span></div>'+
-      '<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">'+(mode==='add'&&remInt>0?'ดอกที่เหลือ':'ดอกที่ต้องจ่าย')+'</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(mode==='add'?Math.max(0,remInt):due)+'</span></div>'+
+      (c.principal_only
+        ?'<div class="stat" style="flex:1"><span class="label" style="color:var(--cyan)">โหมดผ่อนต้น</span><span class="value" style="font-size:1.05rem;color:var(--cyan)">ไม่คิดดอก</span></div>'
+        :'<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">'+(mode==='add'&&remInt>0?'ดอกที่เหลือ':'ดอกที่ต้องจ่าย')+'</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(mode==='add'?Math.max(0,remInt):due)+'</span></div>')+
     '</div>'+
     '<div class="quick-btns">'+quick+'</div>'+
     '<div class="field"><label>'+amtLabel+'</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+amtVal+'" oninput="updatePayCalc()"/></div>'+
@@ -118,6 +120,14 @@ function setPayAmt(v){document.getElementById('pay-amount').value=v;updatePayCal
 function payCalc(c,amt,pen){
   pen=+pen||0;
   var close=closeAmount(c),due=interestDue(c);
+  if(c.principal_only){
+    // โหมดผ่อนต้น: ไม่คิดดอก · เงินทั้งหมดลดต้น · ปิดเมื่อต้นหมด · ผ่อนต้นไม่นับเป็นรายได้ (ไม่มีค่าแรง)
+    var pr=Math.min(round2(amt),c.remaining_principal);
+    var rem=round2(c.remaining_principal-pr);
+    var closing=rem<=0&&amt>0;
+    return{interest_due:0,interest_collected:0,principal_reduced:pr,remaining_principal:rem,
+      wage:round2(pen*0.20),payment_status:pr>0?(closing?'overpaid':'partial'):'unpaid',closing:closing};
+  }
   if(close>0&&amt>=close){
     // จ่ายครบยอดปิด → ปิดสัญญา: เก็บดอกรอบนี้ + คืนต้นทั้งหมด + ค่าธรรมเนียมบ้าน
     return{interest_due:due,interest_collected:due,principal_reduced:+c.remaining_principal,
