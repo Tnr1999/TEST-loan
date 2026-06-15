@@ -518,7 +518,10 @@ async function saveCustomer(){
   if(editingCustId){
     if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
     var cc=allCustomers.find(function(x){return x.id===editingCustId});
-    if(idcard&&!validThaiId(idcard)){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+    if(idcard&&!validThaiId(idcard)){
+      if(!isOwner()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+      toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ Owner','err');
+    }
     var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
@@ -542,8 +545,11 @@ async function saveCustomer(){
 
   // บังคับกรอกเลขบัตร 13 หลัก — จุดยึดของระบบกันโกง (ทุก role รวม Owner)
   if(normDigits(idcard).length!==13){toast('ต้องกรอกเลขบัตรประชาชนให้ครบ 13 หลัก','err');return}
-  // บล็อก checksum เลขบัตร — กรอกผิดบันทึกไม่ได้
-  if(!validThaiId(idcard)){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+  // บล็อก checksum เลขบัตร — กรอกผิดบันทึกไม่ได้ (Owner ข้ามได้คนเดียว)
+  if(!validThaiId(idcard)){
+    if(!isOwner()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
+    toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ Owner','err');
+  }
 
   // โหมดเปิดยอดใหม่ = ใช้ person เดิม · ปกติ = หาคนเดิม (เลขบัตรตรง หรือ ชื่อ+เบอร์ตรง) เพื่อบังคับกฎกู้หลายที่
   var existing=reloanPersonId?{id:reloanPersonId}:findExistingPerson({id_card:idcard,name:name,phone:phone});
