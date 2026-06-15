@@ -144,8 +144,7 @@ function renderDashboard(){
     var dueN=dueToday.length;
     var doneN=dueToday.filter(function(c){return recordedAny[c.id]}).length;
     var pct=dueN?Math.round(doneN/dueN*100):100;
-    heroSub='<div class="sbar-prog">'+(dueN?'เก็บแล้ว '+doneN+'/'+dueN+' ราย':'วันนี้ไม่มีใครถึงกำหนด')+'</div>'+
-      '<div class="prog" style="margin-top:6px;max-width:220px"><div class="prog-fill" style="width:'+pct+'%"></div></div>';
+    heroSub='<div class="sbar-prog">'+(dueN?'เก็บแล้ว '+doneN+'/'+dueN+' ราย':'วันนี้ไม่มีใครถึงกำหนด')+'</div>';
   }
   document.getElementById('summary-bar').innerHTML=
     '<div class="sbar">'+
