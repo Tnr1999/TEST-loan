@@ -384,6 +384,24 @@ async function loadAll(){
   if(typeof renderAlerts==='function') renderAlerts();
 }
 
+// รีเฟรชข้อมูล (ปุ่มมือถือ) — โหลดใหม่ทั้งหมด + หมุนไอคอนระหว่างโหลด
+var _refreshing=false;
+async function doRefresh(){
+  if(_refreshing) return;
+  _refreshing=true;
+  var btn=document.getElementById('fab-refresh');
+  if(btn) btn.classList.add('spin');
+  try{
+    await loadAll();
+    toast('🔄 รีเฟรชข้อมูลแล้ว','ok');
+  }catch(e){
+    toast('รีเฟรชล้มเหลว — ลองใหม่อีกครั้ง','err');
+  }finally{
+    _refreshing=false;
+    if(btn) btn.classList.remove('spin');
+  }
+}
+
 // ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons
 function buildCustomers(){
   allCustomers=allLoans.map(function(l){
