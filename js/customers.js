@@ -177,8 +177,8 @@ function custCardHTML(c,date,s){
   var btn;
   if(c.status==='closed')btn=canAddCustomer()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':'';
   else if(s.pending)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'');
-  else if(s.paid)btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">จ่ายเพิ่ม</button>';
   else if(c.status==='lost')btn=canReturnCredit()?'<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">คืนเครดิต</button>':'';
+  else if(s.paid)btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">จ่ายเพิ่ม</button>';
   else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
