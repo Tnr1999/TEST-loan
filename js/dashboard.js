@@ -143,7 +143,6 @@ function renderDashboard(){
   if(isStaff()){
     var dueN=dueToday.length;
     var doneN=dueToday.filter(function(c){return recordedAny[c.id]}).length;
-    var pct=dueN?Math.round(doneN/dueN*100):100;
     heroSub='<div class="sbar-prog">'+(dueN?'เก็บแล้ว '+doneN+'/'+dueN+' ราย':'วันนี้ไม่มีใครถึงกำหนด')+'</div>';
   }
   document.getElementById('summary-bar').innerHTML=
