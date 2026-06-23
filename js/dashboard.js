@@ -218,19 +218,32 @@ function renderDashboard(){
 
 // หน้า "ค่าแรง" (แท็บแยก) — รายวันตามวันที่ที่เลือก, ขอบเขต = บ้านที่ตัวเองเข้าถึง
 // พนักงานเห็นแค่ของตัวเอง · owner/หัวหน้าสาย เห็นสรุปทั้งทีม
-// ช่วงเวลาค่าแรง: 'day' (วันที่เลือก) | 'week' (จันทร์–อาทิตย์ของสัปดาห์นั้น)
+// ช่วงเวลาค่าแรง: 'day' (วันที่เลือก) | 'range' (เลือกช่วงวันที่เอง ตั้งแต่–ถึง)
 var payoutPeriod='day';
+var payoutFrom='', payoutTo='';   // ช่วงวันที่ของโหมด range (ISO)
 function weekRange(iso){
   var d=new Date(iso+'T00:00:00'),dow=d.getDay();
   var mon=new Date(d);mon.setDate(d.getDate()+(dow===0?-6:1-dow)); // เริ่มวันจันทร์
   var sun=new Date(mon);sun.setDate(mon.getDate()+6);
   return [toISO(mon),toISO(sun)];
 }
-function setPayoutPeriod(p){payoutPeriod=p;renderPayoutPage();}
+function setPayoutPeriod(p){
+  payoutPeriod=p;
+  // เข้าโหมดช่วงครั้งแรก → ตั้งค่าเริ่มต้นเป็นสัปดาห์ของวันที่เลือกอยู่
+  if(p==='range'&&(!payoutFrom||!payoutTo)){var wr=weekRange(selDate());payoutFrom=wr[0];payoutTo=wr[1];}
+  renderPayoutPage();
+}
+function setPayoutRange(){
+  var f=document.getElementById('payout-from'),t=document.getElementById('payout-to');
+  if(f&&f.value)payoutFrom=f.value;
+  if(t&&t.value)payoutTo=t.value;
+  if(payoutFrom&&payoutTo&&payoutFrom>payoutTo){var tmp=payoutFrom;payoutFrom=payoutTo;payoutTo=tmp;} // สลับให้ถูกถ้ากรอกกลับด้าน
+  renderPayoutPage();
+}
 function renderPayoutPage(){
   var el=document.getElementById('payout-main');if(!el)return;
   var bids=myBranchIds(),from,to;
-  if(payoutPeriod==='week'){var wr=weekRange(selDate());from=wr[0];to=wr[1];}
+  if(payoutPeriod==='range'){from=payoutFrom||selDate();to=payoutTo||selDate();}
   else{from=to=selDate();}
   var recs=allRecords.filter(function(r){
     if(r.record_date<from||r.record_date>to)return false;
@@ -239,11 +252,19 @@ function renderPayoutPage(){
   });
   var seg='<div class="seg" style="margin-bottom:14px">'+
     '<button class="'+(payoutPeriod==='day'?'sel':'')+'" onclick="setPayoutPeriod(\'day\')">รายวัน</button>'+
-    '<button class="'+(payoutPeriod==='week'?'sel':'')+'" onclick="setPayoutPeriod(\'week\')">รายสัปดาห์</button>'+
+    '<button class="'+(payoutPeriod==='range'?'sel':'')+'" onclick="setPayoutPeriod(\'range\')">เลือกช่วง</button>'+
     '</div>';
-  var rangeLabel=payoutPeriod==='week'?'<div class="section-label" style="margin:0 0 12px">ช่วง '+thDate(from)+' – '+thDate(to)+'</div>':'';
+  var rangeLabel='';
+  if(payoutPeriod==='range'){
+    rangeLabel='<div class="payout-range">'+
+        '<label>ตั้งแต่<input type="date" class="inp" id="payout-from" value="'+from+'" max="'+to+'" onchange="setPayoutRange()"></label>'+
+        '<span class="payout-range-sep">→</span>'+
+        '<label>ถึง<input type="date" class="inp" id="payout-to" value="'+to+'" min="'+from+'" onchange="setPayoutRange()"></label>'+
+      '</div>'+
+      '<div class="section-label" style="margin:0 0 12px">ช่วง '+thDate(from)+' – '+thDate(to)+'</div>';
+  }
   var body=isStaff()?renderPayoutSelf(recs):renderPayout(recs);
-  el.innerHTML=seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='week'?'สัปดาห์นี้':'วันนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
+  el.innerHTML=seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='day'?'วันนี้':'ช่วงนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
 }
 
 // ── ค่าแรงของตัวเอง (พนักงาน) ──
@@ -251,7 +272,7 @@ function renderPayoutPage(){
 // หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='week')?'สัปดาห์นี้':'วันนี้';
+  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='range')?'ช่วงนี้':'วันนี้';
   var wage=0,comm=0,interest=0,penalty=0,fee=0,heads={},items=[];
   recs.forEach(function(r){
     if(!(+r.wage))return;
@@ -314,7 +335,7 @@ function lineHeadOfBranch(bid){
 // แยกตามสาย (หัวหน้าสายของบ้าน = lineHeadOfBranch) → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · บ้านไหนไม่มีหัวหน้าสาย = ไม่หักคอม
 function renderPayout(recs){
   var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='week')?'สัปดาห์นี้':'วันนี้';
+  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='range')?'ช่วงนี้':'วันนี้';
   // จัดกลุ่ม: สาย (หัวหน้าสาย) → คน → ค่าแรงรวมวันนี้
   var lines={};
   recs.forEach(function(r){

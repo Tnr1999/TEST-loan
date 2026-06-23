@@ -402,6 +402,11 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .seg button{padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-size:0.82rem;font-weight:500;transition:all 0.15s}
 .seg button.sel{background:var(--gold);color:var(--on-gold);border-color:var(--gold);font-weight:600}
+/* กล่องเลือกช่วงวันที่ (หน้าค่าแรง โหมด "เลือกช่วง") */
+.payout-range{display:flex;align-items:flex-end;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.payout-range label{display:flex;flex-direction:column;gap:4px;font-size:0.72rem;color:var(--muted);flex:1;min-width:130px}
+.payout-range .inp{width:100%;color-scheme:dark}
+.payout-range-sep{padding-bottom:11px;color:var(--gold);font-weight:700;flex:0 0 auto}
 
 /* ═══ TOAST ═══ */
 #toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:2000;padding:12px 20px;border-radius:11px;font-size:0.85rem;font-weight:500;display:none;align-items:center;gap:8px;box-shadow:var(--shadow-lg);max-width:90vw}
