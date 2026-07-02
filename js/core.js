@@ -23,6 +23,7 @@ var dashBranchId = '';
 function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function todayISO(){return toISO(new Date())}
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(86400000))}
+function addDaysISO(iso,n){var d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+(+n||0));return toISO(d)}
 function round2(n){return Math.round((+n||0)*100)/100}
 function fmt(n){return (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmt0(n){return (parseFloat(n)||0).toLocaleString('th-TH')}

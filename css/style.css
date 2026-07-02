@@ -297,6 +297,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-btn.cb-credit:hover{filter:brightness(1.07)}
 .crow-btn.cb-edit{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
 .crow-btn.cb-confirm{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
+.crow-btn.cb-advance{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.3)}
+.crow-btn.cb-advance:hover{filter:brightness(1.1)}
 /* ★ การ์ดพระเอก "ต้องเก็บวันนี้" — โชว์ยอด + ปุ่มรับเงินเด่น */
 .crow.big{flex-direction:column;align-items:stretch;gap:11px}
 .crow.big .crow-top{display:flex;align-items:center;gap:12px}

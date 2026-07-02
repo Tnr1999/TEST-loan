@@ -114,7 +114,9 @@ function renderCustomers(){
       if(c.status==='closed')actBtn=canAddCustomer()?'<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openReloan(\''+c.id+'\')">เปิดใหม่</button>':viewBtn;
       else if(s.pending)actBtn='<div class="row-flex" style="gap:6px"><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="btn btn-green btn-sm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'')+'</div>';
       else if(c.status==='lost')actBtn=canReturnCredit()?'<button class="btn btn-cyan btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">คืนเครดิต</button>':viewBtn;
-      else actBtn=canEdit()?'<button class="btn '+(s.paid?'btn-purple':'btn-gold')+' btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">'+(s.paid?'จ่ายเพิ่ม':'รับเงิน')+'</button>':viewBtn;
+      else if(!canEdit())actBtn=viewBtn;
+      else if(s.paid)actBtn='<button class="btn btn-purple btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">จ่ายเพิ่ม</button>';
+      else actBtn='<div class="row-flex" style="gap:6px"><button class="btn btn-gold btn-sm" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+vdate+'\')">รับเงิน</button>'+(c.principal_only?'':'<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openAdvance(\''+c.id+'\',\''+vdate+'\')">ล่วงหน้า</button>')+'</div>';
       return '<tr style="cursor:pointer" onclick="openDetail(\''+c.id+'\')">'+
       '<td class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</td>'+
       '<td><div style="font-weight:500">'+esc(c.full_name)+(c.principal_only?' <span style="font-size:0.62rem;font-weight:700;color:var(--cyan);border:1px solid var(--cyan);border-radius:99px;padding:1px 6px;vertical-align:middle">ผ่อนต้น</span>':'')+'</div>'+(c.phone?'<div style="font-size:0.72rem;color:var(--muted)">'+esc(c.phone)+'</div>':'')+'<div style="font-size:0.7rem;color:var(--muted)">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></td>'+
@@ -173,6 +175,7 @@ function custCardHTML(c,date,s){
       '<div class="crow-act" onclick="event.stopPropagation()">'+
         '<div class="crow-due"><span>'+(c.principal_only?'ผ่อนต้น (เหลือ)':'ดอกที่ต้องเก็บวันนี้')+'</span><b><span class="cur">฿</span>'+fmt(c.principal_only?c.remaining_principal:interestDue(c))+'</b></div>'+
         '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">'+(c.principal_only?'ผ่อนต้น':'รับเงิน')+'</button>'+
+        (c.principal_only?'':'<button class="crow-btn cb-advance" onclick="event.stopPropagation();openAdvance(\''+c.id+'\',\''+date+'\')">ล่วงหน้า</button>')+
       '</div></div>';
   }
 
@@ -182,7 +185,7 @@ function custCardHTML(c,date,s){
   else if(s.pending)btn='<button class="crow-btn cb-edit" onclick="event.stopPropagation();openTopup(\''+c.id+'\')">+ เพิ่มยอด</button>'+(canDisburse()?'<button class="crow-btn cb-confirm" onclick="event.stopPropagation();setDisbursed(\''+c.id+'\')">เปิด</button>':'');
   else if(c.status==='lost')btn=canReturnCredit()?'<button class="crow-btn cb-credit" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">คืนเครดิต</button>':'';
   else if(s.paid)btn='<button class="crow-btn cb-pay-extra" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">จ่ายเพิ่ม</button>';
-  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>';
+  else btn='<button class="crow-btn cb-pay" onclick="event.stopPropagation();openPayment(\''+c.id+'\',\''+date+'\')">รับ</button>'+(c.principal_only?'':'<button class="crow-btn cb-advance" onclick="event.stopPropagation();openAdvance(\''+c.id+'\',\''+date+'\')">ล่วงหน้า</button>');
   return '<div class="crow '+cls+'" onclick="openDetail(\''+c.id+'\')">'+head+btn+'</div>';
 }
 
@@ -291,7 +294,7 @@ function openDetail(id){
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
-      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+'</td>'+
+      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+(r.advance_cycles>0?'<div style="font-size:0.66rem;color:var(--purple)">ล่วงหน้า +'+r.advance_cycles+' งวด</div>':'')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+

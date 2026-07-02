@@ -225,3 +225,95 @@ async function savePayment(){
   await loadAll();
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
 }
+
+/* ═══════════════════════════════════════════════
+   จ่ายล่วงหน้า (ADVANCE PAYMENT)
+   — จ่ายครั้งเดียวครอบคลุมหลายงวดล่วงหน้า (เช่น จ่าย 300 = ดอกวันนี้ + ล่วงหน้าอีก 2 งวด)
+   — จำนวนงวดคำนวณจากยอดที่จ่าย ÷ ดอก 1 งวด (ปัดลง) · ส่วนเกิน → ลดต้น
+   — เลื่อน last_collection_date ไปข้างหน้าตามจำนวนงวดที่จ่าย (ข้ามงวดที่จ่ายล่วงหน้าไปแล้ว)
+   — ไม่รองรับ: โหมดผ่อนต้น (ไม่มีดอก) · วันที่มีรายการรับเงินอยู่แล้ว (ใช้ "จ่ายเพิ่ม" แทน) · ยอดที่จะปิดสัญญาพอดี (ใช้ "รับเงิน" ปกติ)
+═══════════════════════════════════════════════ */
+var _advCtx=null; // {custId,date,perCycle,interval}
+
+function openAdvance(custId,date){
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
+  var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
+  if(c.status==='closed'){toast('ปิดสัญญาแล้ว — ใช้ปุ่ม "เปิดใหม่" แทน','err');return}
+  if(c.status==='lost'){toast('ลูกค้าสถานะตาย — ใช้ปุ่ม "คืนเครดิต" แทน','err');return}
+  if(!c.disbursed){toast('ลูกค้ายังไม่ยืนยันโอนเงิน','err');return}
+  if(c.principal_only){toast('โหมดผ่อนต้นไม่มีดอก — จ่ายล่วงหน้าไม่ได้','err');return}
+  var recs=dayRecords(custId,date);
+  if(recs.length){toast('มีรายการรับเงินวันนี้อยู่แล้ว — ใช้ปุ่ม "จ่ายเพิ่ม" แทน','err');return}
+  var perCycle=interestDue(c);
+  if(perCycle<=0){toast('ไม่มีดอกให้จ่ายล่วงหน้า','err');return}
+  closeModal('modal-detail'); // กัน modal ซ้อนกัน
+  _advCtx={custId:custId,date:date,perCycle:perCycle,interval:c.collection_interval};
+  document.getElementById('modal-advance-title').textContent='จ่ายล่วงหน้า — '+esc(c.full_name);
+  document.getElementById('modal-advance-body').innerHTML=
+    '<div class="field-hint" style="background:var(--surface);padding:10px;border-radius:8px;margin-bottom:14px">1 งวด (ทุก '+c.collection_interval+' วัน) = <b style="color:var(--gold)">฿'+fmt(perCycle)+'</b> ต่องวด</div>'+
+    '<div class="field"><label>จำนวนเงินที่จ่าย (บาท)</label><input class="inp mono" id="adv-amount" type="number" min="0" step="0.01" placeholder="0.00" oninput="updateAdvanceCalc()" autofocus/></div>'+
+    '<div id="adv-calc"></div>'+
+    '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
+      '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-advance\')">ยกเลิก</button>'+
+      '<button class="btn btn-gold btn-block" id="adv-save-btn" onclick="saveAdvancePayment()" disabled>บันทึก</button></div>';
+  openModal('modal-advance');
+  updateAdvanceCalc();
+}
+function updateAdvanceCalc(){
+  if(!_advCtx)return;
+  var amt=Math.max(0,parseFloat(document.getElementById('adv-amount').value)||0);
+  var perCycle=_advCtx.perCycle,interval=_advCtx.interval;
+  var cycles=perCycle>0?Math.floor((amt+1e-9)/perCycle):0;
+  cycles=Math.min(cycles,60); // กันกรอกเลขมโหฬารจนวันที่ล้น
+  var box=document.getElementById('adv-calc'),saveBtn=document.getElementById('adv-save-btn');
+  if(cycles<1){
+    box.innerHTML='<div class="field-hint">กรอกอย่างน้อย ฿'+fmt(perCycle)+' เพื่อจ่ายล่วงหน้าได้ตั้งแต่ 1 งวดขึ้นไป</div>';
+    if(saveBtn)saveBtn.disabled=true;
+    return;
+  }
+  var interestCollected=round2(perCycle*cycles);
+  var remainder=round2(amt-interestCollected);
+  var newRef=addDaysISO(_advCtx.date,interval*(cycles-1));
+  var nextDue=addDaysISO(newRef,interval);
+  box.innerHTML='<div class="calc-box">'+
+    '<div class="calc-row"><span class="k">ครอบคลุม</span><span class="v" style="color:var(--gold)">'+cycles+' งวด</span></div>'+
+    '<div class="calc-row"><span class="k">ดอกที่เก็บได้</span><span class="v" style="color:var(--green)">฿'+fmt(interestCollected)+'</span></div>'+
+    (remainder>0?'<div class="calc-row"><span class="k">ส่วนเกิน (ลดต้น)</span><span class="v" style="color:var(--cyan)">฿'+fmt(remainder)+'</span></div>':'')+
+    '<div class="calc-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><span class="k" style="font-weight:600">ครบกำหนดงวดถัดไป</span><span class="v" style="font-weight:700;color:var(--gold)">'+thDate(nextDue)+'</span></div></div>';
+  if(saveBtn)saveBtn.disabled=false;
+}
+async function saveAdvancePayment(){
+  if(!_advCtx)return;
+  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
+  var custId=_advCtx.custId,date=_advCtx.date,interval=_advCtx.interval,perCycle=_advCtx.perCycle;
+  var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
+  if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return}
+  var amt=Math.max(0,parseFloat(document.getElementById('adv-amount').value)||0);
+  var cycles=perCycle>0?Math.floor((amt+1e-9)/perCycle):0;
+  cycles=Math.min(cycles,60);
+  if(cycles<1){toast('จำนวนเงินไม่พอสำหรับจ่ายล่วงหน้าอย่างน้อย 1 งวด (฿'+fmt(perCycle)+')','err');return}
+  var interestCollected=round2(perCycle*cycles);
+  var remainder=round2(amt-interestCollected);
+  var principalReduced=Math.min(Math.max(0,remainder),c.remaining_principal);
+  var remainingNew=round2(c.remaining_principal-principalReduced);
+  if(remainingNew<=0){toast('ยอดนี้จะปิดสัญญาพอดี — กรุณาใช้ปุ่ม "รับเงิน" ปกติเพื่อปิดสัญญาแทน','err');return}
+  var wage=round2(interestCollected*0.20);
+  var newRef=addDaysISO(date,interval*(cycles-1));
+
+  var btn=document.getElementById('adv-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
+
+  var payload={loan_id:custId,record_date:date,interest_due:interestCollected,amount_paid:amt,
+    interest_collected:interestCollected,principal_reduced:principalReduced,remaining_principal:remainingNew,
+    wage:wage,payment_status:remainder>0?'overpaid':'exact',penalty:0,recorded_by:currentUser.id,advance_cycles:cycles};
+  var res=await _sb.from('daily_records').insert(payload);
+  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message+' — ต้องรัน migration phase13-advance-payment ก่อน','err');btn.disabled=false;btn.textContent='บันทึก';return}
+
+  var upd={remaining_principal:remainingNew,last_collection_date:newRef};
+  if(c.status!=='lost')upd.status='normal';
+  await _sb.from('loans').update(upd).eq('id',custId);
+
+  toast('✅ จ่ายล่วงหน้า '+cycles+' งวดสำเร็จ','ok');
+  closeModal('modal-advance');
+  await loadAll();
+  if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
+}
