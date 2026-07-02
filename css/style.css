@@ -313,12 +313,14 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .vchip.active{color:var(--on-gold);background:var(--gold);border-color:var(--gold)}
 .vchip.vc-overdue.active{background:var(--red);border-color:var(--red);color:#fff}
 .vchip.vc-paid.active{background:var(--green);border-color:var(--green);color:#04230f}
+.vchip.vc-advance.active{background:var(--purple);border-color:var(--purple);color:#1c1032}
 .vchip.vc-new.active{background:var(--cyan);border-color:var(--cyan);color:#04222b}
 .vchip.vc-closed.active{background:var(--muted);border-color:var(--muted);color:var(--on-gold)}
 .vchip.vc-dead.active{background:var(--text2);border-color:var(--text2);color:var(--on-gold)}
 /* จุดสีนำหน้าชิป (แทนอิโมจิ) — ซ่อนเมื่อ active เพราะชิปเปลี่ยนเป็นสีเต็ม */
 .vchip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
 .vc-today::before{background:var(--amber)}
+.vc-advance::before{background:var(--purple)}
 .vc-overdue::before{background:var(--red)}
 .vc-new::before{background:var(--cyan)}
 .vc-old::before{background:var(--text2)}

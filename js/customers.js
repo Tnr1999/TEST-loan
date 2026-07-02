@@ -60,6 +60,8 @@ function renderCustomers(){
     var s=stMap[c.id];
     // "รอเปิด" (ยังไม่ยืนยันโอน) → ยกไปไว้ในกลุ่ม "ปิดยอด" ก่อน ยังไม่โผล่ในลิสต์เก็บเงินปกติ
     if(v==='today')return s.due&&!s.paid&&!s.pending;
+    // "จ่ายล่วงหน้า" — จ่ายในวันที่ดูอยู่ ทั้งที่ยังไม่ถึงรอบกำหนดเก็บ (เก็บเงินล่วงหน้าก่อนครบรอบ)
+    if(v==='advance')return s.paid&&!s.due&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
     if(v==='overdue')return c.status==='overdue'&&!s.paid&&!s.pending;
     if(v==='new')return s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
@@ -69,7 +71,7 @@ function renderCustomers(){
   }
 
   // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู
-  var chips=[['today','ถึงกำหนด'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
+  var chips=[['today','ถึงกำหนด'],['advance','จ่ายล่วงหน้า'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
   document.getElementById('cust-summary').innerHTML=chips.map(function(v){
     var n=list.filter(function(c){return inView(c,v[0])}).length;
     return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';
