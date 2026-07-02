@@ -240,9 +240,37 @@ function setPayoutRange(){
   if(payoutFrom&&payoutTo&&payoutFrom>payoutTo){var tmp=payoutFrom;payoutFrom=payoutTo;payoutTo=tmp;} // สลับให้ถูกถ้ากรอกกลับด้าน
   renderPayoutPage();
 }
+// ── ตัวกรอง กอง/บ้าน หน้าค่าแรง ──
+var payoutGroupId='', payoutBranchId='';
+function setPayoutGroup(id){payoutGroupId=id;payoutBranchId='';renderPayoutPage();}
+function setPayoutBranch(id){payoutBranchId=id;renderPayoutPage();}
+// bids ตามตัวกรองที่เลือก (อยู่ในขอบเขตที่ตัวเองเห็นเสมอ)
+function payoutBids(){
+  var all=myBranchIds();
+  if(payoutBranchId)return all.indexOf(payoutBranchId)>=0?[payoutBranchId]:all;
+  if(payoutGroupId)return allBranches.filter(function(b){return b.group_id===payoutGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
+  return all;
+}
+function payoutFilterBtns(){
+  var all=myBranchIds(),groups=accessibleGroups(),html='';
+  if(groups.length>1){
+    html+='<div class="branch-btns" style="margin-bottom:8px"><button class="branch-btn'+(payoutGroupId===''?' active':'')+'" onclick="setPayoutGroup(\'\')">ทุกกอง</button>';
+    groups.forEach(function(g){html+='<button class="branch-btn'+(payoutGroupId===g.id?' active':'')+'" onclick="setPayoutGroup(\''+g.id+'\')">'+esc(g.name)+'</button>';});
+    html+='</div>';
+  }
+  var branches=allBranches.filter(function(b){return all.indexOf(b.id)>=0});
+  if(payoutGroupId)branches=branches.filter(function(b){return b.group_id===payoutGroupId});
+  // แสดงแถวบ้านเมื่อ: มีกองเดียว (โชว์เลย) หรือเลือกกองแล้ว · และมีบ้าน >1
+  if(branches.length>1&&(groups.length<=1||payoutGroupId)){
+    html+='<div class="branch-btns" style="margin-bottom:12px"><button class="branch-btn'+(payoutBranchId===''?' active':'')+'" onclick="setPayoutBranch(\'\')">ทั้งหมด</button>';
+    branches.forEach(function(b){html+='<button class="branch-btn'+(payoutBranchId===b.id?' active':'')+'" onclick="setPayoutBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
+    html+='</div>';
+  }
+  return html;
+}
 function renderPayoutPage(){
   var el=document.getElementById('payout-main');if(!el)return;
-  var bids=myBranchIds(),from,to;
+  var bids=payoutBids(),from,to;
   if(payoutPeriod==='range'){from=payoutFrom||selDate();to=payoutTo||selDate();}
   else{from=to=selDate();}
   var recs=allRecords.filter(function(r){
@@ -263,8 +291,9 @@ function renderPayoutPage(){
       '</div>'+
       '<div class="section-label" style="margin:0 0 12px">ช่วง '+thDate(from)+' – '+thDate(to)+'</div>';
   }
+  var filt=isStaff()?'':payoutFilterBtns();   // staff เห็นแค่ของตัวเอง ไม่ต้องมีตัวกรองบ้าน
   var body=isStaff()?renderPayoutSelf(recs):renderPayout(recs);
-  el.innerHTML=seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='day'?'วันนี้':'ช่วงนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
+  el.innerHTML=filt+seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='day'?'วันนี้':'ช่วงนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
 }
 
 // ── ค่าแรงของตัวเอง (พนักงาน) ──

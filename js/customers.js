@@ -58,11 +58,12 @@ function renderCustomers(){
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
     var s=stMap[c.id];
-    if(v==='today')return s.due&&!s.paid;
-    if(v==='overdue')return c.status==='overdue'&&!s.paid;
-    if(v==='new')return s.isNew&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='old')return !s.isNew&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='closed')return c.status==='closed'&&!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c);
+    // "รอเปิด" (ยังไม่ยืนยันโอน) → ยกไปไว้ในกลุ่ม "ปิดยอด" ก่อน ยังไม่โผล่ในลิสต์เก็บเงินปกติ
+    if(v==='today')return s.due&&!s.paid&&!s.pending;
+    if(v==='overdue')return c.status==='overdue'&&!s.paid&&!s.pending;
+    if(v==='new')return s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
+    if(v==='old')return !s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
+    if(v==='closed')return s.pending||(c.status==='closed'&&!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c));
     if(v==='dead')return c.status==='lost';
     return true;
   }
@@ -187,7 +188,13 @@ function openDetail(id){
   currentDetailId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
   var b=allBranches.find(function(x){return x.id===c.branch_id});
-  var recs=allRecords.filter(function(r){return r.customer_id===id}).sort(function(a,b){return b.record_date.localeCompare(a.record_date)||(b.created_at||'').localeCompare(a.created_at||'')});
+  // ประวัติข้ามรอบ — รวมรายการชำระของทุกสัญญาของคนเดียวกัน (เปิดยอดใหม่แล้วประวัติเดิมยังอยู่)
+  var personLoans=allCustomers.filter(function(x){return x.person_id===c.person_id}).slice()
+    .sort(function(a,b){return (a.start_date||'').localeCompare(b.start_date||'')||(a.seq-b.seq)});
+  var roundOf={};personLoans.forEach(function(l,i){roundOf[l.id]=i+1;});
+  var multiRound=personLoans.length>1;
+  var loanIds=personLoans.map(function(l){return l.id});
+  var recs=allRecords.filter(function(r){return loanIds.indexOf(r.customer_id)>=0}).sort(function(a,b){return b.record_date.localeCompare(a.record_date)||(b.created_at||'').localeCompare(a.created_at||'')});
   var ca=closeAmount(c);
 
   var h='<div class="page-head" style="margin-bottom:14px"><div>'+
@@ -281,7 +288,7 @@ function openDetail(id){
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
-      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+'</td>'+
+      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+
@@ -406,7 +413,7 @@ function openAddCustomer(reloanCust){
       '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
       '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
       '<div class="field"><label>เลขบัตรประชาชน <span class="req">*</span></label><input class="inp" id="f-idcard" maxlength="13" inputmode="numeric" placeholder="13 หลัก"/><div class="field-err"></div></div>'+
-      '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" placeholder="เช่น กสิกรไทย, ไทยพาณิชย์..."/></div>'+
+      '<div class="field"><label>ชื่อธนาคาร</label><select class="inp" id="f-bank-name">'+bankOptions('')+'</select></div>'+
       '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
       '<div class="form-col-title" style="margin-top:20px">ข้อมูลสัญญา</div>'+
       '<div class="field"><label>กอง <span class="req">*</span></label><select class="inp" id="f-group" onchange="custFormBranches()">'+
@@ -488,7 +495,7 @@ function openEditCustomer(id){
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" value="'+esc(c.phone||'')+'"/></div>'+
     '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" value="'+esc(c.facebook_url||'')+'"/></div>'+
     '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13" value="'+esc(c.id_card||'')+'"/></div>'+
-    '<div class="field"><label>ชื่อธนาคาร</label><input class="inp" id="f-bank-name" value="'+esc(c.bank_name||'')+'"/></div>'+
+    '<div class="field"><label>ชื่อธนาคาร</label><select class="inp" id="f-bank-name">'+bankOptions(c.bank_name)+'</select></div>'+
     '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" value="'+esc(c.bank_account||'')+'"/></div>'+
     '<div class="field-hint" style="background:var(--surface);padding:10px;border-radius:8px">หมายเหตุ: ไม่สามารถแก้ไข วงเงิน/อัตราดอก/ระยะเก็บดอก ได้หลังสร้างแล้ว</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+

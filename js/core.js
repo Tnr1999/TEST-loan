@@ -31,6 +31,16 @@ function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=[
 
 var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'ตาย',closed:'ปิดแล้ว'};
 var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)'};
+// รายชื่อธนาคาร (ดรอปดาวตอนเพิ่ม/แก้ลูกค้า) — เรียงตามที่กำหนด
+var BANK_LIST=['กสิกร','SCB/ไทยพาณิชย์','ttb/ทหารไทย','กรุงไทย','ออมสิน','KKP/เกียรตินาคิน','กรุงศรี','กรุงเทพ','LH/แลนด์แอนด์เฮ้าส์','ธ.ก.ส.','ธนาคารอาคารสงเคราะห์','CIMB','UOB'];
+// สร้าง <option> สำหรับดรอปดาวธนาคาร · เก็บค่าเดิมที่ไม่อยู่ในลิสต์ไว้ (กันข้อมูลเก่าหาย)
+function bankOptions(sel){
+  sel=sel||'';
+  var opts='<option value="">— เลือกธนาคาร —</option>',found=false;
+  BANK_LIST.forEach(function(b){if(b===sel)found=true;opts+='<option value="'+esc(b)+'"'+(b===sel?' selected':'')+'>'+esc(b)+'</option>';});
+  if(sel&&!found)opts+='<option value="'+esc(sel)+'" selected>'+esc(sel)+' (เดิม)</option>';
+  return opts;
+}
 var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',line:'หัวหน้าสาย',manager:'หัวหน้าสาย',staff:'พนักงาน'};
 
 /* ═══ PERMISSION ═══
