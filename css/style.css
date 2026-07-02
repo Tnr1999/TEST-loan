@@ -184,6 +184,12 @@ body.role-staff #dash-layout{display:block!important}
 .stat.accent-cyan .value{color:var(--cyan)}
 .stat.accent-red .value{color:var(--red)}
 .section-label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 10px}
+/* ลากจัดลำดับบ้าน (หน้าตั้งค่า) */
+.branch-drag-list{display:flex;flex-direction:column;gap:10px}
+.branch-drag-item{transition:box-shadow .12s,opacity .12s}
+.branch-drag-item.dragging{opacity:0.6;box-shadow:0 8px 24px rgba(0,0,0,0.5);border-color:var(--gold)}
+.drag-handle{flex:0 0 auto;cursor:grab;color:var(--muted);font-size:1.15rem;line-height:1;padding:4px 2px;touch-action:none;-webkit-user-select:none;user-select:none;letter-spacing:-2px}
+.drag-handle:active{cursor:grabbing;color:var(--gold)}
 /* มาร์กเกอร์แท่งทองนำหน้าหัวข้อ (แทนอิโมจิ — ระบบเดียวกันทั้งแอป) */
 .section-label,.form-col-title{display:flex;align-items:center;gap:8px}
 .section-label::before,.form-col-title::before,.card-head h3::before,.calc-box .calc-title::before{content:'';width:3px;height:0.9em;background:var(--gold);border-radius:2px;flex-shrink:0}

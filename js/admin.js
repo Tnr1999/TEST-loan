@@ -19,8 +19,9 @@ function renderBranches(){
     var custCount=allCustomers.filter(function(c){return c.branch_id===b.id}).length;
     var staff=b.staff_id&&allUsers.find(function(u){return u.id===b.staff_id});
     var lh=lineHeadOfBranch(b.id);
-    return '<div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
-      '<div><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+'</div>'+
+    return '<div class="card card-pad branch-drag-item" data-bid="'+b.id+'" style="display:flex;align-items:center;gap:10px">'+
+      '<span class="drag-handle" title="ลากเพื่อจัดลำดับ" aria-label="ลากเพื่อจัดลำดับ">⠿</span>'+
+      '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+'</div>'+
       '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">ค่าธรรมเนียม ฿'+fmt0(b.fee_per_person)+' / คน · ลูกค้า '+custCount+' ราย'+(staff?' · พนักงาน: '+esc(staff.full_name):'')+(lh?' · หัวหน้าสาย: '+esc(lh.full_name):'')+'</div></div>'+
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditBranch(\''+b.id+'\')">แก้ไข</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteBranch(\''+b.id+'\')">ลบ</button></div></div>';
@@ -34,13 +35,56 @@ function renderBranches(){
     if(gids&&gids.indexOf(g.id)<0)return;
     var bs=allBranches.filter(function(b){return b.group_id===g.id&&inScope(b)});
     if(!bs.length)return;
-    html+='<div class="section-label">'+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+bs.map(renderCard).join('');
+    html+='<div class="section-label">'+esc(g.name)+' ('+bs.length+' บ้าน)</div>'+
+      '<div class="branch-drag-list" data-group="'+g.id+'">'+bs.map(renderCard).join('')+'</div>';
   });
   if(isOwner()){
     var ungrouped=allBranches.filter(function(b){return !b.group_id});
-    if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+ungrouped.map(renderCard).join('');
+    if(ungrouped.length)html+='<div class="section-label" style="color:var(--amber)">⚠️ ยังไม่ได้จัดเข้ากอง</div>'+
+      '<div class="branch-drag-list" data-group="">'+ungrouped.map(renderCard).join('')+'</div>';
   }
   document.getElementById('branch-list').innerHTML=html||'<div class="empty">ยังไม่มีบ้านในขอบเขตของคุณ</div>';
+  // เปิดใช้การลากจัดลำดับ (owner) — ลากทีละกอง
+  document.querySelectorAll('#branch-list .branch-drag-list').forEach(makeBranchSortable);
+}
+// หา element ที่ควรวางก่อน (ตามตำแหน่ง Y ของ pointer)
+function branchDragAfter(list,y){
+  var els=[].slice.call(list.querySelectorAll('.branch-drag-item:not(.dragging)'));
+  var best={off:-Infinity,el:null};
+  els.forEach(function(el){var box=el.getBoundingClientRect();var off=y-box.top-box.height/2;if(off<0&&off>best.off)best={off:off,el:el};});
+  return best.el;
+}
+// ทำให้ลิสต์บ้านลากจัดลำดับได้ (รองรับทั้งเมาส์และทัช ผ่าน Pointer Events)
+function makeBranchSortable(list){
+  list.querySelectorAll('.drag-handle').forEach(function(h){
+    h.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var item=h.closest('.branch-drag-item');if(!item)return;
+      item.classList.add('dragging');
+      function move(ev){
+        var after=branchDragAfter(list,ev.clientY);
+        if(after==null)list.appendChild(item);else list.insertBefore(item,after);
+      }
+      function up(){
+        document.removeEventListener('pointermove',move);
+        document.removeEventListener('pointerup',up);
+        item.classList.remove('dragging');
+        var ids=[].slice.call(list.querySelectorAll('.branch-drag-item')).map(function(x){return x.getAttribute('data-bid')});
+        saveBranchOrder(ids);
+      }
+      document.addEventListener('pointermove',move);
+      document.addEventListener('pointerup',up);
+    });
+  });
+}
+// บันทึกลำดับใหม่ลง branches.sort_order (0..n ตามที่ลาก)
+async function saveBranchOrder(ids){
+  for(var i=0;i<ids.length;i++){
+    var res=await _sb.from('branches').update({sort_order:i}).eq('id',ids[i]);
+    if(res.error){toast('บันทึกลำดับล้มเหลว — ต้องรัน migration phase11-branch-order ก่อน','err');return}
+  }
+  toast('✅ จัดลำดับบ้านแล้ว','ok');
+  await loadAll();
 }
 var editingBranchId=null;
 function openAddBranch(){editingBranchId=null;branchForm('+ เพิ่มบ้าน','','','','','','')}

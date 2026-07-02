@@ -346,6 +346,8 @@ async function loadAll(){
   for(var i=0;i<r.length;i++){if(r[i].error){toast('โหลดข้อมูลล้มเหลว: '+r[i].error.message,'err');return}}
   allGroups=r[0].data||[];
   allBranches=r[1].data||[];
+  // เรียงบ้านตามลำดับที่ลากจัดไว้ (sort_order) — fail-safe: ถ้ายังไม่มีคอลัมน์ = คงลำดับ created_at เดิม
+  allBranches.sort(function(a,b){var av=(a.sort_order==null?9e9:a.sort_order),bv=(b.sort_order==null?9e9:b.sort_order);return av-bv||(a.created_at||'').localeCompare(b.created_at||'');});
   allPersons=r[2].data||[];
   allLoans=r[3].data||[];
   allRecords=r[4].data||[];
