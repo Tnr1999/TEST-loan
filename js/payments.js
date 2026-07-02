@@ -20,19 +20,21 @@ function dayBaseCustomer(c,recs){
 function hhmm(ts){if(!ts)return'';try{return new Date(ts).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Bangkok'})}catch(e){return''}}
 
 // คำนวณ "ส่วนต่าง" ของแต่ละรายการแบบสะสม (ดอกคิดรอบเดียว)
-function computeDayDeltas(baseC0,entries){
+// advance=true → ส่วนเกินดอกงวดนี้ตีเป็น "ดอกล่วงหน้า" (ข้ามงวดถัดไป) แทนการหักเงินต้น
+function computeDayDeltas(baseC0,entries,advance){
   var prevInt=0,prevPrin=0,prevWage=0,cumPaid=0,cumPen=0,out=[],closing=false,remaining=baseC0.remaining_principal;
   entries.forEach(function(e){
     cumPaid=round2(cumPaid+(+e.amount_paid||0));
     cumPen=round2(cumPen+(+e.penalty||0));
-    var cum=payCalc(baseC0,cumPaid,cumPen);
+    var cum=payCalc(baseC0,cumPaid,cumPen,advance);
     out.push({
       interest_due:cum.interest_due,
       interest_collected:round2(cum.interest_collected-prevInt),
       principal_reduced:round2(cum.principal_reduced-prevPrin),
       remaining_principal:cum.remaining_principal,
       wage:round2(cum.wage-prevWage),
-      payment_status:cum.payment_status
+      payment_status:cum.payment_status,
+      advance_cycles:cum.advance_cycles||0
     });
     prevInt=cum.interest_collected;prevPrin=cum.principal_reduced;prevWage=cum.wage;
     closing=!!cum.closing;remaining=cum.remaining_principal;
@@ -102,7 +104,9 @@ function openPayment(custId,date,editId){
         :'<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">'+(mode==='add'&&remInt>0?'ดอกที่เหลือ':'ดอกที่ต้องจ่าย')+'</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(mode==='add'?Math.max(0,remInt):due)+'</span></div>')+
     '</div>'+
     '<div class="quick-btns">'+quick+'</div>'+
-    '<div class="field"><label>'+amtLabel+'</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+amtVal+'" oninput="updatePayCalc()"/></div>'+
+    '<div class="field"><label>'+amtLabel+'</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+amtVal+'" oninput="updatePayCalc()"/>'+
+      (c.principal_only||c.status==='lost'?'':'<label class="check-row" style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:0.78rem;color:var(--text2);cursor:pointer"><input type="checkbox" id="pay-advance" onchange="updatePayCalc()"'+(editRec&&editRec.advance_cycles>0?' checked':'')+'/> จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ = ดอกล่วงหน้า (เลื่อนวันครบกำหนดถัดไป) แทนการหักเงินต้น</label>')+
+    '</div>'+
     '<div class="field"><label>ค่าปรับ (บาท)'+(mode==='add'?' · เพิ่มรอบนี้':'')+'</label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penVal+'" oninput="updatePayCalc()"/></div>'+
     '<div id="pay-calc"></div>'+
     '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(close)+'</div>'+
@@ -117,7 +121,7 @@ function setPayAmt(v){document.getElementById('pay-amount').value=v;updatePayCal
 
 // คำนวณการชำระ (รายการเดียว/สะสม) + ตรวจ "ปิดสัญญา" และกันเงินต้นติดลบ
 // ค่าแรง = (ดอกที่เก็บได้ + ค่าปรับ + ค่าธรรมเนียมบ้าน[เฉพาะวันปิดสัญญา]) × 20%
-function payCalc(c,amt,pen){
+function payCalc(c,amt,pen,advance){
   pen=+pen||0;
   var close=closeAmount(c),due=interestDue(c);
   if(c.principal_only){
@@ -133,14 +137,26 @@ function payCalc(c,amt,pen){
     return{interest_due:due,interest_collected:due,principal_reduced:+c.remaining_principal,
       remaining_principal:0,wage:round2((due+pen+(c.branch_fee||0))*0.20),payment_status:'overpaid',closing:true};
   }
-  var calc=calcPayment(c,amt,pen);
+  // จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ (amt>due) ตีเป็นดอกล่วงหน้าเต็มงวดๆ (ปัดลง) แทนหักต้น
+  var calc=(advance&&due>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen);
   // กันต้นติดลบ: หักต้นได้ไม่เกินต้นคงเหลือ
   if(calc.principal_reduced>c.remaining_principal){
     calc.principal_reduced=+c.remaining_principal;
     calc.remaining_principal=0;
   }
   calc.closing=false;
+  if(calc.advance_cycles==null)calc.advance_cycles=0;
   return calc;
+}
+// ดอกล่วงหน้า: ทุกๆ due (1 งวด) ที่จ่ายเกินมา = ล่วงหน้าอีก 1 งวดเต็ม (ปัดลงเป็นจำนวนเต็มงวด) · เศษที่เหลือไม่พอครบงวด → ลดต้น
+function calcAdvance(c,amt,pen,due){
+  amt=+amt||0;
+  var extraCycles=Math.min(60,Math.max(0,Math.floor((amt-due)/due+1e-9)));
+  var ic=round2(due*(1+extraCycles));
+  var pr=round2(amt-ic);
+  return{interest_due:due,interest_collected:ic,principal_reduced:pr,
+    remaining_principal:round2(c.remaining_principal-pr),
+    wage:round2((ic+pen)*0.20),payment_status:'overpaid',advance_cycles:extraCycles};
 }
 function updatePayCalc(){
   if(!_payCtx)return;
@@ -150,6 +166,8 @@ function updatePayCalc(){
   var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
   var penEl=document.getElementById('pay-penalty');
   var pen=penEl?Math.max(0,parseFloat(penEl.value)||0):0;
+  var advEl=document.getElementById('pay-advance');
+  var advance=advEl?advEl.checked:false;
 
   // ยอดสะสมทั้งวันหลังรายการนี้
   var entries=_payCtx.recId
@@ -157,13 +175,19 @@ function updatePayCalc(){
     :recs.concat([{amount_paid:amt,penalty:pen}]);
   var cumPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
   var cumPen=entries.reduce(function(s,e){return s+ +(e.penalty||0)},0);
-  var calc=payCalc(baseC0,cumPaid,cumPen);
+  var calc=payCalc(baseC0,cumPaid,cumPen,advance);
 
-  var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']:{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
+  var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']
+    :calc.advance_cycles>0?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
+    :{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
   var multi=recs.length>0;
   var h='<div class="calc-box"><div class="calc-title">ผลการคำนวณ'+(multi?' (รวมทั้งวัน)':'')+'</div>'+
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้'+(multi?'รวม':'')+'</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
+  if(calc.advance_cycles>0){
+    var newRef=addDaysISO(_payCtx.date,baseC0.collection_interval*calc.advance_cycles);
+    h+='<div class="calc-row"><span class="k" style="color:var(--purple)">ครบกำหนดงวดถัดไป</span><span class="v" style="color:var(--purple)">'+thDate(newRef)+'</span></div>';
+  }
   if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">'+(calc.closing?'คืนเงินต้น':'หักเงินต้น'+(multi?'รวม':''))+'</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';
   if(calc.closing&&c.branch_fee>0)h+='<div class="calc-row"><span class="k">ค่าธรรมเนียมบ้าน</span><span class="v">฿'+fmt(c.branch_fee)+'</span></div>';
   h+='<div class="calc-row"><span class="k">เงินต้นคงเหลือใหม่</span><span class="v">฿'+fmt(calc.remaining_principal)+'</span></div>';
@@ -182,6 +206,8 @@ async function savePayment(){
   var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
   var penEl=document.getElementById('pay-penalty');
   var pen=penEl?Math.max(0,parseFloat(penEl.value)||0):0;
+  var advEl=document.getElementById('pay-advance');
+  var advance=advEl?advEl.checked:false;
 
   var recs=dayRecords(custId,date);
   var baseC0=dayBaseCustomer(c,recs);
@@ -189,8 +215,9 @@ async function savePayment(){
   var entries=recId
     ?recs.map(function(r){return r.id===recId?Object.assign({},r,{amount_paid:amt,penalty:pen}):r})
     :recs.concat([{amount_paid:amt,penalty:pen,_new:true,recorded_by:currentUser.id}]);
-  var R=computeDayDeltas(baseC0,entries);
+  var R=computeDayDeltas(baseC0,entries,advance);
   var totalPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
+  var advanceCycles=R.deltas.length?(R.deltas[R.deltas.length-1].advance_cycles||0):0;
 
   // ยืนยันก่อน "ปิดสัญญา"
   if(R.closing){
@@ -206,13 +233,14 @@ async function savePayment(){
       interest_collected:d.interest_collected,principal_reduced:d.principal_reduced,
       remaining_principal:d.remaining_principal,wage:d.wage,payment_status:d.payment_status,
       penalty:+e.penalty||0,recorded_by:e.recorded_by||currentUser.id};
+    if(d.advance_cycles>0)payload.advance_cycles=d.advance_cycles; // ไม่ใส่ถ้าไม่ใช่ (เผื่อยังไม่รัน migration phase13)
     var res=e._new?await _sb.from('daily_records').insert(payload):await _sb.from('daily_records').update(payload).eq('id',e.id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');btn.disabled=false;btn.textContent='บันทึก';return}
   }
 
   // update customer
   var upd={remaining_principal:R.remaining};
-  if(totalPaid>0)upd.last_collection_date=date;
+  if(totalPaid>0)upd.last_collection_date=advanceCycles>0?addDaysISO(date,c.collection_interval*advanceCycles):date;
   if(R.closing){
     upd.status='closed';upd.close_amount=closeAmount(baseC0);
   }else if(c.status!=='lost'&&totalPaid>0){
@@ -222,98 +250,6 @@ async function savePayment(){
 
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');
   closeModal('modal-payment');
-  await loadAll();
-  if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
-}
-
-/* ═══════════════════════════════════════════════
-   จ่ายล่วงหน้า (ADVANCE PAYMENT)
-   — จ่ายครั้งเดียวครอบคลุมหลายงวดล่วงหน้า (เช่น จ่าย 300 = ดอกวันนี้ + ล่วงหน้าอีก 2 งวด)
-   — จำนวนงวดคำนวณจากยอดที่จ่าย ÷ ดอก 1 งวด (ปัดลง) · ส่วนเกิน → ลดต้น
-   — เลื่อน last_collection_date ไปข้างหน้าตามจำนวนงวดที่จ่าย (ข้ามงวดที่จ่ายล่วงหน้าไปแล้ว)
-   — ไม่รองรับ: โหมดผ่อนต้น (ไม่มีดอก) · วันที่มีรายการรับเงินอยู่แล้ว (ใช้ "จ่ายเพิ่ม" แทน) · ยอดที่จะปิดสัญญาพอดี (ใช้ "รับเงิน" ปกติ)
-═══════════════════════════════════════════════ */
-var _advCtx=null; // {custId,date,perCycle,interval}
-
-function openAdvance(custId,date){
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
-  var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
-  if(c.status==='closed'){toast('ปิดสัญญาแล้ว — ใช้ปุ่ม "เปิดใหม่" แทน','err');return}
-  if(c.status==='lost'){toast('ลูกค้าสถานะตาย — ใช้ปุ่ม "คืนเครดิต" แทน','err');return}
-  if(!c.disbursed){toast('ลูกค้ายังไม่ยืนยันโอนเงิน','err');return}
-  if(c.principal_only){toast('โหมดผ่อนต้นไม่มีดอก — จ่ายล่วงหน้าไม่ได้','err');return}
-  var recs=dayRecords(custId,date);
-  if(recs.length){toast('มีรายการรับเงินวันนี้อยู่แล้ว — ใช้ปุ่ม "จ่ายเพิ่ม" แทน','err');return}
-  var perCycle=interestDue(c);
-  if(perCycle<=0){toast('ไม่มีดอกให้จ่ายล่วงหน้า','err');return}
-  closeModal('modal-detail'); // กัน modal ซ้อนกัน
-  _advCtx={custId:custId,date:date,perCycle:perCycle,interval:c.collection_interval};
-  document.getElementById('modal-advance-title').textContent='จ่ายล่วงหน้า — '+esc(c.full_name);
-  document.getElementById('modal-advance-body').innerHTML=
-    '<div class="field-hint" style="background:var(--surface);padding:10px;border-radius:8px;margin-bottom:14px">1 งวด (ทุก '+c.collection_interval+' วัน) = <b style="color:var(--gold)">฿'+fmt(perCycle)+'</b> ต่องวด</div>'+
-    '<div class="field"><label>จำนวนเงินที่จ่าย (บาท)</label><input class="inp mono" id="adv-amount" type="number" min="0" step="0.01" placeholder="0.00" oninput="updateAdvanceCalc()" autofocus/></div>'+
-    '<div id="adv-calc"></div>'+
-    '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
-      '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-advance\')">ยกเลิก</button>'+
-      '<button class="btn btn-gold btn-block" id="adv-save-btn" onclick="saveAdvancePayment()" disabled>บันทึก</button></div>';
-  openModal('modal-advance');
-  updateAdvanceCalc();
-}
-function updateAdvanceCalc(){
-  if(!_advCtx)return;
-  var amt=Math.max(0,parseFloat(document.getElementById('adv-amount').value)||0);
-  var perCycle=_advCtx.perCycle,interval=_advCtx.interval;
-  var cycles=perCycle>0?Math.floor((amt+1e-9)/perCycle):0;
-  cycles=Math.min(cycles,60); // กันกรอกเลขมโหฬารจนวันที่ล้น
-  var box=document.getElementById('adv-calc'),saveBtn=document.getElementById('adv-save-btn');
-  if(cycles<1){
-    box.innerHTML='<div class="field-hint">กรอกอย่างน้อย ฿'+fmt(perCycle)+' เพื่อจ่ายล่วงหน้าได้ตั้งแต่ 1 งวดขึ้นไป</div>';
-    if(saveBtn)saveBtn.disabled=true;
-    return;
-  }
-  var interestCollected=round2(perCycle*cycles);
-  var remainder=round2(amt-interestCollected);
-  var newRef=addDaysISO(_advCtx.date,interval*(cycles-1));
-  var nextDue=addDaysISO(newRef,interval);
-  box.innerHTML='<div class="calc-box">'+
-    '<div class="calc-row"><span class="k">ครอบคลุม</span><span class="v" style="color:var(--gold)">'+cycles+' งวด</span></div>'+
-    '<div class="calc-row"><span class="k">ดอกที่เก็บได้</span><span class="v" style="color:var(--green)">฿'+fmt(interestCollected)+'</span></div>'+
-    (remainder>0?'<div class="calc-row"><span class="k">ส่วนเกิน (ลดต้น)</span><span class="v" style="color:var(--cyan)">฿'+fmt(remainder)+'</span></div>':'')+
-    '<div class="calc-row" style="border-top:1px solid var(--border2);margin-top:4px;padding-top:6px"><span class="k" style="font-weight:600">ครบกำหนดงวดถัดไป</span><span class="v" style="font-weight:700;color:var(--gold)">'+thDate(nextDue)+'</span></div></div>';
-  if(saveBtn)saveBtn.disabled=false;
-}
-async function saveAdvancePayment(){
-  if(!_advCtx)return;
-  if(!canEdit()){toast('คุณไม่มีสิทธิ์รับเงิน','err');return}
-  var custId=_advCtx.custId,date=_advCtx.date,interval=_advCtx.interval,perCycle=_advCtx.perCycle;
-  var c=allCustomers.find(function(x){return x.id===custId});if(!c)return;
-  if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return}
-  var amt=Math.max(0,parseFloat(document.getElementById('adv-amount').value)||0);
-  var cycles=perCycle>0?Math.floor((amt+1e-9)/perCycle):0;
-  cycles=Math.min(cycles,60);
-  if(cycles<1){toast('จำนวนเงินไม่พอสำหรับจ่ายล่วงหน้าอย่างน้อย 1 งวด (฿'+fmt(perCycle)+')','err');return}
-  var interestCollected=round2(perCycle*cycles);
-  var remainder=round2(amt-interestCollected);
-  var principalReduced=Math.min(Math.max(0,remainder),c.remaining_principal);
-  var remainingNew=round2(c.remaining_principal-principalReduced);
-  if(remainingNew<=0){toast('ยอดนี้จะปิดสัญญาพอดี — กรุณาใช้ปุ่ม "รับเงิน" ปกติเพื่อปิดสัญญาแทน','err');return}
-  var wage=round2(interestCollected*0.20);
-  var newRef=addDaysISO(date,interval*(cycles-1));
-
-  var btn=document.getElementById('adv-save-btn');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
-
-  var payload={loan_id:custId,record_date:date,interest_due:interestCollected,amount_paid:amt,
-    interest_collected:interestCollected,principal_reduced:principalReduced,remaining_principal:remainingNew,
-    wage:wage,payment_status:remainder>0?'overpaid':'exact',penalty:0,recorded_by:currentUser.id,advance_cycles:cycles};
-  var res=await _sb.from('daily_records').insert(payload);
-  if(res.error){toast('บันทึกล้มเหลว: '+res.error.message+' — ต้องรัน migration phase13-advance-payment ก่อน','err');btn.disabled=false;btn.textContent='บันทึก';return}
-
-  var upd={remaining_principal:remainingNew,last_collection_date:newRef};
-  if(c.status!=='lost')upd.status='normal';
-  await _sb.from('loans').update(upd).eq('id',custId);
-
-  toast('✅ จ่ายล่วงหน้า '+cycles+' งวดสำเร็จ','ok');
-  closeModal('modal-advance');
   await loadAll();
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
 }
