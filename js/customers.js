@@ -220,6 +220,7 @@ function openDetail(id){
   h+='<div class="card card-pad" style="margin-bottom:14px"><div class="detail-grid">';
   h+=dt('เบอร์โทร',c.phone?esc(c.phone):'—');
   h+=dt('Facebook',c.facebook_url?'<a class="link-gold" href="'+esc(c.facebook_url)+'" target="_blank">เปิดลิงก์ ›</a>':'—');
+  h+=dt('ลิงก์กลุ่มเฟส',c.fb_group_url?'<a class="link-gold" href="'+esc(c.fb_group_url)+'" target="_blank">เปิดกลุ่ม ›</a>':'—');
   h+=dt('เลขบัตรประชาชน',c.id_card?esc(c.id_card):'—');
   h+=dt('ธนาคาร',c.bank_name?esc(c.bank_name):'—');
   h+=dt('เลขบัญชี',c.bank_account?'<span class="mono copy-btn" onclick="copyText(\''+esc(c.bank_account)+'\')" title="กดเพื่อคัดลอก">'+esc(c.bank_account)+'</span>':'—');
@@ -412,6 +413,7 @@ function openAddCustomer(reloanCust){
       '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name"/><div class="field-err"></div></div>'+
       '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" placeholder="08x-xxx-xxxx"/></div>'+
       '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" placeholder="https://facebook.com/..."/></div>'+
+      '<div class="field"><label>ลิงก์กลุ่มเฟส</label><input class="inp" id="f-fbgroup" placeholder="https://facebook.com/groups/..."/></div>'+
       '<div class="field"><label>เลขบัตรประชาชน <span class="req">*</span></label><input class="inp" id="f-idcard" maxlength="13" inputmode="numeric" placeholder="13 หลัก"/><div class="field-err"></div></div>'+
       '<div class="field"><label>ชื่อธนาคาร</label><select class="inp" id="f-bank-name">'+bankOptions('')+'</select></div>'+
       '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" placeholder="xxx-x-xxxxx-x"/></div>'+
@@ -438,7 +440,7 @@ function openAddCustomer(reloanCust){
   if(reloanCust){
     var pp=allPersons.find(function(x){return x.id===reloanCust.person_id})||{};
     var set=function(idn,v){var e=document.getElementById(idn);if(e)e.value=v||''};
-    set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);
+    set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);set('f-fbgroup',pp.fb_group_url);
     set('f-idcard',pp.id_card);set('f-bank-name',pp.bank_name);set('f-bank-account',pp.bank_account);
     document.getElementById('modal-customer-title').textContent='เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
     var sbtn=document.getElementById('cust-save-btn');if(sbtn)sbtn.textContent='เปิดยอดใหม่';
@@ -494,6 +496,7 @@ function openEditCustomer(id){
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name" value="'+esc(c.full_name)+'"/></div>'+
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" value="'+esc(c.phone||'')+'"/></div>'+
     '<div class="field"><label>Facebook URL</label><input class="inp" id="f-fb" value="'+esc(c.facebook_url||'')+'"/></div>'+
+    '<div class="field"><label>ลิงก์กลุ่มเฟส</label><input class="inp" id="f-fbgroup" value="'+esc(c.fb_group_url||'')+'"/></div>'+
     '<div class="field"><label>เลขบัตรประชาชน</label><input class="inp" id="f-idcard" maxlength="13" value="'+esc(c.id_card||'')+'"/></div>'+
     '<div class="field"><label>ชื่อธนาคาร</label><select class="inp" id="f-bank-name">'+bankOptions(c.bank_name)+'</select></div>'+
     '<div class="field"><label>เลขบัญชี</label><input class="inp mono" id="f-bank-account" value="'+esc(c.bank_account||'')+'"/></div>'+
@@ -517,6 +520,8 @@ async function saveCustomer(){
   var btn=document.getElementById('cust-save-btn');
   var phone=document.getElementById('f-phone').value.trim()||null;
   var fb=document.getElementById('f-fb').value.trim()||null;
+  var fbGroupEl=document.getElementById('f-fbgroup');
+  var fbGroup=fbGroupEl?fbGroupEl.value.trim()||null:null;
   var idcard=document.getElementById('f-idcard').value.trim()||null;
   var bankName=document.getElementById('f-bank-name').value.trim()||null;
   var bankAccount=document.getElementById('f-bank-account').value.trim()||null;
@@ -529,7 +534,7 @@ async function saveCustomer(){
       if(!isOwner()&&!isHead()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
       toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ '+(isOwner()?'Owner':'หัวหน้ากอง'),'err');
     }
-    var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
+    var upd={full_name:name,phone:phone,facebook_url:fb,fb_group_url:fbGroup,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
     // กันแก้ข้อมูลให้ไป "ชนคนอื่น" — log ให้ Owner ตรวจ (ไม่บล็อก)
@@ -581,14 +586,14 @@ async function saveCustomer(){
   var personId;
   if(reloanPersonId){
     personId=reloanPersonId;
-    await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
+    await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,fb_group_url:fbGroup,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else if(existing){
     personId=existing.id;
     if(bankName||bankAccount)await _sb.from('persons').update({bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else{
-    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
+    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,fb_group_url:fbGroup,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
     if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
     personId=pres.data.id;
   }

@@ -335,7 +335,7 @@ async function loadAll(){
   var q=[
     _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),
-    _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,bank_name,bank_account'),
+    _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account'),
     _sb.from('loans').select('*').order('seq'),
     _sb.from('daily_records').select('*').order('record_date').order('created_at'),
     _sb.from('user_branches').select('*'),
@@ -403,7 +403,7 @@ function buildCustomers(){
     return Object.assign({},l,{
       person_id:l.person_id,
       full_name:p.full_name||'(ไม่ทราบชื่อ)',
-      phone:p.phone||null,id_card:p.id_card||null,facebook_url:p.facebook_url||null,
+      phone:p.phone||null,id_card:p.id_card||null,facebook_url:p.facebook_url||null,fb_group_url:p.fb_group_url||null,
       bank_name:p.bank_name||null,bank_account:p.bank_account||null
     });
   });
