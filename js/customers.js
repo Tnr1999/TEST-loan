@@ -292,14 +292,14 @@ function openDetail(id){
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
-      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+(r.advance_cycles>0?'<div style="font-size:0.66rem;color:var(--purple)">ล่วงหน้า +'+r.advance_cycles+' งวด</div>':'')+'</td>'+
+      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--cyan)">'+(r.principal_reduced>0?'฿'+fmt(r.principal_reduced):'—')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.remaining_principal)+'</td>'+
         '<td class="tr-right mono" style="color:var(--red)">'+(r.penalty>0?'฿'+fmt(r.penalty):'—')+'</td>'+
-        '<td><span class="pst pst-'+r.payment_status+'">'+PSTATUS_LABEL[r.payment_status]+'</span></td></tr>'}).join('')+
+        '<td><span class="pst pst-'+r.payment_status+'">'+(r.payment_status==='advance'&&r.advance_cycles>0?'ล่วงหน้า +'+r.advance_cycles+' งวด':PSTATUS_LABEL[r.payment_status])+'</span></td></tr>'}).join('')+
       '</tbody></table></div>';
   }
   h+='</div>';

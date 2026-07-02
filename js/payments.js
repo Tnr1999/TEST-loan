@@ -163,7 +163,7 @@ function calcAdvance(c,amt,pen,due){
   var pr=round2(amt-ic);
   return{interest_due:due,interest_collected:ic,principal_reduced:pr,
     remaining_principal:round2(c.remaining_principal-pr),
-    wage:round2((ic+pen)*0.20),payment_status:'overpaid',advance_cycles:extraCycles};
+    wage:round2((ic+pen)*0.20),payment_status:'advance',advance_cycles:extraCycles};
 }
 function updatePayCalc(){
   if(!_payCtx)return;
@@ -185,7 +185,7 @@ function updatePayCalc(){
   var calc=payCalc(baseC0,cumPaid,cumPen,advance);
 
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']
-    :calc.advance_cycles>0?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
+    :calc.payment_status==='advance'?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
     :{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
   var multi=recs.length>0;
   var h='<div class="calc-box"><div class="calc-title">ผลการคำนวณ'+(multi?' (รวมทั้งวัน)':'')+'</div>'+
