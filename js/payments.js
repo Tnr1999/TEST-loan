@@ -192,8 +192,9 @@ function updatePayCalc(){
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้'+(multi?'รวม':'')+'</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
   if(calc.advance_cycles>0){
-    var newRef=addDaysISO(_payCtx.date,baseC0.collection_interval*calc.advance_cycles);
-    h+='<div class="calc-row"><span class="k" style="color:var(--purple)">ครบกำหนดงวดถัดไป</span><span class="v" style="color:var(--purple)">'+thDate(newRef)+'</span></div>';
+    // จุดอ้างอิงใหม่ = วันนี้ + (งวดล่วงหน้า × ระยะ) → วันครบกำหนดจริงถัดไป = จุดอ้างอิง + อีก 1 งวด
+    var nextDue=addDaysISO(_payCtx.date,baseC0.collection_interval*(calc.advance_cycles+1));
+    h+='<div class="calc-row"><span class="k" style="color:var(--purple)">ครบกำหนดงวดถัดไป</span><span class="v" style="color:var(--purple)">'+thDate(nextDue)+'</span></div>';
   }
   if(calc.principal_reduced>0)h+='<div class="calc-row"><span class="k">'+(calc.closing?'คืนเงินต้น':'หักเงินต้น'+(multi?'รวม':''))+'</span><span class="v" style="color:var(--cyan)">฿'+fmt(calc.principal_reduced)+'</span></div>';
   if(calc.closing&&c.branch_fee>0)h+='<div class="calc-row"><span class="k">ค่าธรรมเนียมบ้าน</span><span class="v">฿'+fmt(c.branch_fee)+'</span></div>';
@@ -240,7 +241,8 @@ async function savePayment(){
       interest_collected:d.interest_collected,principal_reduced:d.principal_reduced,
       remaining_principal:d.remaining_principal,wage:d.wage,payment_status:d.payment_status,
       penalty:+e.penalty||0,recorded_by:e.recorded_by||currentUser.id};
-    if(d.advance_cycles>0)payload.advance_cycles=d.advance_cycles; // ไม่ใส่ถ้าไม่ใช่ (เผื่อยังไม่รัน migration phase13)
+    // ใส่เมื่อมีค่าใหม่ หรือรายการเดิมเคยเป็นจ่ายล่วงหน้า (ต้องรีเซ็ตเป็น 0 ตอนแก้ไข) — ไม่ใส่เลยเมื่อไม่เกี่ยว เผื่อยังไม่รัน migration phase13
+    if(d.advance_cycles>0||(+e.advance_cycles||0)>0)payload.advance_cycles=d.advance_cycles||0;
     var res=e._new?await _sb.from('daily_records').insert(payload):await _sb.from('daily_records').update(payload).eq('id',e.id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');btn.disabled=false;btn.textContent='บันทึก';return}
   }

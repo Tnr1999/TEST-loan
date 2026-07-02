@@ -60,8 +60,8 @@ function renderCustomers(){
     var s=stMap[c.id];
     // "รอเปิด" (ยังไม่ยืนยันโอน) → ยกไปไว้ในกลุ่ม "ปิดยอด" ก่อน ยังไม่โผล่ในลิสต์เก็บเงินปกติ
     if(v==='today')return s.due&&!s.paid&&!s.pending;
-    // "จ่ายล่วงหน้า" — จ่ายในวันที่ดูอยู่ ทั้งที่ยังไม่ถึงรอบกำหนดเก็บ (เก็บเงินล่วงหน้าก่อนครบรอบ)
-    if(v==='advance')return s.paid&&!s.due&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
+    // "จ่ายล่วงหน้า" — วันครบกำหนดถูกเลื่อนเลยวันที่ดูไปแล้ว (จากสวิตช์จ่ายล่วงหน้า) · จ่ายตรงงวดปกติไม่นับ
+    if(v==='advance')return s.ahead&&!s.pending;
     if(v==='overdue')return c.status==='overdue'&&!s.paid&&!s.pending;
     if(v==='new')return s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
@@ -121,7 +121,7 @@ function renderCustomers(){
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
-      '<td><span class="st st-'+(s.pending?'pending':(isPaidAhead(c)?'advance':c.status))+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':(isPaidAhead(c)?'จ่ายล่วงหน้า':STATUS_LABEL[c.status]))+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
+      '<td><span class="st st-'+(s.pending?'pending':(s.ahead?'advance':c.status))+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':(s.ahead?'จ่ายล่วงหน้า':STATUS_LABEL[c.status]))+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
       '<td>'+actBtn+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
@@ -141,6 +141,7 @@ function custDayStatus(c,date){
     recCount:recs.length,
     paid:paidAmount>0,
     due:c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,date),
+    ahead:isPaidAhead(c,date),   // จ่ายล่วงหน้าไว้ — วันครบกำหนดเลื่อนเลยวันที่ดูไปแล้ว
     isNew:c.start_date===date,   // ลูกค้าที่เข้ามาในวันนี้
     pending:!c.disbursed         // รอเปิด — รอแอดมินโอนเงินให้
   };
@@ -159,7 +160,7 @@ function custCardHTML(c,date,s){
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">'+(c.was_lost?'คืนเครดิต':'ปิดยอด')+'</span>'
-    :(isPaidAhead(c)?'<span class="crow-st t-advance">จ่ายล่วงหน้า</span>':''))))));
+    :(s.ahead?'<span class="crow-st t-advance">จ่ายล่วงหน้า</span>':''))))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
   var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
     '<div class="crow-main">'+

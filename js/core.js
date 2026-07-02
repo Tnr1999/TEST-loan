@@ -172,8 +172,9 @@ function isOverdue(c, iso){
   var ref=c.last_collection_date||c.start_date;
   return daysBetween(ref, iso) > c.collection_interval*7;
 }
-// ลูกค้าที่จ่ายล่วงหน้าไว้ (ใช้สวิตช์ "จ่ายล่วงหน้า" ตอนรับเงิน) — last_collection_date ถูกเลื่อนไปอนาคตเกินวันนี้
-function isPaidAhead(c){return c.status==='normal'&&c.last_collection_date>todayISO()}
+// ลูกค้าที่จ่ายล่วงหน้าไว้ (ใช้สวิตช์ "จ่ายล่วงหน้า" ตอนรับเงิน) — วันครบกำหนดถูกเลื่อนเลยวันที่ดูไปแล้ว
+// จ่ายตรงงวดปกติ last_collection_date = วันนี้พอดี → ไม่นับ (ต้อง "เกิน" เท่านั้น)
+function isPaidAhead(c,iso){return c.status==='normal'&&(c.last_collection_date||'')>(iso||todayISO())}
 
 /* ═══ ค่าปรับอัตโนมัติ (PENALTY) ═══
    เส้นตายของรอบ = 16:00 ของวันครบกำหนด (ref + collection_interval)
