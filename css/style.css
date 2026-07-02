@@ -287,6 +287,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow-st.t-over{color:var(--red);background:var(--red-dim)}
 .crow-st.t-dead{color:var(--muted);background:var(--muted-dim)}
 .crow-st.t-pending{color:var(--gold);background:var(--gold-dim)}
+.crow-st.t-advance{color:var(--purple);background:var(--purple-dim)}
 .crow-btn{flex-shrink:0;border:none;border-radius:12px;padding:10px 15px;font-size:0.85rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:transform .08s,filter .14s}
 .crow-btn:active{transform:scale(.96)}
 .crow-btn.cb-pay{background:var(--gold);color:var(--on-gold)}

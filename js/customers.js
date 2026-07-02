@@ -121,7 +121,7 @@ function renderCustomers(){
       '<td class="tr-right mono" style="font-weight:600">฿'+fmt(c.remaining_principal)+'</td>'+
       '<td class="tr-right mono" style="color:var(--green)">฿'+fmt(interest)+'</td>'+
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
-      '<td><span class="st st-'+(s.pending?'pending':c.status)+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':STATUS_LABEL[c.status])+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
+      '<td><span class="st st-'+(s.pending?'pending':(isPaidAhead(c)?'advance':c.status))+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':(isPaidAhead(c)?'จ่ายล่วงหน้า':STATUS_LABEL[c.status]))+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
       '<td>'+actBtn+'</td></tr>'}).join('')+
     '</tbody></table>';
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
@@ -158,7 +158,8 @@ function custCardHTML(c,date,s){
     :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
     :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
-    :(c.status==='closed'?'<span class="crow-st t-paid">'+(c.was_lost?'คืนเครดิต':'ปิดยอด')+'</span>':'')))));
+    :(c.status==='closed'?'<span class="crow-st t-paid">'+(c.was_lost?'คืนเครดิต':'ปิดยอด')+'</span>'
+    :(isPaidAhead(c)?'<span class="crow-st t-advance">จ่ายล่วงหน้า</span>':''))))));
   // ส่วนหัวการ์ด (avatar + ชื่อ + รายละเอียด) — ใช้ร่วมทุกแบบ
   var head='<div class="crow-ava">'+esc(custCode(c))+'</div>'+
     '<div class="crow-main">'+
@@ -202,7 +203,7 @@ function openDetail(id){
   var h='<div class="page-head" style="margin-bottom:14px"><div>'+
     '<div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="mono" style="color:var(--muted)">'+esc(custCode(c))+'</span>'+
     '<span class="page-title" style="font-size:1.3rem">'+esc(c.full_name)+'</span>'+
-    '<span class="st st-'+c.status+'">'+STATUS_LABEL[c.status]+'</span>'+
+    '<span class="st st-'+(isPaidAhead(c)?'advance':c.status)+'">'+(isPaidAhead(c)?'จ่ายล่วงหน้า':STATUS_LABEL[c.status])+'</span>'+
     (c.principal_only&&c.status!=='closed'?'<span class="st" style="background:rgba(34,211,238,0.15);color:var(--cyan)">ผ่อนต้น · ไม่คิดดอก</span>':'')+
     (c.was_lost&&c.status==='closed'?'<span class="st" style="background:rgba(34,197,94,0.15);color:var(--green)">คืนเครดิต (เคยตาย)</span>':'')+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
