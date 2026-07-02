@@ -392,6 +392,23 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .calc-row{display:flex;justify-content:space-between;font-size:0.82rem;padding:4px 0}
 .calc-row .k{color:var(--text2)}
 .calc-row .v{font-weight:600;font-family:var(--font-mono)}
+/* ── สวิตช์ "จ่ายล่วงหน้า" (โมดัลรับเงิน) — การ์ดแตะทั้งแถว + สวิตช์เลื่อน ── */
+.adv-toggle{position:relative;display:block;cursor:pointer;margin:12px 0 16px}
+.adv-toggle input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.adv-toggle-box{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--surface);transition:background .15s,border-color .15s}
+.adv-toggle:active .adv-toggle-box{transform:scale(.99)}
+.adv-toggle-ic{font-size:1.3rem;flex-shrink:0;filter:grayscale(1);opacity:.6;transition:filter .15s,opacity .15s}
+.adv-toggle-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.adv-toggle-txt b{font-size:0.86rem;font-weight:700;color:var(--text)}
+.adv-toggle-txt small{font-size:0.7rem;color:var(--muted);line-height:1.35}
+.adv-toggle-sw{flex-shrink:0;width:42px;height:24px;border-radius:99px;background:var(--dim);position:relative;transition:background .18s}
+.adv-toggle-dot{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--text2);box-shadow:0 1px 3px rgba(0,0,0,0.4);transition:left .18s ease,background .18s}
+.adv-toggle input:checked~.adv-toggle-box{border-color:var(--purple);background:var(--purple-dim)}
+.adv-toggle input:checked~.adv-toggle-box .adv-toggle-ic{filter:none;opacity:1}
+.adv-toggle input:checked~.adv-toggle-box .adv-toggle-txt b{color:var(--purple)}
+.adv-toggle input:checked~.adv-toggle-box .adv-toggle-sw{background:var(--purple)}
+.adv-toggle input:checked~.adv-toggle-box .adv-toggle-dot{left:20px;background:#fff}
+.adv-toggle input:focus-visible~.adv-toggle-box{outline:2px solid var(--gold);outline-offset:2px}
 .paid-today{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px}
 .paid-today-head{display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text2);margin-bottom:6px}
 .paid-today-head b{font-family:var(--font-mono);color:var(--green);font-size:0.92rem}

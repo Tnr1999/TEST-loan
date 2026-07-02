@@ -104,9 +104,16 @@ function openPayment(custId,date,editId){
         :'<div class="stat" style="flex:1"><span class="label" style="color:var(--amber)">'+(mode==='add'&&remInt>0?'ดอกที่เหลือ':'ดอกที่ต้องจ่าย')+'</span><span class="value" style="font-size:1.1rem;color:var(--amber)">฿'+fmt(mode==='add'?Math.max(0,remInt):due)+'</span></div>')+
     '</div>'+
     '<div class="quick-btns">'+quick+'</div>'+
-    '<div class="field"><label>'+amtLabel+'</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+amtVal+'" oninput="updatePayCalc()"/>'+
-      (c.principal_only||c.status==='lost'?'':'<label class="check-row" style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:0.78rem;color:var(--text2);cursor:pointer"><input type="checkbox" id="pay-advance" onchange="updatePayCalc()"'+(editRec&&editRec.advance_cycles>0?' checked':'')+'/> จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ = ดอกล่วงหน้า (เลื่อนวันครบกำหนดถัดไป) แทนการหักเงินต้น</label>')+
-    '</div>'+
+    '<div class="field"><label>'+amtLabel+'</label><input class="inp mono" id="pay-amount" type="number" min="0" step="0.01" placeholder="0.00" value="'+amtVal+'" oninput="updatePayCalc()"/></div>'+
+    (c.principal_only||c.status==='lost'?'':
+      '<label class="adv-toggle">'+
+        '<input type="checkbox" id="pay-advance" onchange="updatePayCalc()"'+(editRec&&editRec.advance_cycles>0?' checked':'')+'/>'+
+        '<span class="adv-toggle-box">'+
+          '<span class="adv-toggle-ic">⏩</span>'+
+          '<span class="adv-toggle-txt"><b>จ่ายล่วงหน้า</b><small>ส่วนเกินดอกงวดนี้ = ดอกล่วงหน้า เลื่อนกำหนดถัดไป แทนหักต้น</small></span>'+
+          '<span class="adv-toggle-sw"><span class="adv-toggle-dot"></span></span>'+
+        '</span>'+
+      '</label>')+
     '<div class="field"><label>ค่าปรับ (บาท)'+(mode==='add'?' · เพิ่มรอบนี้':'')+'</label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penVal+'" oninput="updatePayCalc()"/></div>'+
     '<div id="pay-calc"></div>'+
     '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(close)+'</div>'+
