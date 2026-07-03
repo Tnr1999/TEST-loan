@@ -78,7 +78,15 @@ function myBranchIds(){
   // หัวหน้าสาย / พนักงาน → เฉพาะบ้านที่ผูกไว้
   return allUserBranches.filter(function(ub){return ub.user_id===currentUser.id}).map(function(ub){return ub.branch_id});
 }
-function canAccessBranch(bid){return myBranchIds().indexOf(bid)>=0}
+// ขอบเขต กอง/บ้าน ที่เลือกในตัวกรอง → รายการ branch id (ใช้ร่วม dashboard/ลูกค้า/ค่าแรง)
+function scopeBids(groupId,branchId){
+  var all=myBranchIds();
+  if(branchId)return all.indexOf(branchId)>=0?[branchId]:all;
+  if(groupId)return allBranches.filter(function(b){return b.group_id===groupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
+  return all;
+}
+// สร้าง lookup object จาก array (แทน .find ในลูป — กัน O(n×m) เมื่อข้อมูลโต)
+function indexBy(arr,key){var m={};(arr||[]).forEach(function(x){m[x[key]]=x});return m}
 
 /* ═══ กันโกง: ตรวจตัวตนลูกค้า / แจ้งเตือน Owner ═══ */
 // normalize ก่อนเทียบ — กันพิมพ์เว้นวรรค/คำนำหน้า/อักขระแปลกปลอม
@@ -266,10 +274,11 @@ function openModal(id){
   document.getElementById(id).classList.add('open');
 }
 function closeModal(id){document.getElementById(id).classList.remove('open')}
-['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','modal-topup','confirm-overlay'].forEach(function(id){
-  document.getElementById(id).addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});
+// wiring ปิด modal — อิง class .modal-overlay (modal ใหม่ใน HTML ได้พฤติกรรมนี้อัตโนมัติ ไม่ต้องลงทะเบียน)
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');if(this.id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}}});
 });
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['modal-customer','modal-payment','modal-branch','modal-group','modal-user','modal-detail','modal-topup','confirm-overlay'].forEach(function(id){document.getElementById(id).classList.remove('open')})});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(function(m){m.classList.remove('open');if(m.id==='confirm-overlay'&&_confirmResolve){_confirmResolve(false);_confirmResolve=null}})});
 
 /* ═══ LOGIN ═══ */
 function showLoginScreen(){document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none'}
@@ -359,23 +368,16 @@ async function loadAll(){
   allUserGroups=r[6].data||[];
   if(canManageUsers()&&r[7]) allUsers=r[7].data||[];
 
-  // ยอดเบิก — โหลดแยก กันแอปพังถ้ายังไม่รัน migration phase4-disbursements
-  var dres=await _sb.from('disbursements').select('*');
-  allDisbursements=dres.error?[]:(dres.data||[]);
-
-  // แจ้งเตือน (กันโกง) — เฉพาะ owner · fail-safe ถ้ายังไม่รัน migration phase8-alerts
-  allAlerts=[];
-  if(isOwner()){
-    var ares=await _sb.from('alerts').select('*').order('created_at',{ascending:false});
-    allAlerts=ares.error?[]:(ares.data||[]);
-  }
-
-  // ผู้ใช้ — owner โหลดในชุดหลักแล้ว · role อื่น (หัวหน้ากอง/หัวหน้าสาย/พนักงาน) โหลดแยกแบบ fail-safe
-  // (พนักงานก็ต้องใช้ เพื่อหา/แสดงหัวหน้าสายของตัวเอง + คำนวณคอมในหน้าค่าแรง)
-  if(!isOwner()){
-    var ures=await _sb.from('users').select('id,username,full_name,role,is_active').order('created_at');
-    if(!ures.error)allUsers=ures.data||[];
-  }
+  // ชุดเสริม (fail-safe แยกจากชุดหลัก กันแอปพังถ้ายังไม่รัน migration) — ยิงขนานกันในรอบเดียว
+  // ① ยอดเบิก (phase4) · ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
+  var extra=await Promise.all([
+    _sb.from('disbursements').select('*'),
+    isOwner()?_sb.from('alerts').select('*').order('created_at',{ascending:false}):null,
+    !isOwner()?_sb.from('users').select('id,username,full_name,role,is_active').order('created_at'):null
+  ]);
+  allDisbursements=(extra[0]&&!extra[0].error&&extra[0].data)||[];
+  allAlerts=(extra[1]&&!extra[1].error&&extra[1].data)||[];
+  if(extra[2]&&!extra[2].error)allUsers=extra[2].data||[];
 
   // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
   allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});
@@ -402,8 +404,9 @@ async function loadAll(){
 
 // ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons
 function buildCustomers(){
+  var personById=indexBy(allPersons,'id');
   allCustomers=allLoans.map(function(l){
-    var p=allPersons.find(function(x){return x.id===l.person_id})||{};
+    var p=personById[l.person_id]||{};
     return Object.assign({},l,{
       person_id:l.person_id,
       full_name:p.full_name||'(ไม่ทราบชื่อ)',

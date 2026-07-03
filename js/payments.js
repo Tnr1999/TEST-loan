@@ -165,24 +165,33 @@ function calcAdvance(c,amt,pen,due){
     remaining_principal:round2(c.remaining_principal-pr),
     wage:round2((ic+pen)*0.20),payment_status:'advance',advance_cycles:extraCycles};
 }
+// อ่านค่าจากฟอร์มรับเงิน (จำนวน/ค่าปรับ/สวิตช์จ่ายล่วงหน้า) — จุดเดียว ใช้ทั้ง preview และ save กันค่าไม่ตรงกัน
+function readPayInputs(){
+  var penEl=document.getElementById('pay-penalty'),advEl=document.getElementById('pay-advance');
+  return{
+    amt:Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0),
+    pen:penEl?Math.max(0,parseFloat(penEl.value)||0):0,
+    advance:advEl?advEl.checked:false
+  };
+}
+// รายการของวันหลังรวมค่าที่กรอก — แก้ไข (recId) = แทนค่ารายการนั้น · จ่ายเพิ่ม/ครั้งแรก = ต่อท้าย
+function buildDayEntries(recs,recId,amt,pen,extra){
+  return recId
+    ?recs.map(function(r){return r.id===recId?Object.assign({},r,{amount_paid:amt,penalty:pen}):r})
+    :recs.concat([Object.assign({amount_paid:amt,penalty:pen},extra||{})]);
+}
 function updatePayCalc(){
   if(!_payCtx)return;
   var c=allCustomers.find(function(x){return x.id===_payCtx.custId});if(!c)return;
   var recs=dayRecords(_payCtx.custId,_payCtx.date);
   var baseC0=dayBaseCustomer(c,recs);
-  var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
-  var penEl=document.getElementById('pay-penalty');
-  var pen=penEl?Math.max(0,parseFloat(penEl.value)||0):0;
-  var advEl=document.getElementById('pay-advance');
-  var advance=advEl?advEl.checked:false;
+  var inp=readPayInputs(),amt=inp.amt,pen=inp.pen;
 
   // ยอดสะสมทั้งวันหลังรายการนี้
-  var entries=_payCtx.recId
-    ?recs.map(function(r){return r.id===_payCtx.recId?Object.assign({},r,{amount_paid:amt,penalty:pen}):r})
-    :recs.concat([{amount_paid:amt,penalty:pen}]);
+  var entries=buildDayEntries(recs,_payCtx.recId,amt,pen);
   var cumPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
   var cumPen=entries.reduce(function(s,e){return s+ +(e.penalty||0)},0);
-  var calc=payCalc(baseC0,cumPaid,cumPen,advance);
+  var calc=payCalc(baseC0,cumPaid,cumPen,inp.advance);
 
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']
     :calc.payment_status==='advance'?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
@@ -211,19 +220,12 @@ async function savePayment(){
   var c=allCustomers.find(function(x){return x.id===custId});
   if(c&&c.status==='lost'&&!canReturnCredit()){toast('คืนเครดิต (ลูกค้าตาย) ได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
   if(date>todayISO()){toast('บันทึกได้เฉพาะวันนี้หรือย้อนหลัง','err');return;}
-  var amt=Math.max(0,parseFloat(document.getElementById('pay-amount').value)||0);
-  var penEl=document.getElementById('pay-penalty');
-  var pen=penEl?Math.max(0,parseFloat(penEl.value)||0):0;
-  var advEl=document.getElementById('pay-advance');
-  var advance=advEl?advEl.checked:false;
+  var inp=readPayInputs(),amt=inp.amt,pen=inp.pen;
 
   var recs=dayRecords(custId,date);
   var baseC0=dayBaseCustomer(c,recs);
-  // entries (chronological) — แก้ไข = แทนค่ารายการนั้น · จ่ายเพิ่ม/ครั้งแรก = ต่อท้าย
-  var entries=recId
-    ?recs.map(function(r){return r.id===recId?Object.assign({},r,{amount_paid:amt,penalty:pen}):r})
-    :recs.concat([{amount_paid:amt,penalty:pen,_new:true,recorded_by:currentUser.id}]);
-  var R=computeDayDeltas(baseC0,entries,advance);
+  var entries=buildDayEntries(recs,recId,amt,pen,{_new:true,recorded_by:currentUser.id});
+  var R=computeDayDeltas(baseC0,entries,inp.advance);
   var totalPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
   var advanceCycles=R.deltas.length?(R.deltas[R.deltas.length-1].advance_cycles||0):0;
 

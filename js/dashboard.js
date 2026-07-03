@@ -76,31 +76,27 @@ function setDashBranch(id){dashBranchId=id;renderDashBranchBtns();renderDashboar
 // ขอบเขตของแถบสรุปยอด = ตัวกรองของ "หน้าที่เปิดอยู่"
 // หน้าลูกค้า → กอง/บ้านที่เลือก · หน้ารายงาน → บ้านที่เลือก (dashBranchId)
 function currentScopeBids(){
-  var all=myBranchIds();
   var pc=document.getElementById('page-customers');
-  if(pc&&pc.classList.contains('active')){
-    if(custBranchId)return [custBranchId];
-    if(custGroupId)return allBranches.filter(function(b){return b.group_id===custGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
-    return all;
-  }
-  if(dashBranchId)return [dashBranchId];
-  if(dashGroupId)return allBranches.filter(function(b){return b.group_id===dashGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
-  return all;
+  if(pc&&pc.classList.contains('active'))return scopeBids(custGroupId,custBranchId);
+  return scopeBids(dashGroupId,dashBranchId);
 }
+// ค่าธรรมเนียม (เก็บตอนปิดสัญญา) ของรายการ = ส่วนที่จ่ายเกินดอก+ต้น — สูตรเดียว ใช้ทั้งสรุปรวมและรายบ้าน
+function feeOf(r){return Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+(r.principal_reduced||0))))}
 function renderDashboard(){
-  var date=document.getElementById('dash-date-picker').value||todayISO();
+  var date=selDate();
   var bids=currentScopeBids();
 
+  var custById=indexBy(allCustomers,'id');
   var custs=allCustomers.filter(function(c){return bids.indexOf(c.branch_id)>=0});
   var recs=allRecords.filter(function(r){
     if(r.record_date!==date)return false;
-    var c=allCustomers.find(function(x){return x.id===r.customer_id});
+    var c=custById[r.customer_id];
     return c&&bids.indexOf(c.branch_id)>=0;
   });
 
   var sum=recs.reduce(function(a,r){
     a.collected+=+r.amount_paid;a.interest+=+r.interest_collected;a.wage+=+r.wage;a.principal+=+r.principal_reduced;a.penalty+=+(r.penalty||0);
-    a.fee+=Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+r.principal_reduced))); // ส่วนที่จ่ายเกินดอก+ต้น = ค่าธรรมเนียม (เก็บตอนปิดสัญญา)
+    a.fee+=feeOf(r);
     if(r.payment_status!=='unpaid')a.paid++;return a;
   },{collected:0,interest:0,wage:0,principal:0,penalty:0,fee:0,paid:0});
   // เงินต้นคงค้างในตลาด (ปัจจุบัน) = สัญญาที่ยังไม่ปิด
@@ -119,11 +115,11 @@ function renderDashboard(){
 
   // by branch
   var byBranch=allBranches.filter(function(b){return bids.indexOf(b.id)>=0}).map(function(b){
-    var br=recs.filter(function(r){var c=allCustomers.find(function(x){return x.id===r.customer_id});return c&&c.branch_id===b.id});
+    var br=recs.filter(function(r){var c=custById[r.customer_id];return c&&c.branch_id===b.id});
     return{id:b.id,group_id:b.group_id,name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
       penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
-      fee:br.reduce(function(s,r){return s+Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+(r.principal_reduced||0))))},0),
+      fee:br.reduce(function(s,r){return s+feeOf(r)},0),
       principal:br.reduce(function(s,r){return s+ +(r.principal_reduced||0)},0),
       collected:br.reduce(function(s,r){return s+ +r.amount_paid + +(r.penalty||0)},0),
       disbursed:allDisbursements.filter(function(d){return d.branch_id===b.id&&d.disburse_date===date}).reduce(function(s,d){return s+ +d.amount},0),
@@ -245,12 +241,7 @@ var payoutGroupId='', payoutBranchId='';
 function setPayoutGroup(id){payoutGroupId=id;payoutBranchId='';renderPayoutPage();}
 function setPayoutBranch(id){payoutBranchId=id;renderPayoutPage();}
 // bids ตามตัวกรองที่เลือก (อยู่ในขอบเขตที่ตัวเองเห็นเสมอ)
-function payoutBids(){
-  var all=myBranchIds();
-  if(payoutBranchId)return all.indexOf(payoutBranchId)>=0?[payoutBranchId]:all;
-  if(payoutGroupId)return allBranches.filter(function(b){return b.group_id===payoutGroupId&&all.indexOf(b.id)>=0}).map(function(b){return b.id});
-  return all;
-}
+function payoutBids(){return scopeBids(payoutGroupId,payoutBranchId)}
 function payoutFilterBtns(){
   var all=myBranchIds(),groups=accessibleGroups(),html='';
   if(groups.length>1){
@@ -273,9 +264,10 @@ function renderPayoutPage(){
   var bids=payoutBids(),from,to;
   if(payoutPeriod==='range'){from=payoutFrom||selDate();to=payoutTo||selDate();}
   else{from=to=selDate();}
+  var custById=indexBy(allCustomers,'id');
   var recs=allRecords.filter(function(r){
     if(r.record_date<from||r.record_date>to)return false;
-    var c=allCustomers.find(function(x){return x.id===r.customer_id});
+    var c=custById[r.customer_id];
     return c&&bids.indexOf(c.branch_id)>=0;
   });
   var seg='<div class="seg" style="margin-bottom:14px">'+
@@ -296,23 +288,28 @@ function renderPayoutPage(){
   el.innerHTML=filt+seg+rangeLabel+(body||'<div class="empty">'+(payoutPeriod==='day'?'วันนี้':'ช่วงนี้')+'ยังไม่มีการเก็บเงิน — ยังไม่มีค่าแรง</div>');
 }
 
+// แถวเงินในการ์ดค่าแรง (ใช้ร่วมทั้งมุมมองทีมและของตัวเอง)
+function money(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'}
+// ป้ายช่วงเวลาหน้าค่าแรง ตามโหมดที่เลือก
+function payoutPW(){return payoutPeriod==='range'?'ช่วงนี้':'วันนี้'}
 // ── ค่าแรงของตัวเอง (พนักงาน) ──
 // แสดงเฉพาะของ currentUser · ค่าแรงเข้า "พนักงานเจ้าของบ้าน" (branches.staff_id) เสมอ ถึงคนอื่นจะเป็นคนกดรับเงิน — ไม่กำหนด = เข้าคนที่กดรับเงิน (recorded_by)
 // หักคอม 5% ของยอดเข้า เฉพาะบ้านที่มีหัวหน้าสาย (เหมือนสรุปทีม)
 function renderPayoutSelf(recs){
-  var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='range')?'ช่วงนี้':'วันนี้';
+  var COMM=0.05, PW=payoutPW();
+  var custById=indexBy(allCustomers,'id'),branchById=indexBy(allBranches,'id'),lhCache={};
+  var lineHead=function(bid){if(!(bid in lhCache))lhCache[bid]=lineHeadOfBranch(bid);return lhCache[bid]};
   var wage=0,comm=0,interest=0,penalty=0,fee=0,heads={},items=[];
   recs.forEach(function(r){
     if(!(+r.wage))return;
-    var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
-    var b=allBranches.find(function(x){return x.id===c.branch_id});
+    var c=custById[r.customer_id];if(!c)return;
+    var b=branchById[c.branch_id];
     var uid=(b&&b.staff_id)||r.recorded_by;
     if(uid!==currentUser.id)return;
     var w=round2(+r.wage), rIn=round2(w*5);
     var rInt=+r.interest_collected||0, rPen=+r.penalty||0, rFee=round2(rIn-rInt-rPen); // ส่วนที่เหลือ = ค่าธรรมเนียมตอนปิด
     wage+=w; interest+=rInt; penalty+=rPen; fee+=rFee;
-    var lh=b&&lineHeadOfBranch(b.id);
+    var lh=b&&lineHead(b.id);
     if(lh){comm+=round2(w*5*COMM);heads[lh.id]=lh.full_name;}
     items.push({c:c,interest:rInt,penalty:rPen,fee:rFee,wage:w});
   });
@@ -321,7 +318,6 @@ function renderPayoutSelf(recs){
   var keep=round2(wage-comm);
   var basein=round2(wage*5);                        // ยอดเข้า (ฐานค่าแรง)
   var pct=basein>0?Math.round(keep/basein*100):20;  // 15% เมื่อมีหัวหน้าสาย (หักคอมแล้ว) · 20% เมื่อไม่มี
-  var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
   var sub=function(k,v){return '<div class="pay-src-row"><span>'+k+'</span><span class="v">฿'+fmt(v)+'</span></div>'};
 
   // กล่องแตกรายละเอียด "ยอดเข้า" → ดอก + ค่าปรับ + ค่าธรรมเนียม
@@ -363,28 +359,28 @@ function lineHeadOfBranch(bid){
 // คอม = 5% ของ "ยอดเข้า" (= ค่าแรง × 5) หักจากค่าแรงของแต่ละคน → รวมเป็น "คอมของสาย" → จ่ายให้หัวหน้าสาย (รวมส่วนของหัวหน้าเองด้วย)
 // แยกตามสาย (หัวหน้าสายของบ้าน = lineHeadOfBranch) → รายคน (พนักงานเจ้าของบ้าน = branches.staff_id ถ้ามี ไม่งั้น fallback เป็นคนกดรับเงิน recorded_by) · บ้านไหนไม่มีหัวหน้าสาย = ไม่หักคอม
 function renderPayout(recs){
-  var COMM=0.05, round2=function(n){return Math.round(n*100)/100};
-  var PW=(typeof payoutPeriod!=='undefined'&&payoutPeriod==='range')?'ช่วงนี้':'วันนี้';
+  var COMM=0.05, PW=payoutPW();
+  var custById=indexBy(allCustomers,'id'),branchById=indexBy(allBranches,'id'),userById=indexBy(allUsers,'id'),lhCache={};
+  var lineHead=function(bid){if(!(bid in lhCache))lhCache[bid]=lineHeadOfBranch(bid);return lhCache[bid]};
   // จัดกลุ่ม: สาย (หัวหน้าสาย) → คน → ค่าแรงรวมวันนี้
   var lines={};
   recs.forEach(function(r){
     if(!(+r.wage))return;
-    var c=allCustomers.find(function(x){return x.id===r.customer_id});if(!c)return;
-    var b=allBranches.find(function(x){return x.id===c.branch_id});
+    var c=custById[r.customer_id];if(!c)return;
+    var b=branchById[c.branch_id];
     var uid=(b&&b.staff_id)||r.recorded_by||'__unknown';
     // owner + หัวหน้ากอง (head) ไม่คิดค่าแรง/คอม — นับเฉพาะหัวหน้าสาย + พนักงาน
-    var ru=allUsers.find(function(x){return x.id===uid});
+    var ru=userById[uid];
     if(ru&&(ru.role==='owner'||ru.role==='head'))return;
-    var lh=b?lineHeadOfBranch(b.id):null;
+    var lh=b?lineHead(b.id):null;
     var lid=lh?lh.id:'__none';
     var g=lines[lid]||(lines[lid]={persons:{},head:lh});
     g.persons[uid]=(g.persons[uid]||0)+ +r.wage;
   });
   if(!Object.keys(lines).length)return '';
 
-  var money=function(k,v,cls){return '<div class="pay-line'+(cls||'')+'"><span class="k">'+k+'</span><span class="v"><span class="cur">฿</span>'+fmt(v)+'</span></div>'};
-  var uName=function(uid){var u=allUsers.find(function(x){return x.id===uid});return u?u.full_name:'(ไม่ทราบชื่อ)'};
-  var uRole=function(uid){var u=allUsers.find(function(x){return x.id===uid});return u?u.role:'staff'};
+  var uName=function(uid){var u=userById[uid];return u?u.full_name:'(ไม่ทราบชื่อ)'};
+  var uRole=function(uid){var u=userById[uid];return u?u.role:'staff'};
 
   var html='<div class="section-label" style="margin-top:24px">จ่ายเงินทีม · ค่าแรง 20% − คอม 5%</div>';
   // เรียงสายตามชื่อหัวหน้าสาย แล้วต่อด้วย "ไม่มีหัวหน้าสาย"
@@ -439,7 +435,7 @@ function renderPayout(recs){
   return html;
 }
 
-function stat(label,value,accent,sub){
-  return '<div class="stat '+(accent||'')+'"><span class="label">'+label+'</span><span class="value">'+value+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>';
+function stat(label,value,accent){
+  return '<div class="stat '+(accent||'')+'"><span class="label">'+label+'</span><span class="value">'+value+'</span></div>';
 }
 

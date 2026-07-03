@@ -7,6 +7,9 @@ var ALERT_TYPES={
   maybe_dup:{icon:'⚠️',label:'อาจเป็นลูกค้าซ้ำ',cls:'al-warn'}
 };
 
+// รีเฟรชหน้าแจ้งเตือน + badge บนเมนู หลังทุก mutation
+function refreshAlertsUI(){renderAlerts();if(typeof renderNav==='function')renderNav()}
+
 // เวลาแบบไทยอ่านง่าย
 function alTime(ts){
   if(!ts)return'';
@@ -67,7 +70,7 @@ async function markAlertRead(id){
   var res=await _sb.from('alerts').update({is_read:true}).eq('id',id);
   if(res.error){toast('อัปเดตล้มเหลว: '+res.error.message,'err');return}
   var a=allAlerts.find(function(x){return x.id===id});if(a)a.is_read=true;
-  renderAlerts();if(typeof renderNav==='function')renderNav();
+  refreshAlertsUI();
 }
 
 async function markAllAlertsRead(){
@@ -76,14 +79,14 @@ async function markAllAlertsRead(){
   var res=await _sb.from('alerts').update({is_read:true}).in('id',ids);
   if(res.error){toast('อัปเดตล้มเหลว: '+res.error.message,'err');return}
   allAlerts.forEach(function(a){a.is_read=true});
-  renderAlerts();if(typeof renderNav==='function')renderNav();
+  refreshAlertsUI();
 }
 
 async function deleteAlert(id){
   var res=await _sb.from('alerts').delete().eq('id',id);
   if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
   allAlerts=allAlerts.filter(function(a){return a.id!==id});
-  renderAlerts();if(typeof renderNav==='function')renderNav();
+  refreshAlertsUI();
 }
 
 // ลบเฉพาะที่อ่านแล้ว — กันตารางบวม (ไม่แตะของที่ยังไม่ตรวจ)
@@ -96,5 +99,5 @@ async function clearReadAlerts(){
   if(res.error){toast('ลบล้มเหลว: '+res.error.message,'err');return}
   allAlerts=allAlerts.filter(function(a){return !a.is_read});
   toast('ลบแล้ว '+ids.length+' รายการ','ok');
-  renderAlerts();if(typeof renderNav==='function')renderNav();
+  refreshAlertsUI();
 }

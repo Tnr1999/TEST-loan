@@ -51,9 +51,22 @@ function renderCustomers(){
   });
 
   // คำนวณสถานะของลูกค้าแต่ละคน ณ "วันที่กำลังดู" (ร่วมกับ dashboard) — ใช้ทั้งชิป/เรียง/แสดงผล
+  // index รายการชำระของวันนั้นครั้งเดียว (O(records)) แทนสแกน allRecords ซ้ำต่อลูกค้า (O(customers×records))
   var vdate=selDate();
+  var recsByCust={};
+  allRecords.forEach(function(r){if(r.record_date===vdate)(recsByCust[r.customer_id]||(recsByCust[r.customer_id]=[])).push(r)});
   var stMap={};
-  list.forEach(function(c){stMap[c.id]=custDayStatus(c,vdate)});
+  list.forEach(function(c){stMap[c.id]=custDayStatus(c,vdate,recsByCust[c.id]||[])});
+  // เตรียม lookup กติกา "ปิดยอด" ครั้งเดียว: คนที่ยังมีสัญญาเปิดอยู่ + สัญญาปิดรอบล่าสุดของแต่ละคน
+  var activePersons={},latestClosed={};
+  allLoans.forEach(function(l){
+    if(l.status==='normal'||l.status==='overdue')activePersons[l.person_id]=1;  // lost ไม่นับเป็นสัญญาเปิด (เหมือนกติกาเดิม)
+    if(l.status!=='closed')return;
+    var cur=latestClosed[l.person_id];
+    if(!cur||(l.start_date||'')>(cur.start_date||'')||((l.start_date||'')===(cur.start_date||'')&&l.seq>cur.seq))latestClosed[l.person_id]=l;
+  });
+  // สัญญาปิดที่ควรโชว์ = คนนั้นไม่มีสัญญาเปิดค้าง + เป็นรอบปิดล่าสุด (dedup รอบเก่า)
+  function closedVisible(c){return c.status==='closed'&&!activePersons[c.person_id]&&latestClosed[c.person_id]&&latestClosed[c.person_id].id===c.id}
 
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
@@ -65,7 +78,7 @@ function renderCustomers(){
     if(v==='overdue')return c.status==='overdue'&&!s.paid&&!s.pending;
     if(v==='new')return s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='closed')return s.pending||(c.status==='closed'&&!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c));
+    if(v==='closed')return s.pending||closedVisible(c);
     if(v==='dead')return c.status==='lost';
     return true;
   }
@@ -79,7 +92,7 @@ function renderCustomers(){
 
   // กรองตามมุมมองที่เลือก (ถ้ากำลังค้นหา → แสดงทุกผลลัพธ์ ไม่ตัดด้วยมุมมอง)
   // ตอนค้นหา → ข้ามตัวกรองมุมมอง แต่ยัง dedup สัญญา "ปิดแล้ว" ซ้ำของคนเดียวกัน (โชว์เฉพาะรอบล่าสุด กันรายการบาน)
-  function searchVisible(c){return c.status!=='closed'||(!personHasActiveLoan(c.person_id)&&isLatestClosedLoan(c));}
+  function searchVisible(c){return c.status!=='closed'||closedVisible(c);}
   var vlist=list.filter(function(c){return search?searchVisible(c):inView(c,custView)});
   // เรียง: รอรับเงิน/ต้องเก็บวันนี้ ▸ ค้าง ▸ ปกติ ▸ จ่ายแล้ว ▸ ตาย ▸ ปิด แล้วตามลำดับเลข
   function prio(c){var s=stMap[c.id];if(c.status==='closed')return 5;if(c.status==='lost')return 4;if(s.pending||s.due)return 0;if(s.paid)return 3;if(c.status==='overdue')return 1;return 2}
@@ -131,9 +144,9 @@ function renderCustomers(){
 function setCustView(v){custView=v;renderCustomers()}
 
 // สถานะของลูกค้า ณ วันที่กำหนด (ใช้ร่วมหน้าลูกค้า + หน้าเก็บเงินของ staff)
-function custDayStatus(c,date){
-  // วันหนึ่งอาจมีหลายรายการ (จ่ายเพิ่ม) — รวมยอด
-  var recs=allRecords.filter(function(r){return r.customer_id===c.id&&r.record_date===date});
+function custDayStatus(c,date,preRecs){
+  // วันหนึ่งอาจมีหลายรายการ (จ่ายเพิ่ม) — รวมยอด · preRecs = index ที่เตรียมไว้แล้ว (กันสแกน allRecords ซ้ำต่อลูกค้า)
+  var recs=preRecs||allRecords.filter(function(r){return r.customer_id===c.id&&r.record_date===date});
   var paidAmount=recs.reduce(function(s,r){return s+ +(r.amount_paid||0)},0);
   return {
     recs:recs,
@@ -191,7 +204,6 @@ function custCardHTML(c,date,s){
 function openDetail(id){
   currentDetailId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
-  var b=allBranches.find(function(x){return x.id===c.branch_id});
   // ประวัติข้ามรอบ — รวมรายการชำระของทุกสัญญาของคนเดียวกัน (เปิดยอดใหม่แล้วประวัติเดิมยังอยู่)
   var personLoans=allCustomers.filter(function(x){return x.person_id===c.person_id}).slice()
     .sort(function(a,b){return (a.start_date||'').localeCompare(b.start_date||'')||(a.seq-b.seq)});
@@ -208,7 +220,7 @@ function openDetail(id){
     (c.principal_only&&c.status!=='closed'?'<span class="st" style="background:rgba(34,211,238,0.15);color:var(--cyan)">ผ่อนต้น · ไม่คิดดอก</span>':'')+
     (c.was_lost&&c.status==='closed'?'<span class="st" style="background:rgba(34,197,94,0.15);color:var(--green)">คืนเครดิต (เคยตาย)</span>':'')+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
-    '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(b?b.name:'—')+'</div></div>';
+    '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></div>';
   if(canEditCustomerInfo()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
   h+='</div>';
 
@@ -437,7 +449,6 @@ function openAddCustomer(reloanCust){
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="cust-save-btn" onclick="saveCustomer()">เพิ่มลูกค้า</button></div>';
-  var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
   var body=document.getElementById('modal-customer-body');body._interval=1;body._principal=null;
   custFormBranches();
   // โหมดเปิดยอดใหม่ → เติมข้อมูลคนเดิม + เปลี่ยนหัวข้อ/ปุ่ม
@@ -460,20 +471,6 @@ function custFormBranches(){
     ?bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('')
     :'<option value="">— ยังไม่มีบ้านในกองนี้ —</option>';
 }
-// คนนี้มีสัญญาที่ยังเก็บอยู่ (เปิดใหม่ไปแล้ว) หรือไม่ — ใช้ซ่อนสัญญาเก่าที่ปิดแล้วออกจากแท็บ "ปิดยอด"
-function personHasActiveLoan(personId){
-  return allLoans.some(function(l){return l.person_id===personId&&(l.status==='normal'||l.status==='overdue')});
-}
-// คนเดียวกันอาจมีสัญญาที่ปิดแล้วหลายรอบ — โชว์ในแท็บ "ปิดยอด" แค่รอบล่าสุด (กันซ้ำ)
-function isLatestClosedLoan(c){
-  var sameClosed=allLoans.filter(function(l){return l.person_id===c.person_id&&l.status==='closed'});
-  if(sameClosed.length<=1)return true;
-  var latest=sameClosed.reduce(function(a,b){
-    if(a.start_date!==b.start_date)return a.start_date>b.start_date?a:b;
-    return a.seq>b.seq?a:b;
-  });
-  return latest.id===c.id;
-}
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
 function loanRuleError(personId,branchId){
   if(!personId)return null; // คนใหม่ ยังไม่มีสัญญา
@@ -494,7 +491,6 @@ function openEditCustomer(id){
   closeModal('modal-detail'); // กัน modal ซ้อนกัน
   editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
-  var mw=document.querySelector('#modal-customer .modal');if(mw)mw.classList.remove('modal-wide');
   document.getElementById('modal-customer-title').textContent='แก้ แก้ไขลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name" value="'+esc(c.full_name)+'"/></div>'+

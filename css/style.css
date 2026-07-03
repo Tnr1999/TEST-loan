@@ -159,10 +159,7 @@ body.role-staff #dash-branch-btns{display:none}
 body.role-staff #dash-cal-wrap{display:none}
 body.role-staff #dash-layout{display:block!important}
 
-.collect-done{text-align:center;padding:34px 20px;background:var(--green-dim);border:1px solid rgba(52,211,153,0.3);border-radius:var(--radius-lg);color:var(--green);font-weight:600;font-size:1rem;line-height:1.6}
-.collect-done>:first-child{font-size:2.4rem;margin-bottom:8px}
 /* รายการการ์ดในหน้าเก็บเงิน */
-.crow-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
 
 /* ═══ CARD ═══ */
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
@@ -173,16 +170,10 @@ body.role-staff #dash-layout{display:block!important}
 /* ═══ STAT GRID ═══ */
 .stat-grid{display:grid;gap:12px;margin-bottom:16px}
 .cols-4{grid-template-columns:repeat(4,1fr)}
-.cols-3{grid-template-columns:repeat(3,1fr)}
-.cols-2{grid-template-columns:repeat(2,1fr)}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:15px 16px;display:flex;flex-direction:column;gap:5px}
 .stat .label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:500}
 .stat .value{font-size:1.4rem;font-weight:700;font-family:var(--font-mono)}
-.stat .sub{font-size:0.7rem;color:var(--muted)}
-.stat.accent-gold .value{color:var(--gold)}
-.stat.accent-green .value{color:var(--green)}
 .stat.accent-cyan .value{color:var(--cyan)}
-.stat.accent-red .value{color:var(--red)}
 .section-label{font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 10px}
 /* ลากจัดลำดับบ้าน (หน้าตั้งค่า) */
 .branch-drag-list{display:flex;flex-direction:column;gap:10px}
@@ -246,21 +237,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .tr-right{text-align:right}
 
 /* ═══ CUSTOMER CARD (มือถือ) ═══ */
-.ccard{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;-webkit-tap-highlight-color:transparent}
-.ccard-actions{display:flex;gap:8px;margin-top:3px}
-.ccard-actions .btn{flex:1}
-.ccard-today{font-size:0.72rem;font-weight:600;padding:2px 8px;border-radius:99px}
-.ccard-today.t-paid{color:var(--green);background:var(--green-dim)}
-.ccard-today.t-due{color:var(--amber);background:var(--amber-dim)}
-.ccard-top{display:flex;align-items:center;gap:8px}
-.ccard-seq{font-family:ui-monospace,monospace;color:var(--muted);font-size:0.78rem;flex-shrink:0}
-.ccard-name{font-weight:600;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ccard-meta{display:flex;flex-wrap:wrap;gap:4px 6px;font-size:0.76rem;color:var(--muted)}
-.ccard-meta span:not(:last-child)::after{content:"·";margin-left:6px;color:var(--border2)}
-.ccard-bot{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.ccard-rem{font-size:0.82rem;color:var(--text2)}
-.ccard-rem b{color:var(--gold);font-size:1.02rem;font-weight:700}
-.ccard-go{font-size:0.78rem;color:var(--gold);flex-shrink:0}
 
 /* ═══ COMPACT ROW (มือถือ – ลิสต์กระชับ) ═══ */
 .crow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:11px 13px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .14s,background .12s,transform .08s}
@@ -313,7 +289,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .vchip:active{transform:scale(0.96)}
 .vchip.active{color:var(--on-gold);background:var(--gold);border-color:var(--gold)}
 .vchip.vc-overdue.active{background:var(--red);border-color:var(--red);color:#fff}
-.vchip.vc-paid.active{background:var(--green);border-color:var(--green);color:#04230f}
 .vchip.vc-advance.active{background:var(--purple);border-color:var(--purple);color:#1c1032}
 .vchip.vc-new.active{background:var(--cyan);border-color:var(--cyan);color:#04222b}
 .vchip.vc-closed.active{background:var(--muted);border-color:var(--muted);color:var(--on-gold)}
@@ -336,8 +311,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 /* ปุ่มไอคอน (รีเฟรชหน้า) บน header — สี่เหลี่ยมจัตุรัส ไอคอนกลาง */
 .btn-icon{padding:0!important;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
 .btn-icon svg{width:18px;height:18px}
-.btn-icon:active svg{animation:fab-spin .6s linear}
-@keyframes fab-spin{to{transform:rotate(360deg)}}
+.btn-icon:active svg{animation:spin .6s linear}
 
 /* ═══ STATUS BADGE ═══ */
 .st{display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:99px}
@@ -346,6 +320,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .st-lost{background:var(--muted-dim);color:var(--text2)}
 .st-closed{background:var(--muted-dim);color:var(--muted)}
 .st-pending{background:var(--amber-dim);color:var(--amber)}
+.st-advance{background:var(--purple-dim);color:var(--purple)}
 .pst{font-size:0.68rem;font-weight:600;padding:2px 7px;border-radius:5px}
 .pst-exact,.pst-overpaid{background:var(--green-dim);color:var(--green)}
 .pst-partial{background:var(--amber-dim);color:var(--amber)}
@@ -353,18 +328,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .pst-advance{background:var(--purple-dim);color:var(--purple)}
 
 /* ═══ CUSTOMER PAY CARD ═══ */
-.pay-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;transition:all 0.15s}
-.pay-card.due{border-color:rgba(249,115,22,0.35);background:linear-gradient(var(--card),var(--card)) padding-box,var(--amber-dim)}
-.pay-card.paid{opacity:0.7}
-.pay-card.overdue{border-color:rgba(251,113,133,0.4)}
-.pay-card.lost{opacity:0.6}
-.pc-seq{font-size:0.68rem;color:var(--muted);font-family:var(--font-mono)}
-.pc-name{font-weight:600;font-size:0.9rem}
-.pc-meta{font-size:0.72rem;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
 
 /* ═══ PROGRESS ═══ */
-.prog{height:8px;background:var(--surface);border-radius:99px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;transition:width 0.5s}
 
 /* ═══ MODAL ═══ */
 .modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
@@ -378,15 +343,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .modal-x:hover{color:var(--gold);border-color:var(--gold)}
 .modal-body{padding:20px}
 .modal-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px}
-/* ฟอร์ม 2 คอลัมน์ (เพิ่มลูกค้า) — มือถือ = คอลัมน์เดียว */
-.form-cols{display:block}
 .form-col-title{font-size:0.8rem;font-weight:600;color:var(--gold);margin:0 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.form-col+.form-col{margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
-@media (min-width:768px){
-  .modal.modal-wide{max-width:760px}
-  .form-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
-  .form-col+.form-col{margin-top:0;padding-top:0;border-top:none}
-}
 
 /* ═══ CALC PREVIEW ═══ */
 .calc-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-top:14px}
@@ -422,8 +379,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .quick-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .quick-btn{font-size:0.76rem;padding:6px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all 0.15s}
 .quick-btn.sel,.quick-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--gold-dim)}
-.quick-btn.qb-pen{border-color:rgba(251,113,133,0.35);color:var(--red)}
-.quick-btn.qb-pen:hover,.quick-btn.qb-pen.sel{border-color:var(--red);color:var(--red);background:var(--red-dim)}
 
 /* ═══ SEGMENTED ═══ */
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -486,11 +441,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 [data-tip]{position:relative;cursor:default}
 [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--card2);color:var(--text);border:1px solid var(--border2);border-radius:9px;padding:8px 12px;font-size:0.75rem;font-family:var(--font-th);white-space:pre;line-height:1.6;z-index:999;pointer-events:none;opacity:0;transition:opacity 0.15s;box-shadow:var(--shadow);min-width:160px;max-width:260px}
 [data-tip]:hover::after{opacity:1}
-.skeleton{background:linear-gradient(90deg,var(--surface),var(--card2),var(--surface));background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--radius)}
-@keyframes shimmer{to{background-position:-200% 0}}
 .row-flex{display:flex;align-items:center;gap:10px}
-.spacer{flex:1}
-.hide{display:none!important}
 .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .dt-item{display:flex;flex-direction:column;gap:3px}
 .dt-item .k{font-size:0.7rem;color:var(--muted)}
@@ -571,10 +522,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .sub-k{font-size:0.58rem}
   .page-title{font-size:1.2rem}
   .cols-4{grid-template-columns:repeat(2,1fr)}
-  .cols-3{grid-template-columns:repeat(3,1fr);gap:8px}
-  .cols-3 .stat{padding:11px 10px}
-  .cols-3 .stat .value{font-size:0.92rem}
-  .cols-3 .stat .label{font-size:0.58rem;letter-spacing:0.02em}
   .stat .value{font-size:1.15rem}
   .detail-grid{grid-template-columns:1fr}
   /* มือถือ = bottom sheet เด้งจากล่าง (มุมบนโค้ง) ตาม DESIGN.md */
@@ -593,7 +540,6 @@ table.tbl tbody tr:hover{background:var(--surface)}
   /* ฟิลเตอร์กระชับ: ช่องค้นหาเต็มแถว, ตัวเลือกแบ่งแถวเท่าๆ กัน */
   .filter-row{gap:8px;margin-bottom:12px}
   .filter-row .search-box{flex:1 1 100%}
-  .filter-row select.inp{flex:1;width:auto;min-width:0;font-size:0.8rem;padding:9px 26px 9px 10px;background-position:right 7px center}
   /* ชิปกรอง: แถวเลื่อนแนวนอนแถวเดียว (ลดความสูง controls บนมือถือ) */
   .chip-list{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px}
   .chip-list::-webkit-scrollbar{display:none}

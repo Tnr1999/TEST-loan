@@ -77,12 +77,10 @@ function makeBranchSortable(list){
     });
   });
 }
-// บันทึกลำดับใหม่ลง branches.sort_order (0..n ตามที่ลาก)
+// บันทึกลำดับใหม่ลง branches.sort_order (0..n ตามที่ลาก) — ยิงขนานทุกบ้านในรอบเดียว
 async function saveBranchOrder(ids){
-  for(var i=0;i<ids.length;i++){
-    var res=await _sb.from('branches').update({sort_order:i}).eq('id',ids[i]);
-    if(res.error){toast('บันทึกลำดับล้มเหลว — ต้องรัน migration phase11-branch-order ก่อน','err');return}
-  }
+  var results=await Promise.all(ids.map(function(id,i){return _sb.from('branches').update({sort_order:i}).eq('id',id)}));
+  if(results.some(function(r){return r.error})){toast('บันทึกลำดับล้มเหลว — ต้องรัน migration phase11-branch-order ก่อน','err');return}
   toast('✅ จัดลำดับบ้านแล้ว','ok');
   await loadAll();
 }
@@ -242,14 +240,13 @@ function renderUsers(){
   if(!allUsers.length){document.getElementById('user-list').innerHTML='<div class="empty">ยังไม่มีผู้ใช้</div>';return}
   var ubByUser={};allUserBranches.forEach(function(ub){(ubByUser[ub.user_id]=ubByUser[ub.user_id]||[]).push(ub.branch_id)});
   var ugByUser={};allUserGroups.forEach(function(ug){(ugByUser[ug.user_id]=ugByUser[ug.user_id]||[]).push(ug.group_id)});
-  var bName=function(id){var b=allBranches.find(function(x){return x.id===id});return b?b.name:'?'};
   var gName=function(id){var g=allGroups.find(function(x){return x.id===id});return g?g.name:'?'};
   document.getElementById('user-list').innerHTML=
     '<div class="table-wrap"><table class="tbl"><thead><tr><th>ชื่อ</th><th>Username</th><th>Role</th><th>ขอบเขต</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     allUsers.map(function(u){
       var branches=u.role==='owner'?'ทุกกอง'
         :u.role==='head'?('กอง: '+((ugByUser[u.id]||[]).map(gName).join(', ')||'— (เห็นทุกบ้าน)'))
-        :('บ้าน: '+((ubByUser[u.id]||[]).map(bName).join(', ')||'—'));
+        :('บ้าน: '+((ubByUser[u.id]||[]).map(branchName).join(', ')||'—'));
       return '<tr style="'+(u.is_active?'':'opacity:0.5')+'">'+
         '<td style="font-weight:500">'+esc(u.full_name)+'</td>'+
         '<td class="mono" style="color:var(--text2)">'+esc(u.username)+'</td>'+
