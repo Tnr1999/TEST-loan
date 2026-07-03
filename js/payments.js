@@ -109,7 +109,7 @@ function openPayment(custId,date,editId){
       '<label class="adv-toggle">'+
         '<input type="checkbox" id="pay-advance" onchange="updatePayCalc()"'+(editRec&&editRec.advance_cycles>0?' checked':'')+'/>'+
         '<span class="adv-toggle-box">'+
-          '<span class="adv-toggle-ic">⏩</span>'+
+          '<span class="adv-toggle-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg></span>'+
           '<span class="adv-toggle-txt"><b>จ่ายล่วงหน้า</b><small>ส่วนเกินดอกงวดนี้ = ดอกล่วงหน้า เลื่อนกำหนดถัดไป แทนหักต้น</small></span>'+
           '<span class="adv-toggle-sw"><span class="adv-toggle-dot"></span></span>'+
         '</span>'+

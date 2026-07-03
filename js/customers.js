@@ -221,7 +221,7 @@ function openDetail(id){
     (c.was_lost&&c.status==='closed'?'<span class="st" style="background:rgba(34,197,94,0.15);color:var(--green)">คืนเครดิต (เคยตาย)</span>':'')+
     (!c.disbursed?'<span class="st st-pending">รอเปิด</span>':'')+'</div>'+
     '<div class="page-sub">'+esc(groupNameOfBranch(c.branch_id))+' · '+esc(branchName(c.branch_id))+'</div></div>';
-  if(canEditCustomerInfo()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ แก้ไข</button>';
+  if(canEditCustomerInfo()&&c.status!=='closed')h+='<button class="btn btn-ghost btn-sm" onclick="openEditCustomer(\''+id+'\')">แก้ไข</button>';
   h+='</div>';
 
   // stats
@@ -491,7 +491,7 @@ function openEditCustomer(id){
   closeModal('modal-detail'); // กัน modal ซ้อนกัน
   editingCustId=id;reloanPersonId=null;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
-  document.getElementById('modal-customer-title').textContent='แก้ แก้ไขลูกค้า';
+  document.getElementById('modal-customer-title').textContent='แก้ไขลูกค้า';
   document.getElementById('modal-customer-body').innerHTML=
     '<div class="field"><label>ชื่อ-สกุล <span class="req">*</span></label><input class="inp" id="f-name" value="'+esc(c.full_name)+'"/></div>'+
     '<div class="field"><label>เบอร์โทรศัพท์</label><input class="inp" id="f-phone" value="'+esc(c.phone||'')+'"/></div>'+
