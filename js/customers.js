@@ -71,20 +71,21 @@ function renderCustomers(){
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
     var s=stMap[c.id];
-    // "รอเปิด" (ยังไม่ยืนยันโอน) → ยกไปไว้ในกลุ่ม "ปิดยอด" ก่อน ยังไม่โผล่ในลิสต์เก็บเงินปกติ
+    // "รอโอน" (ยังไม่ยืนยันโอนเงิน) = ชิปของตัวเอง — ไม่ปนกับลิสต์เก็บเงินและไม่ปนกับ "ปิดยอด"
+    if(v==='pending')return s.pending;
     if(v==='today')return s.due&&!s.paid&&!s.pending;
     // "จ่ายล่วงหน้า" — วันครบกำหนดถูกเลื่อนเลยวันที่ดูไปแล้ว (จากสวิตช์จ่ายล่วงหน้า) · จ่ายตรงงวดปกติไม่นับ
     if(v==='advance')return s.ahead&&!s.pending;
     if(v==='overdue')return c.status==='overdue'&&!s.paid&&!s.pending;
     if(v==='new')return s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
     if(v==='old')return !s.isNew&&!s.pending&&c.status!=='closed'&&c.status!=='lost';
-    if(v==='closed')return s.pending||closedVisible(c);
+    if(v==='closed')return closedVisible(c);
     if(v==='dead')return c.status==='lost';
     return true;
   }
 
   // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู
-  var chips=[['today','ถึงกำหนด'],['advance','จ่ายล่วงหน้า'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
+  var chips=[['today','ถึงกำหนด'],['pending','รอโอน'],['advance','จ่ายล่วงหน้า'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
   document.getElementById('cust-summary').innerHTML=chips.map(function(v){
     var n=list.filter(function(c){return inView(c,v[0])}).length;
     return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';

@@ -296,6 +296,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 /* จุดสีนำหน้าชิป (แทนอิโมจิ) — ซ่อนเมื่อ active เพราะชิปเปลี่ยนเป็นสีเต็ม */
 .vchip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0}
 .vc-today::before{background:var(--amber)}
+.vc-pending::before{background:var(--gold)}
 .vc-advance::before{background:var(--purple)}
 .vc-overdue::before{background:var(--red)}
 .vc-new::before{background:var(--cyan)}
