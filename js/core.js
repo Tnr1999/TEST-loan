@@ -302,6 +302,21 @@ function doLogout(){
   allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];allDisbursements=[];
   showLoginScreen();
 }
+// เด้งออกจากระบบพร้อมข้อความบนหน้า login (ใช้ตอนบัญชีถูกปิด/ถูกลบ)
+function forceLogout(msg){
+  doLogout();
+  var err=document.getElementById('login-err'),errt=document.getElementById('login-err-txt');
+  if(err&&errt&&msg){errt.textContent=msg;err.classList.add('show');}
+}
+// ตรวจ session ที่จำไว้กับ DB ก่อนเข้าแอป — บัญชีถูกปิด/ถูกลบ = ไม่ให้เข้า (ล็อกอินค้างไว้ก็โดนเด้ง)
+async function resumeSession(cached){
+  var res=await _sb.from('users').select('*').eq('id',cached.id).eq('is_active',true).maybeSingle();
+  if(res.error){currentUser=cached;startApp();return;}  // เน็ตล่ม/ผิดพลาดชั่วคราว — ใช้ session เดิมไปก่อน ไม่ล็อกคนทำงานภาคสนาม
+  if(!res.data){forceLogout('บัญชีของคุณถูกระงับหรือถูกลบ — ติดต่อเจ้าของระบบ');return;}
+  currentUser=res.data;                                  // ใช้ข้อมูลล่าสุดจาก DB (role/ชื่อ อัปเดตแล้วมีผลทันที)
+  localStorage.setItem(SESSION_KEY,JSON.stringify(currentUser));
+  startApp();
+}
 
 /* ═══ START ═══ */
 function startApp(){
@@ -378,6 +393,12 @@ async function loadAll(){
   allDisbursements=(extra[0]&&!extra[0].error&&extra[0].data)||[];
   allAlerts=(extra[1]&&!extra[1].error&&extra[1].data)||[];
   if(extra[2]&&!extra[2].error)allUsers=extra[2].data||[];
+
+  // บัญชีถูกปิด/ถูกลบระหว่างใช้งาน → เด้งออกทันที (เช็คจากรายชื่อผู้ใช้ที่โหลดมาแล้ว ไม่มี query เพิ่ม)
+  if(allUsers.length){
+    var me=allUsers.find(function(u){return u.id===currentUser.id});
+    if(!me||me.is_active===false){forceLogout('บัญชีของคุณถูกระงับหรือถูกลบ — ติดต่อเจ้าของระบบ');return;}
+  }
 
   // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
   allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});
