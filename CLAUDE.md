@@ -83,5 +83,14 @@
   - **unique เลขบัตรระดับ DB** — partial unique index บน `persons.id_card` กันซ้ำเป๊ะแม้โค้ดพลาด *(ต้องรัน `supabase-migration-phase9-idcard-unique.sql` · ถ้ามีซ้ำเดิมต้องเคลียร์ก่อน)*
   - **หน้า "แจ้งเตือน" (เฉพาะ owner)** `js/alerts.js` + `page-alerts` · badge เลข unread บนเมนู · ปุ่ม "อ่านแล้ว"/"อ่านทั้งหมด" · ปุ่ม **"ดูลูกค้า"/"ดูคนที่ซ้ำ"** (เปิดรายละเอียดจาก person_id/candidate_ids) · ปุ่ม **ลบ/ลบที่อ่านแล้ว** กันตารางบวม · เก็บที่ตาราง `alerts` *(ต้องรัน `supabase-migration-phase8-alerts.sql` ก่อน)*
 
+- **จ่ายล่วงหน้า (advance payment)** — สวิตช์ `.adv-toggle` ในโมดัลรับเงิน (ซ่อนเมื่อผ่อนต้น/ตาย): ติ๊กแล้วส่วนเกินดอกงวดนี้ตีเป็น **ดอกล่วงหน้าเต็มงวดๆ (ปัดลง)** แทนหักต้น เช่น ดอกงวดละ 100 จ่าย 500 = ดอกวันนี้ 100 + ล่วงหน้า 4 งวด · เลื่อน `last_collection_date` ไปข้างหน้าตามงวด (`calcAdvance` ใน payments.js) · `payment_status='advance'` + `daily_records.advance_cycles` · ประวัติโชว์ "ล่วงหน้า +N งวด" · badge สถานะ "จ่ายล่วงหน้า" (`isPaidAhead` — วันครบกำหนดเลื่อนเลยวันที่ดู) + ชิปกรอง `advance` · **สีม่วง (--purple) = เอกลักษณ์แนวคิดนี้ทั้งระบบ** *(รัน `supabase-migration-phase13-advance-payment.sql` แล้ว)*
+- **เรียงบ้านด้วยการลาก** — หน้าตั้งค่า→บ้าน ลาก ⠿ จัดลำดับ (Pointer Events รองรับทัช) → `branches.sort_order` · `allBranches` เรียงตามนี้ทั้งแอป (`makeBranchSortable`/`saveBranchOrder` ใน admin.js) *(รัน `supabase-migration-phase11-branch-order.sql` แล้ว)*
+- **ลิงก์กลุ่มเฟส** — ช่องต่อลูกค้า `persons.fb_group_url` (แยกจาก Facebook URL) ฟอร์มเพิ่ม/แก้/เปิดยอดใหม่ + ลิงก์กดได้ในรายละเอียด *(รัน `supabase-migration-phase12-fb-group.sql` แล้ว)*
+- **ดรอปดาวธนาคาร** — `BANK_LIST`/`bankOptions` ใน core.js (เรียงตามที่กำหนด กสิกร→UOB · เก็บค่าเดิมนอกลิสต์เป็นตัวเลือก "(เดิม)")
+- **หน้าค่าแรง: ตัวกรอง กอง/บ้าน + เลือกช่วงวันที่เอง** — `payoutGroupId/payoutBranchId` + โหมด `range` (ตั้งแต่–ถึง, default = สัปดาห์ของวันที่เลือก) แทนรายสัปดาห์เดิม
+- **ชิป "จ่ายล่วงหน้า" + ลูกค้า "รอเปิด" อยู่กลุ่ม "ปิดยอด"** — inView ใน renderCustomers · ประวัติการชำระในรายละเอียดรวมทุกรอบของคนเดียวกัน (ป้าย "รอบ N")
+- **helpers กลางที่ควรใช้ซ้ำ (อย่าเขียนใหม่):** `scopeBids(gid,bid)` ขอบเขตตัวกรอง · `indexBy(arr,key)` lookup map · `feeOf(r)` ค่าธรรมเนียมจากรายการ · `readPayInputs()/buildDayEntries()` ฟอร์มรับเงิน · `money()/payoutPW()` หน้าค่าแรง · `addDaysISO` · modal ปิดอัตโนมัติผ่าน class `.modal-overlay` (ไม่ต้องลงทะเบียน id)
+
 **ค้างอยู่ (ยังไม่ทำ)**
 - *(ครบตามแผนแล้ว — เพิ่มเติมตามต้องการ)*
+- แนวคิดไว้พิจารณา: `loadAll` โหลด `daily_records` ทั้งตารางทุกครั้งที่บันทึก — ข้อมูลโตปีละ ~36k แถว ถ้าเริ่มหน่วงค่อยเปลี่ยนเป็นโหลดเฉพาะช่วงวัน + โหลดประวัติรายคนตอน `openDetail`
