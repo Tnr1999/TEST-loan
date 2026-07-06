@@ -21,7 +21,14 @@ var dashBranchId = '';
 
 /* ═══ UTILS ═══ */
 function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function todayISO(){return toISO(new Date())}
+// ── วันทำงานของระบบ: ตัดวันตอน "ตี 4" เวลาไทย ──
+// 00:00–03:59 ยังนับเป็น "วันเดิม" (เก็บเงินรอบดึกไม่ข้ามวัน) · ตี 4 เป็นต้นไป = วันใหม่
+// ล็อก Asia/Bangkok (UTC+7 คงที่) ไม่อิง timezone เครื่อง — เครื่องตั้งโซนเวลาผิดก็ไม่เพี้ยน
+var DAY_CUTOFF_HOUR=4;
+function todayISO(){
+  var d=new Date(Date.now()+(7-DAY_CUTOFF_HOUR)*3600000);   // เลื่อนเป็นเวลาไทย แล้วถอยเท่าเวลาตัดวัน → อ่านวันที่แบบ UTC
+  return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0');
+}
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(86400000))}
 function addDaysISO(iso,n){var d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+(+n||0));return toISO(d)}
 function round2(n){return Math.round((+n||0)*100)/100}
