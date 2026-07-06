@@ -473,19 +473,17 @@ function custFormBranches(){
     :'<option value="">— ยังไม่มีบ้านในกองนี้ —</option>';
 }
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
-function loanRuleError(personId,branchId){
-  if(!personId)return null; // คนใหม่ ยังไม่มีสัญญา
-  var nb=allBranches.find(function(b){return b.id===branchId}),ng=nb?nb.group_id:null;
+// ลูกค้าเปิดสัญญาได้ทุกบ้าน (ไม่บล็อกลิมิตแล้ว) — แต่ถ้ามีสัญญาค้างอยู่บ้านอื่น ยิงแจ้งเตือนให้ Owner รู้ว่าอยู่บ้านไหนบ้าง
+function notifyMultiBranch(personId,personName,newBranchId){
+  if(!personId)return; // คนใหม่ ยังไม่มีสัญญาที่ไหน
   var active=allLoans.filter(function(l){return l.person_id===personId&&l.status!=='closed'});
-  var gset={};
-  for(var i=0;i<active.length;i++){
-    var br=allBranches.find(function(b){return b.id===active[i].branch_id});
-    var g=br?br.group_id:null;
-    if(g)gset[g]=true;
-    if(g&&ng&&g===ng)return 'ลูกค้านี้มีสัญญาที่ยังไม่ปิดในกองนี้อยู่แล้ว (1 กอง กู้ได้ 1 บ้าน)';
-  }
-  if(ng&&!gset[ng]&&Object.keys(gset).length>=2)return 'ลูกค้านี้กู้ครบ 2 กองแล้ว กู้เพิ่มไม่ได้';
-  return null;
+  if(!active.length)return;
+  var places=active.map(function(l){
+    return branchName(l.branch_id)+' ('+groupNameOfBranch(l.branch_id)+')';
+  });
+  logAlert('multi_branch',{person_id:personId,person_name:personName,branch_id:newBranchId,
+    message:'เปิดสัญญาเพิ่มที่ '+branchName(newBranchId)+' — มีสัญญาค้างอยู่แล้วที่: '+places.join(' · ')+' (รวมเป็น '+(active.length+1)+' สัญญา)'});
+  toast('ℹ️ ลูกค้ามีสัญญาอยู่แล้วที่ '+places.join(', ')+' — แจ้ง Owner แล้ว','info');
 }
 function openEditCustomer(id){
   if(!canEditCustomerInfo()){toast('คุณไม่มีสิทธิ์แก้ไขลูกค้า','err');return}
@@ -577,8 +575,8 @@ async function saveCustomer(){
     return;
   }
 
-  var ruleErr=loanRuleError(exId,branchId);
-  if(ruleErr){toast(ruleErr,'err');return}
+  // อยู่ได้ทุกบ้าน — ไม่บล็อก แต่แจ้ง Owner ว่าลูกค้าคนนี้มีสัญญาอยู่บ้านไหนบ้าง
+  notifyMultiBranch(exId,name,branchId);
 
   var saveLabel=reloanPersonId?'เปิดยอดใหม่':'เพิ่มลูกค้า';
   if(btn){btn.innerHTML='<span class="spin"></span>';btn.disabled=true}

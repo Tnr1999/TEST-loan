@@ -3,8 +3,9 @@
    เห็นเฉพาะ owner · โหลดจาก allAlerts (core.js loadAll)
 ═══════════════════════════════════════════════ */
 var ALERT_TYPES={
-  dup_lost :{icon:'💀',label:'เปิดซ้ำคนตาย', cls:'al-danger'},
-  maybe_dup:{icon:'⚠️',label:'อาจเป็นลูกค้าซ้ำ',cls:'al-warn'}
+  dup_lost    :{icon:'💀',label:'เปิดซ้ำคนตาย', cls:'al-danger'},
+  maybe_dup   :{icon:'⚠️',label:'อาจเป็นลูกค้าซ้ำ',cls:'al-warn'},
+  multi_branch:{icon:'🏠',label:'ลูกค้ามีหลายบ้าน',cls:'al-warn'}
 };
 
 // รีเฟรชหน้าแจ้งเตือน + badge บนเมนู หลังทุก mutation
