@@ -205,11 +205,21 @@ function custCardHTML(c,date,s){
 function openDetail(id){
   currentDetailId=id;
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
-  // ประวัติข้ามรอบ — รวมรายการชำระของทุกสัญญาของคนเดียวกัน (เปิดยอดใหม่แล้วประวัติเดิมยังอยู่)
+  // ประวัติข้ามสัญญา — รวมรายการชำระของทุกสัญญาของคนเดียวกัน (เปิดยอดใหม่/หลายบ้าน ประวัติอยู่ที่เดียว)
+  // ป้ายกำกับแถว: หลายบ้าน = ชื่อบ้าน · กู้ซ้ำบ้านเดิมหลายรอบ = "รอบ N" · ผสมกัน = "บ้าน · รอบ N"
   var personLoans=allCustomers.filter(function(x){return x.person_id===c.person_id}).slice()
     .sort(function(a,b){return (a.start_date||'').localeCompare(b.start_date||'')||(a.seq-b.seq)});
-  var roundOf={};personLoans.forEach(function(l,i){roundOf[l.id]=i+1;});
-  var multiRound=personLoans.length>1;
+  var branchLoanCount={};personLoans.forEach(function(l){branchLoanCount[l.branch_id]=(branchLoanCount[l.branch_id]||0)+1;});
+  var multiBranch=Object.keys(branchLoanCount).length>1;
+  var recTag={};                                    // loan id → ป้ายที่โชว์ใต้วันที่ ('' = ไม่ต้องมี)
+  var perBranchRound={};
+  personLoans.forEach(function(l){
+    perBranchRound[l.branch_id]=(perBranchRound[l.branch_id]||0)+1;
+    var parts=[];
+    if(multiBranch)parts.push(branchName(l.branch_id));
+    if(branchLoanCount[l.branch_id]>1)parts.push('รอบ '+perBranchRound[l.branch_id]);
+    recTag[l.id]=parts.join(' · ');
+  });
   var loanIds=personLoans.map(function(l){return l.id});
   var recs=allRecords.filter(function(r){return loanIds.indexOf(r.customer_id)>=0}).sort(function(a,b){return b.record_date.localeCompare(a.record_date)||(b.created_at||'').localeCompare(a.created_at||'')});
   var ca=closeAmount(c);
@@ -306,7 +316,7 @@ function openDetail(id){
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
-      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(multiRound?'<div style="font-size:0.66rem;color:var(--gold)">รอบ '+(roundOf[r.customer_id]||'?')+'</div>':'')+'</td>'+
+      recs.map(function(r){return '<tr><td>'+thDate(r.record_date)+(r.created_at?'<div style="font-size:0.68rem;color:var(--muted)">'+hhmm(r.created_at)+'</div>':'')+(recTag[r.customer_id]?'<div style="font-size:0.66rem;color:var(--gold)">'+esc(recTag[r.customer_id])+'</div>':'')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.interest_due)+'</td>'+
         '<td class="tr-right mono" style="font-weight:600">'+(r.amount_paid>0?'฿'+fmt(r.amount_paid):'—')+'</td>'+
         '<td class="tr-right mono" style="color:var(--green)">'+(r.interest_collected>0?'฿'+fmt(r.interest_collected):'—')+'</td>'+
