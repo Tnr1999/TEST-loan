@@ -217,11 +217,12 @@ function renderDashboard(){
 // ช่วงเวลาค่าแรง: 'day' (วันที่เลือก) | 'range' (เลือกช่วงวันที่เอง ตั้งแต่–ถึง)
 var payoutPeriod='day';
 var payoutFrom='', payoutTo='';   // ช่วงวันที่ของโหมด range (ISO)
+// สัปดาห์ค่าแรง = อังคาร → จันทร์ (วันจันทร์นับเป็นท้ายสัปดาห์ของรอบก่อน)
 function weekRange(iso){
   var d=new Date(iso+'T00:00:00'),dow=d.getDay();
-  var mon=new Date(d);mon.setDate(d.getDate()+(dow===0?-6:1-dow)); // เริ่มวันจันทร์
-  var sun=new Date(mon);sun.setDate(mon.getDate()+6);
-  return [toISO(mon),toISO(sun)];
+  var tue=new Date(d);tue.setDate(d.getDate()-((dow-2+7)%7)); // ถอยไปวันอังคารของรอบ
+  var mon=new Date(tue);mon.setDate(tue.getDate()+6);
+  return [toISO(tue),toISO(mon)];
 }
 function setPayoutPeriod(p){
   payoutPeriod=p;
