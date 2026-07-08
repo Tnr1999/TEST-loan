@@ -57,16 +57,18 @@ function renderCustomers(){
   allRecords.forEach(function(r){if(r.record_date===vdate)(recsByCust[r.customer_id]||(recsByCust[r.customer_id]=[])).push(r)});
   var stMap={};
   list.forEach(function(c){stMap[c.id]=custDayStatus(c,vdate,recsByCust[c.id]||[])});
-  // เตรียม lookup กติกา "ปิดยอด" ครั้งเดียว: คนที่ยังมีสัญญาเปิดอยู่ + สัญญาปิดรอบล่าสุดของแต่ละคน
-  var activePersons={},latestClosed={};
+  // เตรียม lookup กติกา "ปิดยอด" ครั้งเดียว — คิดแยกต่อ "คน+บ้าน" (รองรับลูกค้าหลายบ้าน):
+  // ปิดที่บ้านนี้แต่ยังมีสัญญาค้างบ้านอื่น = ยังโชว์ในปิดยอดของบ้านนี้ · กู้ซ้ำบ้านเดิม = dedup เหลือรอบปิดล่าสุด
+  var activeInBranch={},latestClosed={};
   allLoans.forEach(function(l){
-    if(l.status==='normal'||l.status==='overdue')activePersons[l.person_id]=1;  // lost ไม่นับเป็นสัญญาเปิด (เหมือนกติกาเดิม)
+    var k=l.person_id+'|'+l.branch_id;
+    if(l.status==='normal'||l.status==='overdue')activeInBranch[k]=1;  // lost ไม่นับเป็นสัญญาเปิด (เหมือนกติกาเดิม)
     if(l.status!=='closed')return;
-    var cur=latestClosed[l.person_id];
-    if(!cur||(l.start_date||'')>(cur.start_date||'')||((l.start_date||'')===(cur.start_date||'')&&l.seq>cur.seq))latestClosed[l.person_id]=l;
+    var cur=latestClosed[k];
+    if(!cur||(l.start_date||'')>(cur.start_date||'')||((l.start_date||'')===(cur.start_date||'')&&l.seq>cur.seq))latestClosed[k]=l;
   });
-  // สัญญาปิดที่ควรโชว์ = คนนั้นไม่มีสัญญาเปิดค้าง + เป็นรอบปิดล่าสุด (dedup รอบเก่า)
-  function closedVisible(c){return c.status==='closed'&&!activePersons[c.person_id]&&latestClosed[c.person_id]&&latestClosed[c.person_id].id===c.id}
+  // สัญญาปิดที่ควรโชว์ = คนนั้นไม่มีสัญญาเปิดค้าง "ในบ้านเดียวกัน" + เป็นรอบปิดล่าสุดของบ้านนั้น
+  function closedVisible(c){var k=c.person_id+'|'+c.branch_id;return c.status==='closed'&&!activeInBranch[k]&&latestClosed[k]&&latestClosed[k].id===c.id}
 
   // ตรรกะแต่ละมุมมอง (ใช้ร่วมกันทั้งชิปและการกรองรายการ)
   function inView(c,v){
