@@ -114,7 +114,9 @@ function openPayment(custId,date,editId){
           '<span class="adv-toggle-sw"><span class="adv-toggle-dot"></span></span>'+
         '</span>'+
       '</label>')+
-    '<div class="field"><label>ค่าปรับ (บาท)'+(mode==='add'?' · เพิ่มรอบนี้':'')+'</label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penVal+'" oninput="updatePayCalc()"/></div>'+
+    // ช่องค่าปรับ = พับเก็บไว้ (กันเผลอกรอกซ้ำกับช่องจำนวนเงิน) · มีค่าปรับเดิมอยู่ = เปิดไว้เลย
+    '<button type="button" class="pen-add-btn" id="pen-add" onclick="showPenaltyField()"'+(penVal?' style="display:none"':'')+'>+ เพิ่มค่าปรับ</button>'+
+    '<div class="field" id="pen-field"'+(penVal?'':' style="display:none"')+'><label>ค่าปรับ (บาท)'+(mode==='add'?' · เพิ่มรอบนี้':'')+'</label><input class="inp mono" id="pay-penalty" type="number" min="0" step="0.01" placeholder="0.00" value="'+penVal+'" oninput="updatePayCalc()"/></div>'+
     '<div id="pay-calc"></div>'+
     '<div style="text-align:right;font-size:0.74rem;color:var(--muted);margin-top:10px">ยอดปิดสินเชื่อ: ฿'+fmt(close)+'</div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
@@ -125,6 +127,13 @@ function openPayment(custId,date,editId){
   updatePayCalc();
 }
 function setPayAmt(v){document.getElementById('pay-amount').value=v;updatePayCalc()}
+// เปิดช่องค่าปรับ (พับไว้เป็นค่าเริ่มต้น กันเผลอกรอกซ้ำกับช่องจำนวนเงิน)
+function showPenaltyField(){
+  var f=document.getElementById('pen-field'),a=document.getElementById('pen-add');
+  if(f)f.style.display='';
+  if(a)a.style.display='none';
+  var el=document.getElementById('pay-penalty');if(el)el.focus();
+}
 
 // คำนวณการชำระ (รายการเดียว/สะสม) + ตรวจ "ปิดสัญญา" และกันเงินต้นติดลบ
 // ค่าแรง = (ดอกที่เก็บได้ + ค่าปรับ + ค่าธรรมเนียมบ้าน[เฉพาะวันปิดสัญญา]) × 20%
