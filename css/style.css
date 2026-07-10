@@ -18,7 +18,7 @@
   --header-h:60px; --nav-h:60px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--font-th);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.5}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(ellipse 100% 45% at 50% -8%,rgba(212,175,55,0.10) 0%,transparent 60%)}
@@ -124,29 +124,28 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 /* ═══ SUMMARY BAR (แถบสรุปยอดติดใต้ header) ═══ */
 #summary-bar{position:sticky;top:var(--header-h);z-index:190;background:rgba(19,17,13,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(212,175,55,0.12)}
 #summary-bar:empty{display:none}
-/* ดำ-ทอง: "รวมรับวันนี้" พระเอกทองตัวใหญ่ + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) */
+/* ดำ-ทอง: สรุปยอดแถวเดียว — "รวมรับวันนี้" ทองนำหน้า + ตัวเลขอื่นเงียบ */
 .sbar{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:11px}
-.sbar-hero{flex-shrink:0}
-.sbar-hero-lbl{font-size:0.68rem;color:var(--muted);letter-spacing:0.03em}
-.sbar-hero-lbl .sbar-date{color:var(--dim)}
-.sbar-hero-val{font-family:var(--font-display);font-size:2.05rem;font-weight:800;color:var(--gold);line-height:1.02;letter-spacing:0;margin-top:2px}
 /* ฿ เป็นพรีฟิกซ์เล็ก-ยกขึ้น (สัญลักษณ์ใช้ฟอนต์ไทยที่มี ฿) */
 .cur{font-family:var(--font-serif);font-weight:600;font-size:0.5em;opacity:0.8;vertical-align:0.32em;margin-right:2px}
 .sbar-prog{font-size:0.68rem;color:var(--text2);margin-top:6px}
 .sbar-sub{display:flex;gap:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
 .sbar-sub::-webkit-scrollbar{display:none}
 .sub-item{display:flex;flex-direction:column;gap:1px;line-height:1.15;flex-shrink:0}
-.sub-k{font-size:0.62rem;color:var(--muted);white-space:nowrap}
-.sub-v{font-size:0.84rem;font-weight:600;font-family:var(--font-mono);color:var(--text);white-space:nowrap}
+.sub-k{font-size:0.6rem;color:var(--muted);white-space:nowrap}
+.sub-v{font-size:0.8rem;font-weight:600;font-family:var(--font-mono);color:var(--text);white-space:nowrap}
+.sub-v.is-total{color:var(--gold);font-weight:700}
 .sub-v.is-pen{color:var(--red)}
 .sub-v.is-out{color:var(--amber)}
 @media (min-width:768px){
   .sbar{flex-direction:row;align-items:center;gap:22px}
-  .sbar-sub{flex-wrap:wrap;overflow:visible;border-left:1px solid var(--border);padding-left:22px}
+  .sbar-sub{flex-wrap:wrap;overflow:visible}
 }
 
 /* ═══ PAGES & CONTENT ═══ */
 .container{max-width:1100px;margin:0 auto;padding:20px 16px}
+/* กัน grid item (#dash-main/#dash-cal-wrap) ดันกริดกว้างเกินจอ — เนื้อหาข้างในยาว (ชิปชื่อลูกค้า) ต้องยอมย่อ ไม่ใช่ดันทั้งหน้ากว้างขึ้น */
+#dash-layout>*{min-width:0}
 .page{display:none;margin-bottom:34px}
 .page.active{display:block;animation:pageIn 0.3s cubic-bezier(0.16,1,0.3,1)}
 .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
@@ -188,12 +187,12 @@ body.role-staff #dash-layout{display:block!important}
 .brbox{margin-bottom:12px}
 .brbox-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:11px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .brbox-name{font-size:1.02rem;font-weight:700;color:var(--text)}
-.brbox-total{font-size:0.74rem;color:var(--muted)}
-.brbox-total b{font-family:var(--font-mono);font-size:1rem;font-weight:700;color:var(--gold);margin-left:4px}
+.brbox-total{font-size:0.66rem;color:var(--muted)}
+.brbox-total b{font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:var(--gold);margin-left:4px}
 .brbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px 14px}
 .br-m{display:flex;flex-direction:column;gap:2px;line-height:1.15}
 .br-mk{font-size:0.66rem;color:var(--muted)}
-.br-mv{font-size:1rem;font-weight:600;font-family:var(--font-mono);color:var(--text)}
+.br-mv{font-size:0.8rem;font-weight:600;font-family:var(--font-mono);color:var(--text)}
 .br-mv.r{color:var(--red)}
 .br-mv.out{color:var(--amber)}
 /* หัวกอง — จัดกลุ่ม กอง → บ้าน */
@@ -525,12 +524,12 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .user-chip .uname{display:inline-block;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* ── สรุปยอดมือถือ: ย่อยอดรวม + รายละเอียดให้กะทัดรัด ── */
   .sbar{padding:9px 12px;gap:7px}
-  .sbar-hero-val{font-size:1.6rem}
-  .sbar-hero-lbl{font-size:0.64rem}
   .sbar-sub{gap:13px}
-  .sub-v{font-size:0.76rem}
-  .sub-k{font-size:0.58rem}
+  .sub-v{font-size:0.72rem}
+  .sub-k{font-size:0.56rem}
   .page-title{font-size:1.2rem}
+  /* กัน iOS Safari ซูมเข้าเองตอนโฟกัสช่องกรอก — ต้อง ≥16px เสมอ */
+  .inp{font-size:16px}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .stat .value{font-size:1.15rem}
   .detail-grid{grid-template-columns:1fr}

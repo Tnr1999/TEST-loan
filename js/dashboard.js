@@ -129,7 +129,8 @@ function renderDashboard(){
   // ── สรุปยอดดำ-ทอง: "รวมรับวันนี้" เป็นพระเอก + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) ──
   var total=sum.collected+sum.penalty;
   var sub=function(k,v,ex){return '<div class="sub-item"><span class="sub-k">'+k+'</span><span class="sub-v'+(ex||'')+'">฿'+fmt0(v)+'</span></div>'};
-  var subs=sub('ต้นเก็บคืน',sum.principal)+
+  var subs=sub('รวมรับวันนี้',total,' is-total')+
+    sub('ต้นเก็บคืน',sum.principal)+
     sub('ยอดเบิก',disbTotal,disbTotal>0?' is-out':'')+
     sub('ดอก',sum.interest)+
     sub('ค่าปรับ',sum.penalty,sum.penalty>0?' is-pen':'')+
@@ -143,11 +144,7 @@ function renderDashboard(){
   }
   document.getElementById('summary-bar').innerHTML=
     '<div class="sbar">'+
-      '<div class="sbar-hero">'+
-        '<div class="sbar-hero-lbl">รวมรับวันนี้ <span class="sbar-date">· '+thDate(date)+'</span></div>'+
-        '<div class="sbar-hero-val"><span class="cur">฿</span>'+fmt0(total)+'</div>'+heroSub+
-      '</div>'+
-      '<div class="sbar-sub">'+subs+'</div>'+
+      '<div class="sbar-sub">'+subs+'</div>'+heroSub+
     '</div>';
 
   // ── staff ไม่ใช้หน้าแรก (ซ่อนทั้งส่วนใน core.js) — แถบสรุปด้านบนพอแล้ว ใช้หน้า "ลูกค้า" เก็บเงิน ──
