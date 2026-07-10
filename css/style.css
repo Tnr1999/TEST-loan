@@ -528,6 +528,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .sub-v{font-size:0.72rem}
   .sub-k{font-size:0.56rem}
   .page-title{font-size:1.2rem}
+  /* กัน iOS Safari ซูมเข้าเองตอนโฟกัสช่องกรอก — ต้อง ≥16px เสมอ */
+  .inp{font-size:16px}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .stat .value{font-size:1.15rem}
   .detail-grid{grid-template-columns:1fr}
