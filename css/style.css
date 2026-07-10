@@ -127,9 +127,9 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 /* ดำ-ทอง: "รวมรับวันนี้" พระเอกทองตัวใหญ่ + ตัวเลขอื่นเงียบ (ไม่มีสีรุ้ง) */
 .sbar{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:11px}
 .sbar-hero{flex-shrink:0}
-.sbar-hero-lbl{font-size:0.68rem;color:var(--muted);letter-spacing:0.03em}
+.sbar-hero-lbl{font-size:0.6rem;color:var(--muted);letter-spacing:0.03em}
 .sbar-hero-lbl .sbar-date{color:var(--dim)}
-.sbar-hero-val{font-family:var(--font-display);font-size:2.05rem;font-weight:800;color:var(--gold);line-height:1.02;letter-spacing:0;margin-top:2px}
+.sbar-hero-val{font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:var(--gold);line-height:1.15;letter-spacing:0;margin-top:1px}
 /* ฿ เป็นพรีฟิกซ์เล็ก-ยกขึ้น (สัญลักษณ์ใช้ฟอนต์ไทยที่มี ฿) */
 .cur{font-family:var(--font-serif);font-weight:600;font-size:0.5em;opacity:0.8;vertical-align:0.32em;margin-right:2px}
 .sbar-prog{font-size:0.68rem;color:var(--text2);margin-top:6px}
@@ -525,8 +525,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .user-chip .uname{display:inline-block;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* ── สรุปยอดมือถือ: ย่อยอดรวม + รายละเอียดให้กะทัดรัด ── */
   .sbar{padding:9px 12px;gap:7px}
-  .sbar-hero-val{font-size:1.6rem}
-  .sbar-hero-lbl{font-size:0.64rem}
+  .sbar-hero-val{font-size:0.72rem}
+  .sbar-hero-lbl{font-size:0.56rem}
   .sbar-sub{gap:13px}
   .sub-v{font-size:0.72rem}
   .sub-k{font-size:0.56rem}
