@@ -169,11 +169,13 @@ function custCardHTML(c,date,s){
   // วันค้าง (เดิมซ่อนใน tooltip ของตาราง — มือถือเข้าไม่ถึง จึงโชว์บนการ์ดด้วย)
   var ref=c.last_collection_date||c.start_date;
   var daysOver=ref?(daysBetween(ref,date)-c.collection_interval):0;
-  var cls=s.pending?'pending':(s.paid?'paid':(s.due?'due':((c.status==='overdue'||c.status==='lost')?'over':'')));
+  // "ค้าง" (สีแดง) ต้องชนะ "ถึงกำหนด" (สีเหลือง) — คนเลยกำหนดแล้วให้เห็นเป็นค้างชัดๆ ไม่ใช่ถึงกำหนดธรรมดา
+  var isOver=c.status==='overdue'&&!s.paid&&!s.pending;
+  var cls=s.pending?'pending':(s.paid?'paid':(isOver?'over':(s.due?'due':(c.status==='lost'?'over':''))));
   var chip=s.pending?'<span class="crow-st t-pending">รอเปิด</span>'
     :(s.paid?'<span class="crow-st t-paid">จ่ายแล้ว ฿'+fmt(s.paidAmount)+(s.recCount>1?' ('+s.recCount+')':'')+'</span>'
+    :(isOver?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(s.due?'<span class="crow-st t-due">ถึงกำหนด'+(daysOver>0?' +'+daysOver+'ว':'')+'</span>'
-    :(c.status==='overdue'?'<span class="crow-st t-over">ค้าง'+(daysOver>0?' '+daysOver+'ว':'')+'</span>'
     :(c.status==='lost'?'<span class="crow-st t-dead">ตาย</span>'
     :(c.status==='closed'?'<span class="crow-st t-paid">'+(c.was_lost?'คืนเครดิต':'ปิดยอด')+'</span>'
     :(s.ahead?'<span class="crow-st t-advance">จ่ายล่วงหน้า</span>':''))))));
