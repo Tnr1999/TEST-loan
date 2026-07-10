@@ -270,6 +270,6 @@ async function savePayment(){
 
   toast(recId?'✅ แก้ไขสำเร็จ':'✅ บันทึกสำเร็จ','ok');
   closeModal('modal-payment');
-  await loadAll();
+  await refreshLoan(custId);   // โหลดเฉพาะสัญญานี้ ไม่ดึงทั้ง DB (ประหยัด egress)
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId)openDetail(currentDetailId);
 }

@@ -425,6 +425,11 @@ async function loadAll(){
     if(!me||me.is_active===false){forceLogout('บัญชีของคุณถูกระงับหรือถูกลบ — ติดต่อเจ้าของระบบ');return;}
   }
 
+  await rebuildAndRender();
+}
+
+// ประกอบข้อมูลในหน่วยความจำ + วาดทุกหน้าใหม่ — ใช้ร่วมกันระหว่าง loadAll (โหลดเต็ม) กับ refreshLoan (โหลดเฉพาะสัญญา)
+async function rebuildAndRender(){
   // daily_records ใช้ loan_id — alias เป็น customer_id เพื่อความเข้ากันได้กับโค้ดเดิม
   allRecords.forEach(function(rec){rec.customer_id=rec.loan_id});
   // ประกอบ allCustomers = สัญญา (loan) + ข้อมูลคน (person)
@@ -446,6 +451,26 @@ async function loadAll(){
   if(canManageUsers()) renderUsers();
   if(typeof renderNav==='function') renderNav();        // อัปเดต badge แจ้งเตือน
   if(typeof renderAlerts==='function') renderAlerts();
+}
+
+// โหลดเฉพาะสัญญาเดียวหลังบันทึก (loan + ประวัติชำระ + ยอดเบิกของสัญญานั้น) แทนการ loadAll ทั้ง DB — ลด egress ~95%
+// ใช้กับ: รับเงิน/แก้รายการ · ปิดสัญญา · เพิ่มยอด · เปลี่ยนสถานะ/ผ่อนต้น · ยืนยันโอน
+// เพิ่ม/แก้/ลบลูกค้า + หน้าตั้งค่า ยังใช้ loadAll เหมือนเดิม (นานๆ ครั้ง และกระทบหลายตาราง)
+async function refreshLoan(loanId){
+  var r=await Promise.all([
+    _sb.from('loans').select('*').eq('id',loanId).maybeSingle(),
+    _sb.from('daily_records').select('*').eq('loan_id',loanId).order('record_date').order('created_at'),
+    _sb.from('disbursements').select('*').eq('loan_id',loanId)
+  ]);
+  if(r[0].error||r[1].error){await loadAll();return}   // ผิดพลาด → ถอยไปโหลดเต็มแบบเดิม
+  var loan=r[0].data,i=allLoans.findIndex(function(l){return l.id===loanId});
+  if(!loan){if(i>=0)allLoans.splice(i,1)}               // สัญญาถูกลบระหว่างทาง
+  else if(i>=0)allLoans[i]=loan;
+  else allLoans.push(loan);
+  allRecords=allRecords.filter(function(x){return x.loan_id!==loanId}).concat(r[1].data||[]);
+  allRecords.sort(function(a,b){return String(a.record_date).localeCompare(String(b.record_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))});
+  if(!r[2].error)allDisbursements=allDisbursements.filter(function(x){return x.loan_id!==loanId}).concat(r[2].data||[]);
+  await rebuildAndRender();
 }
 
 // ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons

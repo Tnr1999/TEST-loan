@@ -343,7 +343,7 @@ async function changeStatus(id,status){
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   // เก็บประวัติ "เคยตาย" ไว้ถาวร (ใช้โชว์ป้ายคืนเครดิตหลังปิด) — แยก update แบบ fail-safe เผื่อยังไม่รัน migration phase7
   if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
-  toast('✅ อัปเดตสถานะแล้ว','ok');await loadAll();openDetail(id);
+  toast('✅ อัปเดตสถานะแล้ว','ok');await refreshLoan(id);openDetail(id);
 }
 // สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — Owner + หัวหน้ากอง
 async function setPrincipalOnly(id,on){
@@ -356,7 +356,7 @@ async function setPrincipalOnly(id,on){
   if(!ok)return;
   var res=await _sb.from('loans').update({principal_only:on}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message+' — รัน migration phase10 หรือยัง?','err');return}
-  toast('✅ '+(on?'เปลี่ยนเป็นผ่อนต้นแล้ว':'ยกเลิกผ่อนต้นแล้ว'),'ok');await loadAll();openDetail(id);
+  toast('✅ '+(on?'เปลี่ยนเป็นผ่อนต้นแล้ว':'ยกเลิกผ่อนต้นแล้ว'),'ok');await refreshLoan(id);openDetail(id);
 }
 // ยืนยันว่าโอนเงินให้ลูกค้าใหม่แล้ว (รอเปิด → เปิดแล้ว)
 async function setDisbursed(id){
@@ -368,7 +368,7 @@ async function setDisbursed(id){
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   // บันทึก "ยอดเบิก" — เงินที่โอนให้ลูกค้าตอนเปิดสัญญา
   await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:c.principal,disburse_date:todayISO(),kind:'new',recorded_by:currentUser.id});
-  toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await loadAll();
+  toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await refreshLoan(id);
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
@@ -378,7 +378,7 @@ async function doCloseLoan(id){
   if(!ok)return;
   var res=await _sb.from('loans').update({status:'closed',close_amount:ca}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
-  toast('✅ ปิดสินเชื่อสำเร็จ ยอด ฿'+fmt(ca),'ok');await loadAll();openDetail(id);
+  toast('✅ ปิดสินเชื่อสำเร็จ ยอด ฿'+fmt(ca),'ok');await refreshLoan(id);openDetail(id);
 }
 // เพิ่มยอด — ลูกค้าเดิมขอยอดเพิ่ม (เช่น เปิด 1000 ขอเพิ่มเป็น 2000 → โอนเพิ่ม 1000)
 // บันทึกเป็น "ยอดเบิก" (kind=topup) + เพิ่มเข้าเงินต้น/เงินต้นคงเหลือ
@@ -403,7 +403,7 @@ async function saveTopup(id){
   var res=await _sb.from('loans').update({principal:+c.principal+amt,remaining_principal:+c.remaining_principal+amt}).eq('id',id);
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');btn.disabled=false;btn.textContent='โอนเพิ่ม';return}
   await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:amt,disburse_date:todayISO(),kind:'topup',recorded_by:currentUser.id});
-  toast('✅ เพิ่มยอดสำเร็จ ฿'+fmt(amt),'ok');closeModal('modal-topup');await loadAll();openDetail(id);
+  toast('✅ เพิ่มยอดสำเร็จ ฿'+fmt(amt),'ok');closeModal('modal-topup');await refreshLoan(id);openDetail(id);
 }
 async function doDeleteCustomer(id){
   if(!canDelete()){toast('ลบลูกค้าได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
