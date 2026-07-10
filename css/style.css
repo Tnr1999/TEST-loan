@@ -185,12 +185,12 @@ body.role-staff #dash-layout{display:block!important}
 .brbox{margin-bottom:12px}
 .brbox-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding-bottom:11px;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .brbox-name{font-size:1.02rem;font-weight:700;color:var(--text)}
-.brbox-total{font-size:0.74rem;color:var(--muted)}
-.brbox-total b{font-family:var(--font-mono);font-size:1rem;font-weight:700;color:var(--gold);margin-left:4px}
+.brbox-total{font-size:0.66rem;color:var(--muted)}
+.brbox-total b{font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:var(--gold);margin-left:4px}
 .brbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:12px 14px}
 .br-m{display:flex;flex-direction:column;gap:2px;line-height:1.15}
 .br-mk{font-size:0.66rem;color:var(--muted)}
-.br-mv{font-size:1rem;font-weight:600;font-family:var(--font-mono);color:var(--text)}
+.br-mv{font-size:0.8rem;font-weight:600;font-family:var(--font-mono);color:var(--text)}
 .br-mv.r{color:var(--red)}
 .br-mv.out{color:var(--amber)}
 /* หัวกอง — จัดกลุ่ม กอง → บ้าน */
