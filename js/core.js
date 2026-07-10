@@ -31,6 +31,14 @@ function todayISO(){
 }
 function daysBetween(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/(86400000))}
 function addDaysISO(iso,n){var d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+(+n||0));return toISO(d)}
+// ── เก็บประวัติการชำระ (daily_records) ย้อนหลังจำกัด — เก่ากว่านี้ลบถาวรจาก DB อัตโนมัติ ──
+var RETENTION_MONTHS=6;
+function retentionCutoffISO(){                               // วันนี้ − 6 เดือน (วันเกินท้ายเดือน = ปัดเป็นวันสุดท้ายของเดือนนั้น)
+  var p=todayISO().split('-'),d=new Date(Date.UTC(+p[0],+p[1]-1-RETENTION_MONTHS,1));
+  var last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();
+  d.setUTCDate(Math.min(+p[2],last));
+  return d.toISOString().slice(0,10);
+}
 function round2(n){return Math.round((+n||0)*100)/100}
 function fmt(n){return (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmt0(n){return (parseFloat(n)||0).toLocaleString('th-TH')}
@@ -366,7 +374,17 @@ function showInitialSkeleton(){
 }
 
 /* ═══ LOAD DATA ═══ */
+// ลบประวัติการชำระที่เก่ากว่า RETENTION_MONTHS ถาวร — รันวันละครั้งต่อเครื่อง (ทำก่อนโหลด ให้ข้อมูลที่โหลดสะท้อนผลลบ)
+async function purgeOldRecords(){
+  var today=todayISO();
+  try{
+    if(localStorage.getItem('purge_done')===today)return;
+    var res=await _sb.from('daily_records').delete().lt('record_date',retentionCutoffISO());
+    if(!res.error)localStorage.setItem('purge_done',today);
+  }catch(e){/* เน็ตล่ม/ผิดพลาดชั่วคราว — ข้ามไป รอบหน้าลองใหม่ */}
+}
 async function loadAll(){
+  await purgeOldRecords();
   var q=[
     _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),

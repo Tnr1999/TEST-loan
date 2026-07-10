@@ -314,7 +314,7 @@ function openDetail(id){
   }
 
   // history
-  h+='<div class="card"><div class="card-head"><h3>ประวัติการชำระ ('+recs.length+' รายการ)</h3></div>';
+  h+='<div class="card"><div class="card-head"><h3>ประวัติการชำระ ('+recs.length+' รายการ) <span style="font-size:0.7rem;font-weight:400;color:var(--muted)">· เก็บย้อนหลัง '+RETENTION_MONTHS+' เดือน</span></h3></div>';
   if(!recs.length)h+='<div class="empty">ยังไม่มีประวัติการชำระ</div>';
   else{
     h+='<div class="table-wrap"><table class="tbl"><thead><tr><th>วันที่</th><th class="tr-right">ดอกต้องจ่าย</th><th class="tr-right">จ่ายจริง</th><th class="tr-right">ดอกเก็บ</th><th class="tr-right">หักต้น</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ค่าปรับ</th><th>สถานะ</th></tr></thead><tbody>'+
