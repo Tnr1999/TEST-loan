@@ -18,7 +18,7 @@
   --header-h:60px; --nav-h:60px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--font-th);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.5}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   background:radial-gradient(ellipse 100% 45% at 50% -8%,rgba(212,175,55,0.10) 0%,transparent 60%)}
@@ -136,8 +136,8 @@ header{position:sticky;top:0;z-index:200;height:var(--header-h);background:rgba(
 .sbar-sub{display:flex;gap:18px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:1px}
 .sbar-sub::-webkit-scrollbar{display:none}
 .sub-item{display:flex;flex-direction:column;gap:1px;line-height:1.15;flex-shrink:0}
-.sub-k{font-size:0.62rem;color:var(--muted);white-space:nowrap}
-.sub-v{font-size:0.84rem;font-weight:600;font-family:var(--font-mono);color:var(--text);white-space:nowrap}
+.sub-k{font-size:0.6rem;color:var(--muted);white-space:nowrap}
+.sub-v{font-size:0.8rem;font-weight:600;font-family:var(--font-mono);color:var(--text);white-space:nowrap}
 .sub-v.is-pen{color:var(--red)}
 .sub-v.is-out{color:var(--amber)}
 @media (min-width:768px){
@@ -528,8 +528,8 @@ table.tbl tbody tr:hover{background:var(--surface)}
   .sbar-hero-val{font-size:1.6rem}
   .sbar-hero-lbl{font-size:0.64rem}
   .sbar-sub{gap:13px}
-  .sub-v{font-size:0.76rem}
-  .sub-k{font-size:0.58rem}
+  .sub-v{font-size:0.72rem}
+  .sub-k{font-size:0.56rem}
   .page-title{font-size:1.2rem}
   .cols-4{grid-template-columns:repeat(2,1fr)}
   .stat .value{font-size:1.15rem}
