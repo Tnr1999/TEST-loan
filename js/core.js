@@ -190,10 +190,11 @@ function isPaymentDueToday(c, iso){
   var ref=c.last_collection_date||c.start_date;
   return daysBetween(ref, iso) >= c.collection_interval;
 }
+// ค้าง = เลยวันครบกำหนดของงวดมาแล้วอย่างน้อย 1 วัน (เก็บทุกวัน: ครบกำหนดวันนี้ยัง "ถึงกำหนด" · พรุ่งนี้ยังไม่จ่าย = ค้างทันที)
 function isOverdue(c, iso){
   if(c.status==='closed'||c.status==='lost') return false;
   var ref=c.last_collection_date||c.start_date;
-  return daysBetween(ref, iso) > c.collection_interval*7;
+  return daysBetween(ref, iso) > c.collection_interval;
 }
 // ลูกค้าที่จ่ายล่วงหน้าไว้ (ใช้สวิตช์ "จ่ายล่วงหน้า" ตอนรับเงิน) — วันครบกำหนดถูกเลื่อนเลยวันที่ดูไปแล้ว
 // จ่ายตรงงวดปกติ last_collection_date = วันนี้พอดี → ไม่นับ (ต้อง "เกิน" เท่านั้น)
