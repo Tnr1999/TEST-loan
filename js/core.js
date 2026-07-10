@@ -312,6 +312,7 @@ async function doLogin(){
   startApp();
 }
 function doLogout(){
+  stopRealtime();
   localStorage.removeItem(SESSION_KEY);currentUser=null;
   allBranches=[];allCustomers=[];allRecords=[];allUsers=[];allUserBranches=[];
   allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];allDisbursements=[];
@@ -363,6 +364,7 @@ function startApp(){
   },{passive:true});
   showInitialSkeleton();
   loadAll();
+  startRealtime();   // อัปเดตสดข้ามเครื่อง — เครื่องอื่นบันทึกแล้วเห็นทันที
 }
 // โครงโหลด (skeleton) ระหว่างดึงข้อมูลครั้งแรก — กันจอว่าง/ดูเหมือนค้าง
 function showInitialSkeleton(){
@@ -463,14 +465,66 @@ async function refreshLoan(loanId){
     _sb.from('disbursements').select('*').eq('loan_id',loanId)
   ]);
   if(r[0].error||r[1].error){await loadAll();return}   // ผิดพลาด → ถอยไปโหลดเต็มแบบเดิม
+  _loanRefreshedAt[loanId]=Date.now();                  // กัน realtime สะท้อนกลับมาโหลดซ้ำ (self-echo)
   var loan=r[0].data,i=allLoans.findIndex(function(l){return l.id===loanId});
   if(!loan){if(i>=0)allLoans.splice(i,1)}               // สัญญาถูกลบระหว่างทาง
   else if(i>=0)allLoans[i]=loan;
   else allLoans.push(loan);
+  // สัญญาใหม่จากเครื่องอื่น — ยังไม่มีข้อมูลคนในเครื่องนี้ → ดึงเพิ่มเฉพาะคนนั้น
+  if(loan&&!allPersons.some(function(p){return p.id===loan.person_id})){
+    var pr=await _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account').eq('id',loan.person_id).maybeSingle();
+    if(pr.data)allPersons.push(pr.data);
+  }
   allRecords=allRecords.filter(function(x){return x.loan_id!==loanId}).concat(r[1].data||[]);
   allRecords.sort(function(a,b){return String(a.record_date).localeCompare(String(b.record_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))});
   if(!r[2].error)allDisbursements=allDisbursements.filter(function(x){return x.loan_id!==loanId}).concat(r[2].data||[]);
   await rebuildAndRender();
+}
+
+/* ═══ REALTIME — เครื่องอื่นบันทึกปุ๊บ เครื่องนี้เห็นปั๊บ (ไม่ต้องกดรีเฟรช) ═══
+   ฟังการเปลี่ยนแปลงจาก DB (loans / daily_records / disbursements / persons) แล้วโหลดเฉพาะสัญญาที่เปลี่ยนผ่าน refreshLoan
+   ต้องรัน supabase-migration-phase14-realtime.sql ก่อน (เปิด publication) — ไม่รันก็ไม่พัง แค่ไม่มีอัปเดตสด */
+var _rtChannel=null,_rtPending={},_rtFlush=null,_loanRefreshedAt={};
+function startRealtime(){
+  if(_rtChannel||typeof _sb.channel!=='function')return;   // mock/เวอร์ชันเก่าไม่มี channel = ข้ามเงียบๆ
+  try{
+    _rtChannel=_sb.channel('db-live')
+      .on('postgres_changes',{event:'*',schema:'public',table:'loans'},function(p){
+        var lid=(p.new&&p.new.id)||(p.old&&p.old.id);if(lid)queueLoanRefresh(lid);
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'daily_records'},function(p){
+        var lid=(p.new&&p.new.loan_id)||(p.old&&p.old.loan_id);if(lid)queueLoanRefresh(lid);
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'disbursements'},function(p){
+        var lid=(p.new&&p.new.loan_id)||(p.old&&p.old.loan_id);if(lid)queueLoanRefresh(lid);
+      })
+      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'persons'},function(p){
+        if(!p.new||!p.new.id)return;
+        var i=allPersons.findIndex(function(x){return x.id===p.new.id});
+        if(i>=0){allPersons[i]=Object.assign({},allPersons[i],p.new);rebuildAndRender();}
+      })
+      .subscribe();
+  }catch(e){_rtChannel=null}
+}
+function stopRealtime(){
+  if(_rtChannel){try{_sb.removeChannel(_rtChannel)}catch(e){}_rtChannel=null}
+  _rtPending={};clearTimeout(_rtFlush);
+}
+// รวมเหตุการณ์ที่มาติดๆ กัน (debounce 600ms) แล้วโหลดทีละสัญญา — ข้ามสัญญาที่เครื่องนี้เพิ่งโหลดเอง (self-echo ภายใน 3 วิ)
+function queueLoanRefresh(loanId){
+  if(Date.now()-(_loanRefreshedAt[loanId]||0)<3000)return;
+  _rtPending[loanId]=1;
+  clearTimeout(_rtFlush);
+  _rtFlush=setTimeout(async function(){
+    var ids=Object.keys(_rtPending);_rtPending={};
+    for(var i=0;i<ids.length;i++){
+      if(Date.now()-(_loanRefreshedAt[ids[i]]||0)<3000)continue;
+      await refreshLoan(ids[i]);
+    }
+    // ถ้าหน้ารายละเอียดเปิดอยู่ → วาดเนื้อหาใหม่ให้เห็นยอดล่าสุด (เฉพาะเมื่อสัญญายังอยู่)
+    if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId
+       &&allCustomers.some(function(c){return c.id===currentDetailId}))openDetail(currentDetailId);
+  },600);
 }
 
 // ประกอบ "ลูกค้า" รูปแบบเดิม (1 แถว/สัญญา) จาก loans + persons
