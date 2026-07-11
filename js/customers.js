@@ -596,19 +596,28 @@ async function saveCustomer(){
   if(btn){btn.innerHTML='<span class="spin"></span>';btn.disabled=true}
 
   // หา/สร้าง person
-  var personId;
-  if(reloanPersonId){
-    personId=reloanPersonId;
+  var personId=reloanPersonId||(existing?existing.id:null);
+  // ยืนยันกับ DB ว่าคนนี้ยังมีอยู่จริง — ข้อมูลในเครื่องอาจค้าง (คนถูกลบจากเครื่องอื่น/เคลียร์ใน Supabase)
+  // ถ้าใช้ id ค้างจะชน FK "loans_person_id_fkey" ตอนสร้างสัญญา
+  if(personId){
+    var chk=await _sb.from('persons').select('id').eq('id',personId).maybeSingle();
+    if(!chk.data)personId=null;   // คนใน memory ไม่อยู่ใน DB แล้ว → สร้างใหม่แทน
+  }
+  if(personId&&reloanPersonId){
     await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,fb_group_url:fbGroup,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
-  else if(existing){
-    personId=existing.id;
+  else if(personId){
     if(bankName||bankAccount)await _sb.from('persons').update({bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else{
     var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,fb_group_url:fbGroup,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
-    if(pres.error){toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
-    personId=pres.data.id;
+    if(pres.error){
+      // เลขบัตรชนกับคนใน DB ที่เครื่องนี้ยังไม่เห็น (unique index phase9) → ใช้คนเดิมใน DB แทน
+      var dup=idcard?await _sb.from('persons').select('id').eq('id_card',idcard).maybeSingle():{data:null};
+      if(dup.data)personId=dup.data.id;
+      else{toast('บันทึกล้มเหลว: '+pres.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
+    }
+    else personId=pres.data.id;
   }
 
   // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)

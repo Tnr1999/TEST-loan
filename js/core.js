@@ -499,10 +499,17 @@ function startRealtime(){
       .on('postgres_changes',{event:'*',schema:'public',table:'disbursements'},function(p){
         var lid=(p.new&&p.new.loan_id)||(p.old&&p.old.loan_id);if(lid)queueLoanRefresh(lid);
       })
-      .on('postgres_changes',{event:'UPDATE',schema:'public',table:'persons'},function(p){
+      .on('postgres_changes',{event:'*',schema:'public',table:'persons'},function(p){
+        // sync คนให้ครบทุกแบบ — ถ้าปล่อยให้เครื่องจำ "คนที่ถูกลบ" ค้างไว้ เพิ่มลูกค้าซ้ำจะชน FK loans_person_id_fkey
+        if(p.eventType==='DELETE'){
+          var did=p.old&&p.old.id;if(!did)return;
+          allPersons=allPersons.filter(function(x){return x.id!==did});rebuildAndRender();return;
+        }
         if(!p.new||!p.new.id)return;
         var i=allPersons.findIndex(function(x){return x.id===p.new.id});
-        if(i>=0){allPersons[i]=Object.assign({},allPersons[i],p.new);rebuildAndRender();}
+        if(i>=0)allPersons[i]=Object.assign({},allPersons[i],p.new);
+        else allPersons.push(p.new);
+        rebuildAndRender();
       })
       .subscribe();
   }catch(e){_rtChannel=null}
