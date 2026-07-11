@@ -159,7 +159,7 @@ function custDayStatus(c,date,preRecs){
     due:c.status!=='closed'&&c.status!=='lost'&&isPaymentDueToday(c,date),
     ahead:isPaidAhead(c,date),   // จ่ายล่วงหน้าไว้ — วันครบกำหนดเลื่อนเลยวันที่ดูไปแล้ว
     isNew:c.start_date===date,   // ลูกค้าที่เข้ามาในวันนี้
-    pending:!c.disbursed         // รอเปิด — รอแอดมินโอนเงินให้
+    pending:!c.disbursed&&c.status!=='closed'  // รอเปิด — รอยืนยันโอนเงิน · สัญญาที่ปิดแล้วไม่นับ (เคสเปิด-ปิดวันเดียวโดยไม่เคยกดเปิด จะได้ไม่ค้างในชิป "รอโอน")
   };
 }
 // การ์ดลูกค้าแบบลิสต์ (มือถือ + หน้าเก็บเงิน staff) — แตะดูรายละเอียด, ปุ่มขวารับเงิน
