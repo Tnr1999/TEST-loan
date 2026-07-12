@@ -386,14 +386,29 @@ async function purgeOldRecords(){
     if(!res.error)localStorage.setItem('purge_done',today);
   }catch(e){/* เน็ตล่ม/ผิดพลาดชั่วคราว — ข้ามไป รอบหน้าลองใหม่ */}
 }
+// ดึงทุกแถวแบบแบ่งหน้า — Supabase REST จำกัด 1000 แถว/ครั้ง ตารางที่โตเกินนั้นจะโดนตัดเงียบๆ
+// (เจอจริง: สัญญา seq >1000 หายจากแอปทั้งที่อยู่ใน DB) · mock ที่ไม่มี .range = ยิงครั้งเดียวตามเดิม
+async function fetchAllRows(buildQuery){
+  var probe=buildQuery();
+  if(typeof probe.range!=='function')return await probe;
+  var out=[],page=1000,from=0;
+  while(true){
+    var r=await buildQuery().range(from,from+page-1);
+    if(r.error)return r;
+    out=out.concat(r.data||[]);
+    if(!r.data||r.data.length<page)break;
+    from+=page;
+  }
+  return {data:out,error:null};
+}
 async function loadAll(){
   await purgeOldRecords();
   var q=[
     _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),
-    _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account'),
-    _sb.from('loans').select('*').order('seq'),
-    _sb.from('daily_records').select('*').order('record_date').order('created_at'),
+    fetchAllRows(function(){return _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account').order('id')}),
+    fetchAllRows(function(){return _sb.from('loans').select('*').order('seq')}),
+    fetchAllRows(function(){return _sb.from('daily_records').select('*').order('record_date').order('created_at')}),
     _sb.from('user_branches').select('*'),
     _sb.from('user_groups').select('*')
   ];
@@ -414,7 +429,7 @@ async function loadAll(){
   // ชุดเสริม (fail-safe แยกจากชุดหลัก กันแอปพังถ้ายังไม่รัน migration) — ยิงขนานกันในรอบเดียว
   // ① ยอดเบิก (phase4) · ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
   var extra=await Promise.all([
-    _sb.from('disbursements').select('*'),
+    fetchAllRows(function(){return _sb.from('disbursements').select('*').order('disburse_date')}),
     isOwner()?_sb.from('alerts').select('*').order('created_at',{ascending:false}):null,
     !isOwner()?_sb.from('users').select('id,username,full_name,role,is_active').order('created_at'):null
   ]);
