@@ -283,9 +283,11 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .crow.big .crow-btn.cb-pay{padding:12px 24px;font-size:0.95rem}
 
 /* ═══ VIEW CHIPS (ตัวกรองด่วน) ═══ */
-.vchip{display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;transition:all 0.14s}
+.vchip{display:inline-flex;align-items:center;gap:5px;font-size:0.82rem;font-weight:600;padding:7px 13px;border-radius:99px;border:1px solid var(--border2);background:var(--card2);color:var(--text2);cursor:pointer;transition:all 0.14s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .vchip b{font-weight:700}
 .vchip:active{transform:scale(0.96)}
+/* กำลังลากจัดลำดับ (กดแช่/ลากเมาส์) */
+.vchip.chip-dragging{opacity:0.8;transform:scale(1.07);box-shadow:var(--shadow-lg);border-color:var(--gold);position:relative;z-index:5;transition:none}
 .vchip.active{color:var(--on-gold);background:var(--gold);border-color:var(--gold)}
 .vchip.vc-overdue.active{background:var(--red);border-color:var(--red);color:#fff}
 .vchip.vc-advance.active{background:var(--purple);border-color:var(--purple);color:#1c1032}
