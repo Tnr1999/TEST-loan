@@ -86,12 +86,14 @@ function renderCustomers(){
     return true;
   }
 
-  // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู
-  var chips=[['today','ถึงกำหนด'],['pending','รอโอน'],['advance','จ่ายล่วงหน้า'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']];
-  document.getElementById('cust-summary').innerHTML=chips.map(function(v){
+  // ชิปกรองด่วน — default = ที่ถึงกำหนดในวันที่ดู · กดแช่ (มือถือ) หรือลากเมาส์ เพื่อจัดลำดับเอง จำไว้ต่อเครื่อง
+  var chips=sortChipsByPref([['today','ถึงกำหนด'],['pending','รอโอน'],['advance','จ่ายล่วงหน้า'],['overdue','ค้าง'],['new','ลูกค้าใหม่'],['old','ลูกค้าเก่า'],['closed','ปิดยอด'],['dead','ตาย']]);
+  var chipWrap=document.getElementById('cust-summary');
+  chipWrap.innerHTML=chips.map(function(v){
     var n=list.filter(function(c){return inView(c,v[0])}).length;
-    return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" onclick="setCustView(\''+v[0]+'\')">'+v[1]+' <b>'+n+'</b></button>';
+    return '<button class="vchip vc-'+v[0]+(custView===v[0]?' active':'')+'" data-vk="'+v[0]+'">'+v[1]+' <b>'+n+'</b></button>';
   }).join('');
+  makeChipsSortable(chipWrap);
 
   // กรองตามมุมมองที่เลือก (ถ้ากำลังค้นหา → แสดงทุกผลลัพธ์ ไม่ตัดด้วยมุมมอง)
   // ตอนค้นหา → ข้ามตัวกรองมุมมอง แต่ยัง dedup สัญญา "ปิดแล้ว" ซ้ำของคนเดียวกัน (โชว์เฉพาะรอบล่าสุด กันรายการบาน)
@@ -145,6 +147,75 @@ function renderCustomers(){
     vlist.map(function(c){return custCardHTML(c,vdate,stMap[c.id])}).join('');
 }
 function setCustView(v){custView=v;renderCustomers()}
+
+/* ═══ ชิปกรอง: ลากจัดลำดับได้ (จำต่อเครื่องด้วย localStorage) ═══
+   มือถือ = กดแช่ ~0.35 วิแล้วลาก (ขยับก่อนครบเวลา = เลื่อนจอปกติ) · เมาส์ = ลากได้ทันที · คลิกธรรมดา = สลับมุมมองเหมือนเดิม */
+var CHIP_ORDER_KEY='cust_chip_order';
+function sortChipsByPref(chips){
+  var ord=[];try{ord=JSON.parse(localStorage.getItem(CHIP_ORDER_KEY))||[]}catch(e){}
+  if(!ord.length)return chips;
+  return chips.slice().sort(function(a,b){
+    var ia=ord.indexOf(a[0]),ib=ord.indexOf(b[0]);
+    if(ia<0)ia=ord.length+chips.findIndex(function(c){return c[0]===a[0]});  // คีย์ใหม่ที่ยังไม่เคยจัด = ต่อท้ายตามลำดับ default
+    if(ib<0)ib=ord.length+chips.findIndex(function(c){return c[0]===b[0]});
+    return ia-ib;
+  });
+}
+// หา chip ที่ควรวาง "ก่อนหน้า" ตามตำแหน่ง pointer — รองรับทั้งแถวเดียว (มือถือ) และหลายแถวแบบ wrap (PC)
+function chipDragAfter(list,x,y){
+  var els=[].slice.call(list.querySelectorAll('.vchip:not(.chip-dragging)'));
+  for(var i=0;i<els.length;i++){
+    var b=els[i].getBoundingClientRect();
+    if(y<b.top-4)return els[i];                          // อยู่แถวถัดลงไป → วางก่อนตัวแรกของแถวนั้น
+    if(y<=b.bottom+4&&x<b.left+b.width/2)return els[i];  // แถวเดียวกัน อยู่ก่อนกึ่งกลางชิปนี้
+  }
+  return null;
+}
+function makeChipsSortable(list){
+  if(!list._chipWired){  // ผูกครั้งเดียวที่ container (innerHTML เปลี่ยนได้เรื่อยๆ)
+    list._chipWired=true;
+    list.addEventListener('click',function(e){
+      if(Date.now()-(list._dragEndAt||0)<300)return;     // เพิ่งลากเสร็จ = ไม่ใช่คลิกเปลี่ยนมุมมอง
+      var c=e.target.closest('.vchip');if(c)setCustView(c.getAttribute('data-vk'));
+    });
+    // ระหว่างลากบนจอทัช ต้องกันเบราว์เซอร์แย่งไป scroll (non-passive ถึง preventDefault ได้)
+    list.addEventListener('touchmove',function(e){if(list._chipDragging)e.preventDefault()},{passive:false});
+  }
+  list.querySelectorAll('.vchip').forEach(function(chip){
+    chip.addEventListener('pointerdown',function(e){
+      var sx=e.clientX,sy=e.clientY,started=false;
+      var timer=setTimeout(start,350);
+      function start(){started=true;list._chipDragging=true;chip.classList.add('chip-dragging');}
+      function move(ev){
+        if(!started){
+          var dx=Math.abs(ev.clientX-sx),dy=Math.abs(ev.clientY-sy);
+          if(e.pointerType==='mouse'&&(dx>6||dy>6))start();  // เมาส์ = ลากได้ทันทีไม่ต้องกดแช่
+          else if(dx>10||dy>10)end();                        // ทัชขยับก่อนครบเวลา = ตั้งใจเลื่อนจอ ยกเลิกลาก
+          return;
+        }
+        var after=chipDragAfter(list,ev.clientX,ev.clientY);
+        if(after==null)list.appendChild(chip);else list.insertBefore(chip,after);
+      }
+      function up(){
+        if(started){
+          list._dragEndAt=Date.now();
+          var order=[].slice.call(list.querySelectorAll('.vchip')).map(function(x){return x.getAttribute('data-vk')});
+          try{localStorage.setItem(CHIP_ORDER_KEY,JSON.stringify(order))}catch(e2){}
+        }
+        end();
+      }
+      function end(){
+        clearTimeout(timer);list._chipDragging=false;chip.classList.remove('chip-dragging');
+        document.removeEventListener('pointermove',move);
+        document.removeEventListener('pointerup',up);
+        document.removeEventListener('pointercancel',end);
+      }
+      document.addEventListener('pointermove',move);
+      document.addEventListener('pointerup',up);
+      document.addEventListener('pointercancel',end);
+    });
+  });
+}
 
 // สถานะของลูกค้า ณ วันที่กำหนด (ใช้ร่วมหน้าลูกค้า + หน้าเก็บเงินของ staff)
 function custDayStatus(c,date,preRecs){
