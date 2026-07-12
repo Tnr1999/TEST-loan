@@ -441,15 +441,15 @@ async function setDisbursed(id){
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   // บันทึก "ยอดเบิก" — เงินที่โอนให้ลูกค้าตอนเปิดสัญญา
   await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:c.principal,disburse_date:todayISO(),kind:'new',recorded_by:currentUser.id});
-  toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await refreshLoan(id);
-  // พาไปชิปที่ลูกค้าอยู่จริงหลังเปิด — กันงงว่า "หาย" (เปิดวันนี้ยังไม่ถึงกำหนดเก็บ = อยู่ชิป "ลูกค้าใหม่" · เริ่มเก็บตามงวดถัดไป)
+  await refreshLoan(id);
+  // ไม่สลับหน้า (ไล่กดเปิดหลายคนติดกันได้) — ใช้ toast บอกแทนว่าลูกค้าย้ายไปอยู่ชิปไหน
   var c2=allCustomers.find(function(x){return x.id===id});
   if(c2){
     var vd=document.getElementById('dash-date-picker').value||todayISO();
     var s2=custDayStatus(c2,vd);
-    custView=s2.due&&!s2.paid?'today':(c2.start_date===vd?'new':'old');
-    renderCustomers();
-  }
+    var chipName=s2.due&&!s2.paid?'ถึงกำหนด':(c2.start_date===vd?'ลูกค้าใหม่':'ลูกค้าเก่า');
+    toast('✅ เปิดแล้ว — ลูกค้าย้ายไปชิป "'+chipName+'"','ok');
+  }else toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
