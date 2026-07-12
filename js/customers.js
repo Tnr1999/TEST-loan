@@ -553,8 +553,18 @@ function openAddCustomer(reloanCust){
     set('f-idcard',pp.id_card);set('f-bank-name',pp.bank_name);set('f-bank-account',pp.bank_account);
     document.getElementById('modal-customer-title').textContent='เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
     var sbtn=document.getElementById('cust-save-btn');if(sbtn)sbtn.textContent='เปิดยอดใหม่';
+    presetCustFormBranch(reloanCust.branch_id);            // ตั้ง กอง/บ้าน ตามสัญญาเดิม — เดิมค้างที่บ้านแรกในลิสต์ ทำให้เปิดยอดใหม่หลุดไปบ้านอื่น
   }
+  else if(custBranchId)presetCustFormBranch(custBranchId); // เพิ่มลูกค้าใหม่ระหว่างกรองดูบ้านไหนอยู่ → default บ้านนั้น
+  else if(custGroupId){var ge0=document.getElementById('f-group');if(ge0){ge0.value=custGroupId;if(ge0.value===custGroupId)custFormBranches();}}
   openModal('modal-customer');
+}
+// ตั้งค่า dropdown กอง+บ้าน ในฟอร์มลูกค้าให้ตรงกับบ้านที่กำหนด (บ้านไม่อยู่ในสิทธิ์/ลิสต์ = คงค่า default เดิม)
+function presetCustFormBranch(branchId){
+  var b=allBranches.find(function(x){return x.id===branchId});if(!b)return;
+  var ge=document.getElementById('f-group'),be=document.getElementById('f-branch');
+  if(ge&&b.group_id){ge.value=b.group_id;if(ge.value===b.group_id)custFormBranches();}
+  if(be)be.value=branchId;
 }
 // เติมรายการบ้านในฟอร์มเพิ่มลูกค้า ตามกองที่เลือก
 function custFormBranches(){
