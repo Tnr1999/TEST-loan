@@ -643,6 +643,7 @@ async function saveCustomer(){
 
   var okMsg=reloanPersonId?'เปิดยอดใหม่สำเร็จ':'✅ เพิ่มลูกค้าสำเร็จ';
   reloanPersonId=null;
+  custView='pending';   // สลับลิสต์ไปชิป "รอโอน" ให้เห็นคนที่เพิ่งเพิ่มทันที (ลูกค้าใหม่เริ่มที่สถานะรอยืนยันโอน ไม่อยู่ในลิสต์เก็บเงิน)
   toast(okMsg,'ok');closeModal('modal-customer');await loadAll();openDetail(res.data.id);
 }
 
