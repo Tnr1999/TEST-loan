@@ -371,6 +371,14 @@ async function setDisbursed(id){
   // บันทึก "ยอดเบิก" — เงินที่โอนให้ลูกค้าตอนเปิดสัญญา
   await _sb.from('disbursements').insert({loan_id:id,branch_id:c.branch_id,amount:c.principal,disburse_date:todayISO(),kind:'new',recorded_by:currentUser.id});
   toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');await refreshLoan(id);
+  // พาไปชิปที่ลูกค้าอยู่จริงหลังเปิด — กันงงว่า "หาย" (เปิดวันนี้ยังไม่ถึงกำหนดเก็บ = อยู่ชิป "ลูกค้าใหม่" · เริ่มเก็บตามงวดถัดไป)
+  var c2=allCustomers.find(function(x){return x.id===id});
+  if(c2){
+    var vd=document.getElementById('dash-date-picker').value||todayISO();
+    var s2=custDayStatus(c2,vd);
+    custView=s2.due&&!s2.paid?'today':(c2.start_date===vd?'new':'old');
+    renderCustomers();
+  }
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
