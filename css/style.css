@@ -568,6 +568,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .alert-card.al-danger{border-left-color:var(--red);background:linear-gradient(90deg,var(--red-dim),transparent 60%),var(--card)}
 .alert-card.al-warn{border-left-color:var(--gold);background:linear-gradient(90deg,var(--gold-dim),transparent 60%),var(--card)}
 .alert-card.read{opacity:0.55;border-left-color:var(--border2);background:var(--card)}
+.alert-card.al-danger.read{border-left-color:var(--red)}  /* เรื่องอันตราย (เปิดซ้ำคนตาย) คงแถบแดงไว้แม้อ่านแล้ว */
 .alert-card .al-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
 .alert-card .al-tag{font-weight:700;font-size:0.82rem;color:var(--text)}
 .alert-card .al-time{font-size:0.72rem;color:var(--muted);white-space:nowrap}
