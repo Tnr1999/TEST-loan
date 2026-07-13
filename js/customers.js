@@ -733,9 +733,9 @@ async function saveCustomer(){
   var maxStart=addDaysISO(todayISO(),30);
   if(startDate>maxStart)startDate=maxStart;
 
-  // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)
+  // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ) · เลขลูกค้าถามจาก DB จริงกันซ้ำ
   var res=await _sb.from('loans').insert({
-    person_id:personId,branch_id:branchId,cust_no:nextCustNo(branchId,personId),
+    person_id:personId,branch_id:branchId,cust_no:await nextCustNoDB(branchId,personId),
     principal:principal,daily_interest_rate:0.10,
     collection_interval:interval,start_date:startDate,
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0,
