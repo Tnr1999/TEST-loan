@@ -607,4 +607,15 @@ function nextCustNo(branchId,personId){
   var max=0;allLoans.forEach(function(l){if(l.branch_id===branchId&&+l.cust_no>max)max=+l.cust_no});
   return max+1;
 }
+// เวอร์ชันถาม DB จริง — กันรหัสซ้ำจากข้อมูลในเครื่องค้าง/สองเครื่องเพิ่มพร้อมกัน (เจอจริง: DA024 ซ้ำ 2 คน)
+// query เบามาก (เฉพาะ 2 คอลัมน์ของบ้านเดียว) · พลาด → ถอยไปคิดจากหน่วยความจำแบบเดิม
+async function nextCustNoDB(branchId,personId){
+  try{
+    var r=await fetchAllRows(function(){return _sb.from('loans').select('person_id,cust_no').eq('branch_id',branchId).order('cust_no')});
+    if(r.error||!r.data)return nextCustNo(branchId,personId);
+    var mine=0,max=0;
+    r.data.forEach(function(x){var n=+x.cust_no||0;if(n>max)max=n;if(x.person_id===personId&&n>mine)mine=n;});
+    return mine||max+1;
+  }catch(e){return nextCustNo(branchId,personId)}
+}
 
