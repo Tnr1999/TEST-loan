@@ -362,6 +362,10 @@ function openDetail(id){
     if(c.status!=='lost'){
       ops+='<button class="btn btn-purple btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
       if(canEdit())ops+='<button class="btn btn-green btn-sm" onclick="doCloseLoan(\''+id+'\')">✓ ปิดสินเชื่อ</button>';
+      // พลาดกดเปิด (ยืนยันโอน) ก่อนโอนจริง → ย้อนกลับเป็น "รอโอน" ได้ ตราบใดที่ยังไม่มีประวัติรับเงิน
+      if(canDisburse()&&c.disbursed&&!allRecords.some(function(r){return r.customer_id===id})){
+        ops+='<button class="btn btn-ghost btn-sm" onclick="undoDisburse(\''+id+'\')">↩️ ยกเลิกเปิด (กลับเป็นรอโอน)</button>';
+      }
       // โหมดผ่อนต้น (หยุดคิดดอก) — Owner + หัวหน้ากอง (ในกองตัวเอง)
       if(isOwner()||isHead()){
         if(c.principal_only){ops+='<button class="btn btn-ghost btn-sm" onclick="setPrincipalOnly(\''+id+'\',false)">↩️ ยกเลิกผ่อนต้น (คิดดอกปกติ)</button>';
@@ -450,6 +454,20 @@ async function setDisbursed(id){
     var chipName=s2.due&&!s2.paid?'ถึงกำหนด':(c2.start_date===vd?'ลูกค้าใหม่':'ลูกค้าเก่า');
     toast('✅ เปิดแล้ว — ลูกค้าย้ายไปชิป "'+chipName+'"','ok');
   }else toast('✅ เปลี่ยนเป็น "เปิดแล้ว"','ok');
+  if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
+}
+// ย้อน "เปิดแล้ว" กลับเป็น "รอโอน" (พลาดกดเปิดก่อนโอนจริง) — Owner/หัวหน้ากอง · เฉพาะสัญญาที่ยังไม่มีประวัติรับเงิน
+async function undoDisburse(id){
+  if(!canDisburse()){toast('ยกเลิกเปิดได้เฉพาะ Owner หรือหัวหน้ากอง','err');return}
+  var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  if(allRecords.some(function(r){return r.customer_id===id})){toast('ลูกค้ามีประวัติรับเงินแล้ว — ยกเลิกเปิดไม่ได้','err');return}
+  var ok=await showConfirm({icon:'↩️',title:'ยกเลิกเปิด',msg:'เปลี่ยน "'+c.full_name+'" กลับเป็น "รอโอน"?\nยอดเบิกที่บันทึกไว้ตอนกดเปิดจะถูกลบออกจากสรุปยอด',okText:'ยกเลิกเปิด',okClass:'btn-amber'});
+  if(!ok)return;
+  var res=await _sb.from('loans').update({disbursed:false}).eq('id',id);
+  if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  await _sb.from('disbursements').delete().eq('loan_id',id).eq('kind','new');  // ลบเฉพาะยอดเบิกตอนเปิดสัญญา
+  toast('↩️ กลับเป็น "รอโอน" แล้ว','ok');
+  await refreshLoan(id);
   if(document.getElementById('modal-detail').classList.contains('open')&&currentDetailId===id)openDetail(id);
 }
 async function doCloseLoan(id){
