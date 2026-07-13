@@ -539,7 +539,8 @@ function openAddCustomer(reloanCust){
         '<button class="sel" data-v="1" onclick="selInterval(1)">ทุกวัน</button>'+
         '<button data-v="2" onclick="selInterval(2)">ทุก 2 วัน</button>'+
         '<button data-v="3" onclick="selInterval(3)">ทุก 3 วัน</button></div></div>'+
-      '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" value="'+thDate(todayISO())+'" disabled style="opacity:0.7"/></div>'+
+      '<div class="field"><label>วันที่ปล่อยสินเชื่อ</label><input class="inp" id="f-start" type="date" max="'+todayISO()+'" value="'+todayISO()+'"/>'+
+        '<div class="field-hint">เลือกย้อนหลังได้ (เผื่อบันทึกตกหล่น) — งวดเก็บนับจากวันที่เลือก</div></div>'+
     '<div class="modal-foot" style="margin:18px -20px -20px;padding:16px 20px">'+
       '<button class="btn btn-ghost btn-block" onclick="closeModal(\'modal-customer\')">ยกเลิก</button>'+
       '<button class="btn btn-gold btn-block" id="cust-save-btn" onclick="saveCustomer()">เพิ่มลูกค้า</button></div>';
@@ -709,11 +710,15 @@ async function saveCustomer(){
     else personId=pres.data.id;
   }
 
+  // วันที่ปล่อยสินเชื่อ — เลือกย้อนหลังได้ (กันอนาคตซ้ำอีกชั้น เผื่อเบราว์เซอร์ไม่บังคับ max)
+  var startDate=(document.getElementById('f-start')||{}).value||todayISO();
+  if(startDate>todayISO())startDate=todayISO();
+
   // สร้างสัญญา — seq ให้ฐานข้อมูลกำหนดเอง (รันต่อเนื่องทั้งระบบ)
   var res=await _sb.from('loans').insert({
     person_id:personId,branch_id:branchId,cust_no:nextCustNo(branchId,personId),
     principal:principal,daily_interest_rate:0.10,
-    collection_interval:interval,start_date:todayISO(),
+    collection_interval:interval,start_date:startDate,
     status:'normal',remaining_principal:principal,branch_fee:branch?branch.fee_per_person:0,
     disbursed:false
   }).select().single();
