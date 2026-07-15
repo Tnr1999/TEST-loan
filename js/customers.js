@@ -568,7 +568,8 @@ function openAddCustomer(reloanCust){
   if(reloanCust){
     var pp=allPersons.find(function(x){return x.id===reloanCust.person_id})||{};
     var set=function(idn,v){var e=document.getElementById(idn);if(e)e.value=v||''};
-    set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);set('f-fbgroup',pp.fb_group_url);
+    set('f-name',pp.full_name||reloanCust.full_name);set('f-phone',pp.phone);set('f-fb',pp.facebook_url);
+    set('f-fbgroup',reloanCust.fb_group_url||pp.fb_group_url);  // ลิงก์กลุ่มของสัญญา/บ้านเดิม ไม่ใช่ของบ้านอื่น
     set('f-idcard',pp.id_card);set('f-bank-name',pp.bank_name);set('f-bank-account',pp.bank_account);
     document.getElementById('modal-customer-title').textContent='เปิดยอดใหม่ — '+esc(pp.full_name||reloanCust.full_name||'');
     var sbtn=document.getElementById('cust-save-btn');if(sbtn)sbtn.textContent='เปิดยอดใหม่';
@@ -655,9 +656,12 @@ async function saveCustomer(){
       if(!isOwner()&&!isHead()){toast('เลขบัตรประชาชนไม่ถูกต้อง (ตรวจสอบหลักไม่ผ่าน) — แก้ไขก่อนบันทึก','err');return}
       toast('⚠️ เลขบัตร checksum ไม่ผ่าน — บันทึกด้วยสิทธิ์ '+(isOwner()?'Owner':'หัวหน้ากอง'),'err');
     }
-    var upd={full_name:name,phone:phone,facebook_url:fb,fb_group_url:fbGroup,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
+    var upd={full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount};
     var res=await _sb.from('persons').update(upd).eq('id',cc.person_id);
     if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');return}
+    // ลิงก์กลุ่มเฟสเก็บที่ "สัญญาใบนี้" (ต่อบ้าน — คนเดียวกู้หลายบ้านไม่ทับกัน) · ยังไม่รัน phase16 → เก็บที่คนแบบเดิม
+    var fg=await _sb.from('loans').update({fb_group_url:fbGroup}).eq('id',editingCustId);
+    if(fg.error)await _sb.from('persons').update({fb_group_url:fbGroup}).eq('id',cc.person_id);
     // กันแก้ข้อมูลให้ไป "ชนคนอื่น" — log ให้ Owner ตรวจ (ไม่บล็อก)
     var nd=findNearDuplicates({id_card:idcard,name:name,phone:phone,bank_account:bankAccount},cc.person_id);
     if(nd.length){
@@ -712,13 +716,13 @@ async function saveCustomer(){
     if(!chk.data)personId=null;   // คนใน memory ไม่อยู่ใน DB แล้ว → สร้างใหม่แทน
   }
   if(personId&&reloanPersonId){
-    await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,fb_group_url:fbGroup,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
+    await _sb.from('persons').update({full_name:name,phone:phone,facebook_url:fb,id_card:idcard,bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else if(personId){
     if(bankName||bankAccount)await _sb.from('persons').update({bank_name:bankName,bank_account:bankAccount}).eq('id',personId);
   }
   else{
-    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,fb_group_url:fbGroup,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
+    var pres=await _sb.from('persons').insert({full_name:name,phone:phone,id_card:idcard,facebook_url:fb,bank_name:bankName||null,bank_account:bankAccount||null}).select().single();
     if(pres.error){
       // เลขบัตรชนกับคนใน DB ที่เครื่องนี้ยังไม่เห็น (unique index phase9) → ใช้คนเดิมใน DB แทน
       var dup=idcard?await _sb.from('persons').select('id').eq('id_card',idcard).maybeSingle():{data:null};
@@ -742,6 +746,12 @@ async function saveCustomer(){
     disbursed:false
   }).select().single();
   if(res.error){toast('บันทึกล้มเหลว: '+res.error.message,'err');if(btn){btn.disabled=false;btn.textContent=saveLabel}return}
+
+  // ลิงก์กลุ่มเฟสของสัญญาใบนี้ (ต่อบ้าน) — ยังไม่รัน phase16 → เก็บที่ตัวคนแบบเดิม (fail-safe)
+  if(fbGroup){
+    var fg2=await _sb.from('loans').update({fb_group_url:fbGroup}).eq('id',res.data.id);
+    if(fg2.error)await _sb.from('persons').update({fb_group_url:fbGroup}).eq('id',personId);
+  }
 
   // กันโกง (เงียบๆ): สร้างลูกค้า "ใหม่" ที่ใกล้เคียงคนเดิม → แจ้ง Owner ไว้ตรวจย้อนหลัง
   if(!existing&&!reloanPersonId){
