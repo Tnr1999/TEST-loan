@@ -115,8 +115,8 @@ function renderCustomers(){
   document.getElementById('cust-list').innerHTML=
     '<table class="tbl"><thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ดอก/งวด</th><th class="tr-right">ยอดปิด</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
     vlist.map(function(c){var s=stMap[c.id];
-      var interest=interestDue(c);
-      var close=closeAmount(c);
+      var interest=interestPerCycle(c);      // คอลัมน์ "ดอก/งวด" = ต่องวดเสมอ (ยอดค้างสะสมดูตอนกดรับเงิน)
+      var close=closeAmount(c,vdate);        // ยอดปิดรวมดอกค้างสะสม ณ วันที่ดู
       var ref=c.last_collection_date||c.start_date;
       var daysSince=ref?daysBetween(ref,vdate):0;
       var daysOver=daysSince-c.collection_interval;
@@ -262,7 +262,7 @@ function custCardHTML(c,date,s){
     return '<div class="crow due big" onclick="openDetail(\''+c.id+'\')">'+
       '<div class="crow-top">'+head+'</div>'+
       '<div class="crow-act" onclick="event.stopPropagation()">'+
-        '<div class="crow-due"><span>'+(c.principal_only?'ผ่อนต้น (เหลือ)':'ดอกที่ต้องเก็บวันนี้')+'</span><b><span class="cur">฿</span>'+fmt(c.principal_only?c.remaining_principal:interestDue(c))+'</b></div>'+
+        '<div class="crow-due"><span>'+(c.principal_only?'ผ่อนต้น (เหลือ)':'ดอกที่ต้องเก็บวันนี้')+'</span><b><span class="cur">฿</span>'+fmt(c.principal_only?c.remaining_principal:interestDue(c,date))+'</b></div>'+
         '<button class="crow-btn cb-pay" onclick="openPayment(\''+c.id+'\',\''+date+'\')">'+(c.principal_only?'ผ่อนต้น':'รับเงิน')+'</button>'+
       '</div></div>';
   }

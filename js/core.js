@@ -171,9 +171,19 @@ async function logAlert(type,o){
 }
 
 /* ═══ CALCULATIONS (ตาม Spec) ═══ */
-function interestDue(c){return c.principal_only?0:+(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
-function calcPayment(c, amountPaid, penalty){
-  var due=interestDue(c), ic, pr, ps;
+// จำนวนงวดที่ถึงกำหนดแล้ว นับจากจ่ายล่าสุด (ขั้นต่ำ 1 งวด) — ค้างหลายงวด = ดอกสะสมตามงวด
+function cyclesDue(c,iso){
+  var ref=c.last_collection_date||c.start_date;
+  if(!ref)return 1;
+  var d=daysBetween(ref,iso||todayISO());
+  return Math.max(1,Math.floor(d/(+c.collection_interval||1)));
+}
+// ดอกต่อ 1 งวด (ใช้คิดงวดล่วงหน้า/คอลัมน์ ดอก/งวด)
+function interestPerCycle(c){return c.principal_only?0:+(c.remaining_principal * c.daily_interest_rate * c.collection_interval).toFixed(2)}
+// ดอกที่ต้องเก็บ ณ วันที่ iso = ดอกต่องวด × งวดที่ค้าง/ถึงกำหนด (ค้าง 3 งวด = ดอก 3 งวด)
+function interestDue(c,iso){return c.principal_only?0:+(interestPerCycle(c)*cyclesDue(c,iso)).toFixed(2)}
+function calcPayment(c, amountPaid, penalty, iso){
+  var due=interestDue(c,iso), ic, pr, ps;
   amountPaid=+amountPaid||0;
   penalty=+penalty||0;
   if(amountPaid===0){ps='unpaid';ic=0;pr=0;}
@@ -184,7 +194,7 @@ function calcPayment(c, amountPaid, penalty){
     remaining_principal:+(c.remaining_principal-pr).toFixed(2),
     wage:+((ic+penalty)*0.20).toFixed(2),payment_status:ps};
 }
-function closeAmount(c){return c.principal_only?+(c.remaining_principal).toFixed(2):+(c.remaining_principal + interestDue(c) + (c.branch_fee||0)).toFixed(2)}
+function closeAmount(c,iso){return c.principal_only?+(c.remaining_principal).toFixed(2):+(c.remaining_principal + interestDue(c,iso) + (c.branch_fee||0)).toFixed(2)}
 function isPaymentDueToday(c, iso){
   if(c.status==='closed') return false;
   var ref=c.last_collection_date||c.start_date;
