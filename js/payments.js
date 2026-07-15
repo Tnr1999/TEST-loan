@@ -21,12 +21,12 @@ function hhmm(ts){if(!ts)return'';try{return new Date(ts).toLocaleTimeString('th
 
 // คำนวณ "ส่วนต่าง" ของแต่ละรายการแบบสะสม (ดอกคิดรอบเดียว)
 // advance=true → ส่วนเกินดอกงวดนี้ตีเป็น "ดอกล่วงหน้า" (ข้ามงวดถัดไป) แทนการหักเงินต้น
-function computeDayDeltas(baseC0,entries,advance){
+function computeDayDeltas(baseC0,entries,advance,date){
   var prevInt=0,prevPrin=0,prevWage=0,cumPaid=0,cumPen=0,out=[],closing=false,remaining=baseC0.remaining_principal;
   entries.forEach(function(e){
     cumPaid=round2(cumPaid+(+e.amount_paid||0));
     cumPen=round2(cumPen+(+e.penalty||0));
-    var cum=payCalc(baseC0,cumPaid,cumPen,advance);
+    var cum=payCalc(baseC0,cumPaid,cumPen,advance,date);
     out.push({
       interest_due:cum.interest_due,
       interest_collected:round2(cum.interest_collected-prevInt),
@@ -52,7 +52,7 @@ function openPayment(custId,date,editId){
   _payCtx={custId:custId,date:date,recId:editRec?editId:null};
 
   var baseC0=dayBaseCustomer(c,recs);
-  var due=interestDue(baseC0),close=closeAmount(baseC0);          // ดอก/ยอดปิดของรอบ (ฐานต้นวัน)
+  var due=interestDue(baseC0,date),close=closeAmount(baseC0,date); // ดอก/ยอดปิด ณ วันที่บันทึก (ค้างหลายงวด = สะสม)
   var prevPaid=recs.reduce(function(s,r){return s+ +(r.amount_paid||0)},0);
   var prevInt=recs.reduce(function(s,r){return s+ +(r.interest_collected||0)},0);
   var prevPen=recs.reduce(function(s,r){return s+ +(r.penalty||0)},0);
@@ -137,9 +137,9 @@ function showPenaltyField(){
 
 // คำนวณการชำระ (รายการเดียว/สะสม) + ตรวจ "ปิดสัญญา" และกันเงินต้นติดลบ
 // ค่าแรง = (ดอกที่เก็บได้ + ค่าปรับ + ค่าธรรมเนียมบ้าน[เฉพาะวันปิดสัญญา]) × 20%
-function payCalc(c,amt,pen,advance){
+function payCalc(c,amt,pen,advance,date){
   pen=+pen||0;
-  var close=closeAmount(c),due=interestDue(c);
+  var close=closeAmount(c,date),due=interestDue(c,date);
   if(c.principal_only){
     // โหมดผ่อนต้น: ไม่คิดดอก · เงินทั้งหมดลดต้น · ปิดเมื่อต้นหมด · ผ่อนต้นไม่นับเป็นรายได้ (ไม่มีค่าแรง)
     var pr=Math.min(round2(amt),c.remaining_principal);
@@ -154,7 +154,7 @@ function payCalc(c,amt,pen,advance){
       remaining_principal:0,wage:round2((due+pen+(c.branch_fee||0))*0.20),payment_status:'overpaid',closing:true};
   }
   // จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ (amt>due) ตีเป็นดอกล่วงหน้าเต็มงวดๆ (ปัดลง) แทนหักต้น
-  var calc=(advance&&due>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen);
+  var calc=(advance&&due>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen,date);
   // กันต้นติดลบ: หักต้นได้ไม่เกินต้นคงเหลือ
   if(calc.principal_reduced>c.remaining_principal){
     calc.principal_reduced=+c.remaining_principal;
@@ -164,11 +164,12 @@ function payCalc(c,amt,pen,advance){
   if(calc.advance_cycles==null)calc.advance_cycles=0;
   return calc;
 }
-// ดอกล่วงหน้า: ทุกๆ due (1 งวด) ที่จ่ายเกินมา = ล่วงหน้าอีก 1 งวดเต็ม (ปัดลงเป็นจำนวนเต็มงวด) · เศษที่เหลือไม่พอครบงวด → ลดต้น
+// ดอกล่วงหน้า: จ่ายเกิน "ดอกที่ค้างทั้งหมด (due)" แล้ว ทุกๆ 1 งวด (ดอกต่องวด) ที่เกินมา = ล่วงหน้า 1 งวดเต็ม · เศษไม่ครบงวด → ลดต้น
 function calcAdvance(c,amt,pen,due){
   amt=+amt||0;
-  var extraCycles=Math.min(60,Math.max(0,Math.floor((amt-due)/due+1e-9)));
-  var ic=round2(due*(1+extraCycles));
+  var per=interestPerCycle(c)||due;
+  var extraCycles=Math.min(60,Math.max(0,Math.floor((amt-due)/per+1e-9)));
+  var ic=round2(due+per*extraCycles);
   var pr=round2(amt-ic);
   return{interest_due:due,interest_collected:ic,principal_reduced:pr,
     remaining_principal:round2(c.remaining_principal-pr),
@@ -200,14 +201,18 @@ function updatePayCalc(){
   var entries=buildDayEntries(recs,_payCtx.recId,amt,pen);
   var cumPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
   var cumPen=entries.reduce(function(s,e){return s+ +(e.penalty||0)},0);
-  var calc=payCalc(baseC0,cumPaid,cumPen,inp.advance);
+  var calc=payCalc(baseC0,cumPaid,cumPen,inp.advance,_payCtx.date);
 
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']
     :calc.payment_status==='advance'?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
     :{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
   var multi=recs.length>0;
   var h='<div class="calc-box"><div class="calc-title">ผลการคำนวณ'+(multi?' (รวมทั้งวัน)':'')+'</div>'+
-    '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>'+
+    '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>';
+  // ค้างหลายงวด → โชว์ยอดดอกสะสมให้คนเก็บเห็นชัด
+  var cyc=cyclesDue(baseC0,_payCtx.date);
+  if(cyc>1&&!baseC0.principal_only)h+='<div class="calc-row"><span class="k" style="color:var(--red)">ดอกค้างสะสม '+cyc+' งวด</span><span class="v" style="color:var(--red)">฿'+fmt(interestDue(baseC0,_payCtx.date))+'</span></div>';
+  h+=
     '<div class="calc-row"><span class="k">ดอกที่เก็บได้'+(multi?'รวม':'')+'</span><span class="v" style="color:var(--green)">฿'+fmt(calc.interest_collected)+'</span></div>';
   if(calc.advance_cycles>0){
     // จุดอ้างอิงใหม่ = วันนี้ + (งวดล่วงหน้า × ระยะ) → วันครบกำหนดจริงถัดไป = จุดอ้างอิง + อีก 1 งวด
@@ -234,7 +239,7 @@ async function savePayment(){
   var recs=dayRecords(custId,date);
   var baseC0=dayBaseCustomer(c,recs);
   var entries=buildDayEntries(recs,recId,amt,pen,{_new:true,recorded_by:currentUser.id});
-  var R=computeDayDeltas(baseC0,entries,inp.advance);
+  var R=computeDayDeltas(baseC0,entries,inp.advance,date);
   var totalPaid=entries.reduce(function(s,e){return s+ +(e.amount_paid||0)},0);
   var advanceCycles=R.deltas.length?(R.deltas[R.deltas.length-1].advance_cycles||0):0;
 
@@ -262,7 +267,7 @@ async function savePayment(){
   var upd={remaining_principal:R.remaining};
   if(totalPaid>0)upd.last_collection_date=advanceCycles>0?addDaysISO(date,c.collection_interval*advanceCycles):date;
   if(R.closing){
-    upd.status='closed';upd.close_amount=closeAmount(baseC0);
+    upd.status='closed';upd.close_amount=closeAmount(baseC0,date);
   }else if(c.status!=='lost'&&totalPaid>0){
     upd.status='normal';
   }
