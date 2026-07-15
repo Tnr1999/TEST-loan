@@ -4,6 +4,7 @@
 ═══════════════════════════════════════════════ */
 var ALERT_TYPES={
   dup_lost    :{icon:'💀',label:'เปิดซ้ำคนตาย', cls:'al-danger'},
+  dup_branch  :{icon:'⛔',label:'เปิดซ้ำบ้านเดียวกัน',cls:'al-danger'},
   maybe_dup   :{icon:'⚠️',label:'อาจเป็นลูกค้าซ้ำ',cls:'al-warn'},
   multi_branch:{icon:'🏠',label:'ลูกค้ามีหลายบ้าน',cls:'al-warn'}
 };

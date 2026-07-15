@@ -701,7 +701,17 @@ async function saveCustomer(){
     return;
   }
 
-  // อยู่ได้ทุกบ้าน — ไม่บล็อก แต่แจ้ง Owner ว่าลูกค้าคนนี้มีสัญญาอยู่บ้านไหนบ้าง
+  // บล็อกแข็ง (ทุก role รวม Owner): มีสัญญาที่ยังไม่ปิด (ปกติ/ค้าง) อยู่แล้วในบ้านเดียวกัน — 1 บ้านต่อคน 1 สัญญาเปิดพร้อมกันเท่านั้น
+  // (ตายในบ้านนี้ถูกจับโดยบล็อกด้านบนแล้ว) — ต้องการเพิ่มยอด ใช้ปุ่ม "+ เพิ่มยอด" แทน ไม่ใช่เปิดสัญญาใหม่ซ้อน
+  if(exId&&!reloanPersonId&&allLoans.some(function(l){return l.person_id===exId&&l.branch_id===branchId&&(l.status==='normal'||l.status==='overdue')})){
+    var lpb=allPersons.find(function(p){return p.id===exId})||{};
+    logAlert('dup_branch',{person_id:exId,person_name:lpb.full_name||name,branch_id:branchId,
+      message:'พยายามเปิดสัญญาใหม่ซ้ำในบ้านเดียวกัน ทั้งที่มีสัญญาเปิดอยู่แล้ว'});
+    toast('ลูกค้ารายนี้มีสัญญาเปิดอยู่แล้วในบ้านนี้ — ปิดสัญญาเดิมก่อน หรือใช้ปุ่ม "+ เพิ่มยอด" แทน','err');
+    return;
+  }
+
+  // อยู่ได้ทุกบ้าน (คนละบ้าน) — ไม่บล็อก แต่แจ้ง Owner ว่าลูกค้าคนนี้มีสัญญาอยู่บ้านไหนบ้าง
   notifyMultiBranch(exId,name,branchId);
 
   var saveLabel=reloanPersonId?'เปิดยอดใหม่':'เพิ่มลูกค้า';
