@@ -558,7 +558,8 @@ function buildCustomers(){
     return Object.assign({},l,{
       person_id:l.person_id,
       full_name:p.full_name||'(ไม่ทราบชื่อ)',
-      phone:p.phone||null,id_card:p.id_card||null,facebook_url:p.facebook_url||null,fb_group_url:p.fb_group_url||null,
+      // ลิงก์กลุ่มเฟสเก็บที่สัญญา (ต่อบ้าน — กันทับกันข้ามบ้าน) · ของเก่าที่ยังอยู่ที่ตัวคน = fallback
+      phone:p.phone||null,id_card:p.id_card||null,facebook_url:p.facebook_url||null,fb_group_url:l.fb_group_url||p.fb_group_url||null,
       bank_name:p.bank_name||null,bank_account:p.bank_account||null
     });
   });
