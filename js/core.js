@@ -398,27 +398,41 @@ async function purgeOldRecords(){
 }
 // ดึงทุกแถวแบบแบ่งหน้า — Supabase REST จำกัด 1000 แถว/ครั้ง ตารางที่โตเกินนั้นจะโดนตัดเงียบๆ
 // (เจอจริง: สัญญา seq >1000 หายจากแอปทั้งที่อยู่ใน DB) · mock ที่ไม่มี .range = ยิงครั้งเดียวตามเดิม
+// หน้าแรกยิงเดี่ยว (ตารางส่วนใหญ่ <1000 = จบใน 1 request) · เกินนั้นยิงพร้อมกันทีละ 4 หน้า ไม่รอเรียงคิว (ลดเวลาโหลดตารางใหญ่ ~4 เท่า)
 async function fetchAllRows(buildQuery){
   var probe=buildQuery();
   if(typeof probe.range!=='function')return await probe;
-  var out=[],page=1000,from=0;
-  while(true){
-    var r=await buildQuery().range(from,from+page-1);
-    if(r.error)return r;
-    out=out.concat(r.data||[]);
-    if(!r.data||r.data.length<page)break;
-    from+=page;
+  var page=1000;
+  var r0=await buildQuery().range(0,page-1);
+  if(r0.error)return r0;
+  var out=r0.data||[];
+  if(out.length<page)return {data:out,error:null};
+  var from=page,done=false;
+  while(!done){
+    var batch=[];
+    for(var i=0;i<4;i++){batch.push(buildQuery().range(from,from+page-1));from+=page;}
+    var rs=await Promise.all(batch);
+    for(var j=0;j<rs.length;j++){
+      if(rs[j].error)return rs[j];
+      out=out.concat(rs[j].data||[]);
+      if(!rs[j].data||rs[j].data.length<page){done=true;break;}
+    }
   }
   return {data:out,error:null};
 }
+var _loadSeq=0;              // นับรอบโหลด — กันการโหลดย้อนหลังของรอบเก่ามาเขียนทับรอบใหม่
+var RECENT_DAYS=45;          // ช่วงประวัติที่โหลดก่อนวาดหน้าจอ (ที่เหลือตามมาทีหลังแบบเงียบๆ)
 async function loadAll(){
+  var seq=++_loadSeq;
   await purgeOldRecords();
+  var recentCut=addDaysISO(todayISO(),-RECENT_DAYS);
   var q=[
     _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),
     fetchAllRows(function(){return _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account').order('id')}),
     fetchAllRows(function(){return _sb.from('loans').select('*').order('seq')}),
-    fetchAllRows(function(){return _sb.from('daily_records').select('*').order('record_date').order('created_at')}),
+    // ประวัติการชำระ: โหลดเฉพาะช่วงล่าสุดก่อน ให้หน้าจอขึ้นไว — ที่เก่ากว่านั้นตามมาใน loadOlderRecords
+    fetchAllRows(function(){return _sb.from('daily_records').select('*').gte('record_date',recentCut).order('record_date').order('created_at')}),
     _sb.from('user_branches').select('*'),
     _sb.from('user_groups').select('*')
   ];
@@ -454,6 +468,22 @@ async function loadAll(){
   }
 
   await rebuildAndRender();
+  loadOlderRecords(recentCut,seq);   // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
+}
+
+// โหลดประวัติการชำระที่เก่ากว่าช่วงล่าสุด (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับหน้าค่าแรงช่วงเก่า/ดูวันย้อนหลัง/ประวัติในรายละเอียด
+async function loadOlderRecords(cut,seq){
+  try{
+    var r=await fetchAllRows(function(){return _sb.from('daily_records').select('*').lt('record_date',cut).order('record_date').order('created_at')});
+    if(r.error||!r.data||!r.data.length)return;
+    if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
+    var have={};allRecords.forEach(function(x){have[x.id]=1});
+    var add=r.data.filter(function(x){return !have[x.id]});
+    if(!add.length)return;
+    allRecords=allRecords.concat(add);
+    allRecords.sort(function(a,b){return String(a.record_date).localeCompare(String(b.record_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))});
+    await rebuildAndRender();
+  }catch(e){/* พลาด = หน้าจอยังใช้ข้อมูลช่วงล่าสุดได้ปกติ */}
 }
 
 // ประกอบข้อมูลในหน่วยความจำ + วาดทุกหน้าใหม่ — ใช้ร่วมกันระหว่าง loadAll (โหลดเต็ม) กับ refreshLoan (โหลดเฉพาะสัญญา)
