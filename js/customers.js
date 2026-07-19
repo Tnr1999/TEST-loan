@@ -10,7 +10,7 @@ function renderCustGroupBtns(){
   groups.forEach(function(g){btns+='<button class="branch-btn'+(custGroupId===g.id?' active':'')+'" onclick="setCustGroup(\''+g.id+'\')">'+esc(g.name)+'</button>';});
   el.innerHTML=btns;
 }
-function setCustGroup(id){custGroupId=id;custBranchId='';renderCustGroupBtns();renderCustBranchBtns();renderCustomers();renderDashboard();}
+function setCustGroup(id){custGroupId=id;custBranchId='';custRenderLimit=CUST_CHUNK;renderCustGroupBtns();renderCustBranchBtns();renderCustomers();renderDashboard();}
 
 // ── ตัวกรอง "บ้าน" — ถ้าเลือกกองแล้วโชว์เฉพาะบ้านในกองนั้น ──
 function renderCustBranchBtns(){
@@ -29,7 +29,7 @@ function renderCustBranchBtns(){
   branches.filter(function(b){return !b.group_id}).forEach(function(b){btns+='<button class="branch-btn'+(custBranchId===b.id?' active':'')+'" onclick="setCustBranch(\''+b.id+'\')">'+esc(b.name)+'</button>';});
   el.innerHTML=btns;
 }
-function setCustBranch(id){custBranchId=id;renderCustBranchBtns();renderCustomers();renderDashboard();}
+function setCustBranch(id){custBranchId=id;custRenderLimit=CUST_CHUNK;renderCustBranchBtns();renderCustomers();renderDashboard();}
 
 function renderCustomers(){
   var search=(document.getElementById('cust-search').value||'').toLowerCase();
@@ -111,10 +111,14 @@ function renderCustomers(){
     document.getElementById('cust-list-cards').innerHTML=eh;
     return;
   }
+  // วาดเป็นช่วง — เกินลิมิตซ่อนไว้หลังปุ่ม "แสดงเพิ่ม" (ลูกค้าหลายร้อยรายไม่หน่วง)
+  var totalN=vlist.length,shown=vlist.slice(0,custRenderLimit);
+  var moreBtn=totalN>shown.length
+    ?'<div style="text-align:center;padding:12px"><button class="btn btn-ghost btn-sm" onclick="custShowMore()">แสดงเพิ่ม (เหลืออีก '+(totalN-shown.length)+' รายการ)</button></div>':'';
   // ตาราง (จอใหญ่)
   document.getElementById('cust-list').innerHTML=
     '<table class="tbl"><thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th class="tr-right">ต้นคงเหลือ</th><th class="tr-right">ดอก/งวด</th><th class="tr-right">ยอดปิด</th><th>สถานะ</th><th></th></tr></thead><tbody>'+
-    vlist.map(function(c){var s=stMap[c.id];
+    shown.map(function(c){var s=stMap[c.id];
       var interest=interestPerCycle(c);      // คอลัมน์ "ดอก/งวด" = ต่องวดเสมอ (ยอดค้างสะสมดูตอนกดรับเงิน)
       var close=closeAmount(c,vdate);        // ยอดปิดรวมดอกค้างสะสม ณ วันที่ดู
       var ref=c.last_collection_date||c.start_date;
@@ -141,12 +145,23 @@ function renderCustomers(){
       '<td class="tr-right mono" style="color:var(--gold);font-weight:600">฿'+fmt(close)+'</td>'+
       '<td><span class="st st-'+(s.pending?'pending':(s.ahead?'advance':c.status))+'" data-tip="'+esc(tip)+'">'+(s.pending?'รอเปิด':(s.ahead?'จ่ายล่วงหน้า':STATUS_LABEL[c.status]))+(daysOver>0?' +'+daysOver+'ว':'')+'</span></td>'+
       '<td>'+actBtn+'</td></tr>'}).join('')+
-    '</tbody></table>';
+    '</tbody></table>'+moreBtn;
   // การ์ดกระชับ (มือถือ) — แตะแถวเพื่อดูรายละเอียด, ปุ่มขวาเพื่อรับเงิน
   document.getElementById('cust-list-cards').innerHTML=
-    vlist.map(function(c){return custCardHTML(c,vdate,stMap[c.id])}).join('');
+    shown.map(function(c){return custCardHTML(c,vdate,stMap[c.id])}).join('')+moreBtn;
 }
-function setCustView(v){custView=v;renderCustomers()}
+function setCustView(v){custView=v;custRenderLimit=CUST_CHUNK;renderCustomers()}
+
+/* ═══ วาดลิสต์เป็นช่วง — ลูกค้าหลายร้อยรายไม่หน่วง ═══ */
+var CUST_CHUNK=80;                 // จำนวนที่วาดต่อรอบ (พอเต็มหลายจอ — ที่เหลือกด "แสดงเพิ่ม")
+var custRenderLimit=CUST_CHUNK;
+function custShowMore(){custRenderLimit+=200;renderCustomers()}
+// ค้นหาแบบหน่วง — พิมพ์เสร็จค่อยวาด (เดิมวาดลิสต์ทั้งหมดใหม่ทุกตัวอักษร = หน่วงบนมือถือ)
+var _custSearchT=null;
+function custSearchInput(){
+  clearTimeout(_custSearchT);
+  _custSearchT=setTimeout(function(){custRenderLimit=CUST_CHUNK;renderCustomers()},250);
+}
 
 /* ═══ ชิปกรอง: ลากจัดลำดับได้ (จำต่อเครื่องด้วย localStorage) ═══
    มือถือ = กดแช่ ~0.35 วิแล้วลาก (ขยับก่อนครบเวลา = เลื่อนจอปกติ) · เมาส์ = ลากได้ทันที · คลิกธรรมดา = สลับมุมมองเหมือนเดิม */

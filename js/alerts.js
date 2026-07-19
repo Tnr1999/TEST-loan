@@ -12,6 +12,15 @@ var ALERT_TYPES={
 // รีเฟรชหน้าแจ้งเตือน + badge บนเมนู หลังทุก mutation
 function refreshAlertsUI(){renderAlerts();if(typeof renderNav==='function')renderNav()}
 
+// เข้าหน้าแจ้งเตือน → วาดจากที่มีก่อน (ขึ้นทันที) แล้วโหลดลิสต์เต็มตามหลัง
+// (ตอนเปิดแอปโหลดมาเฉพาะที่ยังไม่อ่าน เพื่อให้เปิดแอปไว — รายการที่อ่านแล้วมาครบตรงนี้)
+async function loadFullAlerts(){
+  renderAlerts();
+  if(!isOwner())return;
+  var r=await _sb.from('alerts').select('*').order('created_at',{ascending:false});
+  if(!r.error&&r.data){allAlerts=r.data;refreshAlertsUI();}
+}
+
 // เวลาแบบไทยอ่านง่าย
 function alTime(ts){
   if(!ts)return'';
