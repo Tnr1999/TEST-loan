@@ -8,7 +8,7 @@ function showPage(name){
   window.scrollTo({top:0,behavior:'smooth'});
   if(typeof renderDashboard==='function'&&allCustomers.length)renderDashboard(); // สรุปยอดตามหน้าที่เปิด
   if(name==='payout'&&typeof renderPayoutPage==='function')renderPayoutPage();
-  if(name==='alerts'&&typeof renderAlerts==='function')renderAlerts();
+  if(name==='alerts'&&typeof loadFullAlerts==='function')loadFullAlerts();
 }
 // ไอคอนเส้น (stroke=currentColor → เปลี่ยนเป็นทองเมื่อ active)
 var NAV_ICONS={

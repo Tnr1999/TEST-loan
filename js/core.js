@@ -454,7 +454,8 @@ async function loadAll(){
   // ① ยอดเบิก (phase4) · ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
   var extra=await Promise.all([
     fetchAllRows(function(){return _sb.from('disbursements').select('*').order('disburse_date')}),
-    isOwner()?_sb.from('alerts').select('*').order('created_at',{ascending:false}):null,
+    // แจ้งเตือน: ตอนเปิดแอปโหลดเฉพาะที่ยังไม่อ่าน (พอสำหรับ badge) — ลิสต์เต็มโหลดตอนเข้าหน้าแจ้งเตือน (loadFullAlerts)
+    isOwner()?_sb.from('alerts').select('*').eq('is_read',false).order('created_at',{ascending:false}):null,
     !isOwner()?_sb.from('users').select('id,username,full_name,role,is_active').order('created_at'):null
   ]);
   allDisbursements=(extra[0]&&!extra[0].error&&extra[0].data)||[];
