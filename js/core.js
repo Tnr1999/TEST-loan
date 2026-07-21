@@ -68,6 +68,8 @@ var ROLE_LABEL={owner:'OWNER',head:'หัวหน้ากอง',line:'หั
 function isOwner(){return currentUser&&currentUser.role==='owner'}
 function isHead(){return currentUser&&currentUser.role==='head'}                                    // หัวหน้ากอง
 function isLineHead(){return currentUser&&(currentUser.role==='line'||currentUser.role==='manager')} // หัวหน้าสาย
+// เพิ่มยอด/กดปิดสินเชื่อ — เฉพาะ owner/หัวหน้ากอง (พนักงาน+หัวหน้าสายทำไม่ได้ · รับเงินครบยอดปิดยังปิดให้อัตโนมัติ)
+function canTopupClose(){return isOwner()||isHead()}
 function isStaff(){return currentUser&&currentUser.role==='staff'}
 function canEdit(){return isOwner()||isHead()||isLineHead()||isStaff()}   // รับเงิน/ปิดสินเชื่อ/เพิ่มยอด — ทุก role (ในขอบเขตที่เห็น)
 function canDisburse(){return isOwner()||isHead()}             // ยืนยันโอนเงิน ("เปิด") — Owner + หัวหน้ากอง (ในกองตัวเอง)
