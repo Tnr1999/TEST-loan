@@ -374,6 +374,11 @@ function openDetail(id){
       ops+='<button class="btn btn-cyan btn-sm" onclick="openPayment(\''+id+'\',\''+todayISO()+'\')">💳 คืนเครดิต (รับเงินเต็ม)</button>';
       hint='<div class="field-hint" style="margin-top:8px">คืนเครดิต = ลูกค้าจ่าย <b>ต้น + ดอก + ค่าปรับ</b> ครบยอดปิด → ปิดสัญญา (ระบบเก็บประวัติว่าเคยตาย) · จ่ายไม่ครบจะยังคงสถานะตาย</div>';
     }
+    // ปิดสัญญาโดยไม่ได้รับเงิน (ตัดหนี้สูญ) — เฉพาะ Owner เท่านั้น ต่างจากคืนเครดิตที่ต้องจ่ายเต็มยอด
+    if(c.status==='lost'&&isOwner()){
+      ops+='<button class="btn btn-ghost btn-sm" onclick="closeLostLoan(\''+id+'\')">✕ ปิดสัญญา (ตัดหนี้สูญ)</button>';
+      hint+='<div class="field-hint" style="margin-top:8px">ปิดสัญญา (ตัดหนี้สูญ) = ปิดสัญญาทันทีโดย<b>ไม่ได้รับเงินคืน</b> ใช้เมื่อแน่ใจว่าเรียกเก็บไม่ได้แล้ว</div>';
+    }
     if(c.status!=='lost'){
       // เพิ่มยอด/ปิดสินเชื่อ — เฉพาะ owner/หัวหน้ากอง (ปิดสัญญาผ่านการรับเงินครบยอดปิดยังทำได้ตามปกติทุก role)
       if(canTopupClose())ops+='<button class="btn btn-purple btn-sm" onclick="openTopup(\''+id+'\')">+ เพิ่มยอด</button>';
@@ -494,6 +499,19 @@ async function doCloseLoan(id){
   var res=await _sb.from('loans').update({status:'closed',close_amount:ca}).eq('id',id);
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   toast('✅ ปิดสินเชื่อสำเร็จ ยอด ฿'+fmt(ca),'ok');await refreshLoan(id);openDetail(id);
+}
+// ปิดสัญญาลูกค้าตายโดยไม่ได้รับเงินคืน (ตัดหนี้สูญ) — Owner เท่านั้น ต่างจาก "คืนเครดิต" ที่ต้องจ่ายเต็มยอดก่อนปิด
+async function closeLostLoan(id){
+  if(!isOwner()){toast('ปิดสัญญา (ตัดหนี้สูญ) ได้เฉพาะ Owner เท่านั้น','err');return}
+  var c=allCustomers.find(function(x){return x.id===id});if(!c||c.status!=='lost')return;
+  var ca=closeAmount(c);
+  var ok=await showConfirm({icon:'✕',title:'ปิดสัญญา (ตัดหนี้สูญ)',
+    msg:'ปิดสัญญาของ "'+c.full_name+'" โดยไม่ได้รับเงินคืน (ยอดค้าง ฿'+fmt(ca)+')\nใช้เมื่อแน่ใจว่าเรียกเก็บไม่ได้แล้ว\n\nการปิดไม่สามารถยกเลิกได้',
+    okText:'ปิดสัญญา',okClass:'btn-red'});
+  if(!ok)return;
+  var res=await _sb.from('loans').update({status:'closed',close_amount:ca}).eq('id',id);
+  if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
+  toast('ปิดสัญญาแล้ว (ตัดหนี้สูญ ฿'+fmt(ca)+')','ok');await refreshLoan(id);openDetail(id);
 }
 // เพิ่มยอด — ลูกค้าเดิมขอยอดเพิ่ม (เช่น เปิด 1000 ขอเพิ่มเป็น 2000 → โอนเพิ่ม 1000)
 // บันทึกเป็น "ยอดเบิก" (kind=topup) + เพิ่มเข้าเงินต้น/เงินต้นคงเหลือ
