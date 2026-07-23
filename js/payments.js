@@ -150,8 +150,9 @@ function payCalc(c,amt,pen,advance,date){
   }
   if(close>0&&amt>=close){
     // จ่ายครบยอดปิด → ปิดสัญญา: เก็บดอกรอบนี้ + คืนต้นทั้งหมด + ค่าธรรมเนียมบ้าน
+    // payment_status='closed' (ไม่ใช่ 'overpaid') เพื่อให้ประวัติแสดง "ปิดสัญญา" ชัด แยกจากจ่ายเกินธรรมดา
     return{interest_due:due,interest_collected:due,principal_reduced:+c.remaining_principal,
-      remaining_principal:0,wage:round2((due+pen+(c.branch_fee||0))*0.20),payment_status:'overpaid',closing:true};
+      remaining_principal:0,wage:round2((due+pen+(c.branch_fee||0))*0.20),payment_status:'closed',closing:true};
   }
   // จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ (amt>due) ตีเป็นดอกล่วงหน้าเต็มงวดๆ (ปัดลง) แทนหักต้น
   var calc=(advance&&due>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen,date);
@@ -205,7 +206,7 @@ function updatePayCalc(){
 
   var lbl=calc.closing?['✓ ปิดสัญญา','var(--green)']
     :calc.payment_status==='advance'?['จ่ายล่วงหน้า +'+calc.advance_cycles+' งวด','var(--purple)']
-    :{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)']}[calc.payment_status];
+    :{unpaid:['ไม่จ่าย','var(--muted)'],partial:['จ่ายบางส่วน','var(--amber)'],exact:['จ่ายครบดอก','var(--green)'],overpaid:['จ่ายเกิน (หักต้น)','var(--cyan)'],closed:['✓ ปิดสัญญา','var(--green)']}[calc.payment_status];
   var multi=recs.length>0;
   var h='<div class="calc-box"><div class="calc-title">ผลการคำนวณ'+(multi?' (รวมทั้งวัน)':'')+'</div>'+
     '<div class="calc-row"><span class="k">สถานะ</span><span class="v" style="color:'+lbl[1]+'">'+lbl[0]+'</span></div>';

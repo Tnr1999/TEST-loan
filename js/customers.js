@@ -423,7 +423,12 @@ function openDetail(id){
         '<td class="tr-right mono" style="color:var(--cyan)">'+(r.principal_reduced>0?'฿'+fmt(r.principal_reduced):'—')+'</td>'+
         '<td class="tr-right mono">฿'+fmt(r.remaining_principal)+'</td>'+
         '<td class="tr-right mono" style="color:var(--red)">'+(r.penalty>0?'฿'+fmt(r.penalty):'—')+'</td>'+
-        '<td><span class="pst pst-'+r.payment_status+'">'+(r.payment_status==='advance'&&r.advance_cycles>0?'ล่วงหน้า +'+r.advance_cycles+' งวด':PSTATUS_LABEL[r.payment_status])+'</span></td></tr>'}).join('')+
+        '<td>'+(function(){
+          // record เก่าก่อนแก้บั๊ก: ตอนปิดสัญญาเก็บ 'overpaid' + ต้นเหลือ 0 → แสดง "ปิดสัญญา" ให้ตรงความจริง
+          var ps=(r.payment_status==='overpaid'&&+r.remaining_principal===0)?'closed':r.payment_status;
+          var lbl=ps==='advance'&&r.advance_cycles>0?'ล่วงหน้า +'+r.advance_cycles+' งวด':PSTATUS_LABEL[ps];
+          return '<span class="pst pst-'+ps+'">'+lbl+'</span>';
+        })()+'</td></tr>'}).join('')+
       '</tbody></table></div>';
   }
   h+='</div>';

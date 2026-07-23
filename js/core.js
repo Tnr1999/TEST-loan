@@ -46,7 +46,7 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 function thDate(iso){if(!iso)return'—';var d=new Date(iso+'T00:00:00');var m=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return d.getDate()+' '+m[d.getMonth()]+' '+(d.getFullYear()+543)}
 
 var STATUS_LABEL={normal:'ปกติ',overdue:'ค้างจ่าย',lost:'ตาย',closed:'ปิดแล้ว'};
-var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)',advance:'จ่ายล่วงหน้า'};
+var PSTATUS_LABEL={unpaid:'ไม่จ่าย',partial:'จ่ายบางส่วน',exact:'จ่ายครบดอก',overpaid:'จ่ายเกิน(หักต้น)',advance:'จ่ายล่วงหน้า',closed:'ปิดสัญญา'};
 // รายชื่อธนาคาร (ดรอปดาวตอนเพิ่ม/แก้ลูกค้า) — เรียงตามที่กำหนด
 var BANK_LIST=['พร้อมเพย์','กสิกร','SCB/ไทยพาณิชย์','ttb/ทหารไทย','กรุงไทย','ออมสิน','KKP/เกียรตินาคิน','กรุงศรี','กรุงเทพ','LH/แลนด์แอนด์เฮ้าส์','ธ.ก.ส.','ธนาคารอาคารสงเคราะห์','CIMB','UOB'];
 // สร้าง <option> สำหรับดรอปดาวธนาคาร · เก็บค่าเดิมที่ไม่อยู่ในลิสต์ไว้ (กันข้อมูลเก่าหาย)

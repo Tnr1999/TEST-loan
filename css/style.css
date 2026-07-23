@@ -325,6 +325,7 @@ table.tbl tbody tr:hover{background:var(--surface)}
 .st-advance{background:var(--purple-dim);color:var(--purple)}
 .pst{font-size:0.68rem;font-weight:600;padding:2px 7px;border-radius:5px}
 .pst-exact,.pst-overpaid{background:var(--green-dim);color:var(--green)}
+.pst-closed{background:var(--gold-dim);color:var(--gold);font-weight:700}
 .pst-partial{background:var(--amber-dim);color:var(--amber)}
 .pst-unpaid{background:var(--muted-dim);color:var(--muted)}
 .pst-advance{background:var(--purple-dim);color:var(--purple)}
