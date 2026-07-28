@@ -178,6 +178,8 @@ function cyclesDue(c,iso){
   var ref=c.last_collection_date||c.start_date;
   if(!ref)return 1;
   var d=daysBetween(ref,iso||todayISO());
+  // วันเบิก (ยังไม่เคยเก็บเงิน + ดูที่วันเปิดสัญญาพอดี) = ยังไม่คิดดอกวันนี้ · ดอกเริ่มนับวันถัดไป (ตรงกับ isPaymentDueToday)
+  if(!c.last_collection_date&&d<=0)return 0;
   return Math.max(1,Math.floor(d/(+c.collection_interval||1)));
 }
 // ดอกต่อ 1 งวด (ใช้คิดงวดล่วงหน้า/คอลัมน์ ดอก/งวด)

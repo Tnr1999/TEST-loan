@@ -155,7 +155,8 @@ function payCalc(c,amt,pen,advance,date){
       remaining_principal:0,wage:round2((due+pen+(c.branch_fee||0))*0.20),payment_status:'closed',closing:true};
   }
   // จ่ายล่วงหน้า — ส่วนเกินดอกงวดนี้ (amt>due) ตีเป็นดอกล่วงหน้าเต็มงวดๆ (ปัดลง) แทนหักต้น
-  var calc=(advance&&due>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen,date);
+  // วันเบิก due=0 (วันนี้ฟรี) → จ่ายล่วงหน้าได้เต็มจำนวน (per>0 พอ ไม่ต้องรอ due>0)
+  var calc=(advance&&interestPerCycle(c)>0&&amt>due)?calcAdvance(c,amt,pen,due):calcPayment(c,amt,pen,date);
   // กันต้นติดลบ: หักต้นได้ไม่เกินต้นคงเหลือ
   if(calc.principal_reduced>c.remaining_principal){
     calc.principal_reduced=+c.remaining_principal;
