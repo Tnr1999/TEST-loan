@@ -32,6 +32,9 @@ function renderCustBranchBtns(){
 function setCustBranch(id){custBranchId=id;custRenderLimit=CUST_CHUNK;renderCustBranchBtns();renderCustomers();renderDashboard();}
 
 function renderCustomers(){
+  // ยังโหลดรอบแรกไม่เสร็จ — คงโครง skeleton ไว้ก่อน กันแสดง "🎉 วันนี้เก็บครบแล้ว" หลอกว่าไม่มีใครค้าง
+  // ทั้งที่ข้อมูลจริงยังไม่มาถึง (เกิดจากถูกเรียกเร็วเกินไปก่อน loadAll เสร็จ — พบจริงจากคลิปที่ผู้ใช้ส่งมา)
+  if(!_dataLoaded)return;
   var search=(document.getElementById('cust-search').value||'').toLowerCase();
   var fb=custBranchId;
   var list=allCustomers.filter(function(c){

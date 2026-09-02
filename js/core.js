@@ -379,6 +379,7 @@ function doLogout(){
   localStorage.removeItem(SESSION_KEY);currentUser=null;
   allBranches=[];allCustomers=[];allRecords=[];allUsers=[];allUserBranches=[];
   allGroups=[];allPersons=[];allLoans=[];allUserGroups=[];allDisbursements=[];
+  _dataLoaded=false;
   showLoginScreen();
 }
 // เด้งออกจากระบบพร้อมข้อความบนหน้า login (ใช้ตอนบัญชีถูกปิด/ถูกลบ)
@@ -473,7 +474,14 @@ async function fetchAllRows(buildQuery){
   return {data:out,error:null};
 }
 var _loadSeq=0;              // นับรอบโหลด — กันการโหลดย้อนหลังของรอบเก่ามาเขียนทับรอบใหม่
-var RECENT_DAYS=45;          // ช่วงประวัติที่โหลดก่อนวาดหน้าจอ (ที่เหลือตามมาทีหลังแบบเงียบๆ)
+var _dataLoaded=false;       // true หลัง loadAll() รอบแรกเสร็จสมบูรณ์ — กันจอโล่ง/ข้อความ "ไม่มีใครค้าง" ปลอมตอนยังโหลดไม่เสร็จ
+// ช่วงประวัติที่โหลด "ก่อนวาดหน้าจอ" (บล็อก first paint) — ที่เหลือตามมาทีหลังแบบไม่บล็อก (ดู loadOlderRecords)
+// เดิม 45 วัน แต่พบจริงว่าร้านมีสัญญาที่ยังเปิดอยู่หลักพันราย (เก็บเงินรายวัน/ทุก 2-3 วัน) —
+// ช่วง 45 วันเลยกลายเป็นก้อนใหญ่ที่บล็อกจอทุกครั้งที่เปิด/รีเฟรชแอปไปด้วย (บั๊ก 1000 แถวเก่าไม่เกี่ยว
+// แต่จำนวนสัญญาที่ใช้งานจริงมากขึ้นมากตั้งแต่ประเมินค่านี้ไว้) → เหลือ 3 วัน (วันนี้/เมื่อวาน/วันก่อนนั้น)
+// พอสำหรับหน้าจอแรก+เลื่อนปฏิทินสองสามวันโดยไม่มีอาการกระตุก ส่วนย้อนไกลกว่านั้น (ปฏิทิน/ค่าแรงช่วงเก่า/
+// ประวัติลูกค้า) โหลดตามหลังผ่าน loadOlderRecords/loadOlderDisbursements เหมือนเดิม (cache ในเครื่องแล้ว)
+var RECENT_DAYS=3;
 async function loadAll(){
   var seq=++_loadSeq;
   await purgeOldRecords();
@@ -522,6 +530,7 @@ async function loadAll(){
     if(!me||me.is_active===false){forceLogout('บัญชีของคุณถูกระงับหรือถูกลบ — ติดต่อเจ้าของระบบ');return;}
   }
 
+  _dataLoaded=true;   // ตั้งก่อน rebuildAndRender เพราะการ render ครั้งแรกต้องเลิกถือว่า "ยังโหลดไม่เสร็จ" แล้ว
   await rebuildAndRender();
   loadOlderRecords(recentCut,seq);         // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
   loadOlderDisbursements(recentCut,seq);   // เก็บยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลังเช่นกัน

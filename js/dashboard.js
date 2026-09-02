@@ -83,6 +83,9 @@ function currentScopeBids(){
 // ค่าธรรมเนียม (เก็บตอนปิดสัญญา) ของรายการ = ส่วนที่จ่ายเกินดอก+ต้น — สูตรเดียว ใช้ทั้งสรุปรวมและรายบ้าน
 function feeOf(r){return Math.max(0,round2((+r.amount_paid)-(+r.interest_collected)-(+(r.principal_reduced||0))))}
 function renderDashboard(){
+  // ยังโหลดรอบแรกไม่เสร็จ (allCustomers/allRecords ว่างเปล่าจริงๆ) — คงโครง skeleton ไว้ก่อน
+  // กันแสดง "฿0" ทุกช่องหลอกว่าปิดยอดครบ ทั้งที่ข้อมูลจริงยังไม่มาถึง (พบจริงจากคลิปที่ผู้ใช้ส่งมา)
+  if(!_dataLoaded)return;
   var date=selDate();
   var bids=currentScopeBids();
 
