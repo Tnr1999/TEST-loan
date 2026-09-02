@@ -458,9 +458,11 @@ async function loadAll(){
   if(canManageUsers()&&r[7]) allUsers=r[7].data||[];
 
   // ชุดเสริม (fail-safe แยกจากชุดหลัก กันแอปพังถ้ายังไม่รัน migration) — ยิงขนานกันในรอบเดียว
-  // ① ยอดเบิก (phase4) · ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
+  // ① ยอดเบิก (phase4) — เฉพาะช่วงล่าสุดก่อน (เหมือน daily_records) ที่เก่ากว่านั้นตามมาใน loadOlderDisbursements
+  //    (ยอดเบิกไม่มีระบบลบถาวรแบบ daily_records เก็บสะสมทั้งประวัติ ยิ่งธุรกิจเปิดมานาน ตารางยิ่งโต ต้องกันโหลดทั้งก้อนตั้งแต่ตอนนี้)
+  // ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
   var extra=await Promise.all([
-    fetchAllRows(function(){return _sb.from('disbursements').select('*').order('disburse_date')}),
+    fetchAllRows(function(){return _sb.from('disbursements').select('*').gte('disburse_date',recentCut).order('disburse_date')}),
     // แจ้งเตือน: ตอนเปิดแอปโหลดเฉพาะที่ยังไม่อ่าน (พอสำหรับ badge) — ลิสต์เต็มโหลดตอนเข้าหน้าแจ้งเตือน (loadFullAlerts)
     isOwner()?_sb.from('alerts').select('*').eq('is_read',false).order('created_at',{ascending:false}):null,
     !isOwner()?_sb.from('users').select('id,username,full_name,role,is_active').order('created_at'):null
@@ -476,7 +478,8 @@ async function loadAll(){
   }
 
   await rebuildAndRender();
-  loadOlderRecords(recentCut,seq);   // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
+  loadOlderRecords(recentCut,seq);         // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
+  loadOlderDisbursements(recentCut,seq);   // เก็บยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลังเช่นกัน
 }
 
 // โหลดประวัติการชำระที่เก่ากว่าช่วงล่าสุด (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับหน้าค่าแรงช่วงเก่า/ดูวันย้อนหลัง/ประวัติในรายละเอียด
@@ -491,6 +494,19 @@ async function loadOlderRecords(cut,seq){
     allRecords=allRecords.concat(add);
     allRecords.sort(function(a,b){return String(a.record_date).localeCompare(String(b.record_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))});
     await rebuildAndRender();
+  }catch(e){/* พลาด = หน้าจอยังใช้ข้อมูลช่วงล่าสุดได้ปกติ */}
+}
+// โหลดยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลัง (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับดูสรุปยอดของวันย้อนหลังไกลๆ
+async function loadOlderDisbursements(cut,seq){
+  try{
+    var r=await fetchAllRows(function(){return _sb.from('disbursements').select('*').lt('disburse_date',cut).order('disburse_date')});
+    if(r.error||!r.data||!r.data.length)return;
+    if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
+    var have={};allDisbursements.forEach(function(x){have[x.id]=1});
+    var add=r.data.filter(function(x){return !have[x.id]});
+    if(!add.length)return;
+    allDisbursements=allDisbursements.concat(add);
+    renderDashboard();
   }catch(e){/* พลาด = หน้าจอยังใช้ข้อมูลช่วงล่าสุดได้ปกติ */}
 }
 
