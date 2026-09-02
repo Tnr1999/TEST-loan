@@ -177,7 +177,10 @@ async function logAlert(type,o){
 function cyclesDue(c,iso){
   var ref=c.last_collection_date||c.start_date;
   if(!ref)return 1;
-  var d=daysBetween(ref,iso||todayISO());
+  var eff=iso||todayISO();
+  // สถานะ "ตาย" (หายติดต่อ) — แช่แข็งดอกที่วันเปลี่ยนสถานะ ไม่ปล่อยดอกวิ่งต่อระหว่างรอ Owner ตัดสินใจ (คืนเครดิต/ตัดหนี้สูญ)
+  if(c.status==='lost'&&c.lost_date&&c.lost_date<eff)eff=c.lost_date;
+  var d=daysBetween(ref,eff);
   // วันเบิก (ยังไม่เคยเก็บเงิน + ดูที่วันเปิดสัญญาพอดี) = ยังไม่คิดดอกวันนี้ · ดอกเริ่มนับวันถัดไป (ตรงกับ isPaymentDueToday)
   if(!c.last_collection_date&&d<=0)return 0;
   return Math.max(1,Math.floor(d/(+c.collection_interval||1)));
