@@ -113,16 +113,19 @@ function renderDashboard(){
   var overdueList=custs.filter(function(c){return c.status==='overdue'});
   var lostList=custs.filter(function(c){return c.status==='lost'});
 
-  // by branch
+  // by branch — เตรียมกลุ่ม records/ยอดเบิกของวันนี้ต่อบ้าน "ครั้งเดียว" ก่อนเข้าลูป
+  // (เดิม filter allDisbursements ทั้งก้อนซ้ำต่อบ้าน = O(บ้าน×ยอดเบิกทั้งประวัติ) ยิ่งข้อมูลเก่าสะสมมาก ยิ่งหน่วงทุกครั้งที่สลับหน้า)
+  var recsByBranch={};recs.forEach(function(r){var c=custById[r.customer_id];if(c)(recsByBranch[c.branch_id]||(recsByBranch[c.branch_id]=[])).push(r)});
+  var disbByBranch={};disbToday.forEach(function(d){disbByBranch[d.branch_id]=(disbByBranch[d.branch_id]||0)+ +d.amount});
   var byBranch=allBranches.filter(function(b){return bids.indexOf(b.id)>=0}).map(function(b){
-    var br=recs.filter(function(r){var c=custById[r.customer_id];return c&&c.branch_id===b.id});
+    var br=recsByBranch[b.id]||[];
     return{id:b.id,group_id:b.group_id,name:b.name,interest:br.reduce(function(s,r){return s+ +r.interest_collected},0),
       wage:br.reduce(function(s,r){return s+ +r.wage},0),
       penalty:br.reduce(function(s,r){return s+ +(r.penalty||0)},0),
       fee:br.reduce(function(s,r){return s+feeOf(r)},0),
       principal:br.reduce(function(s,r){return s+ +(r.principal_reduced||0)},0),
       collected:br.reduce(function(s,r){return s+ +r.amount_paid + +(r.penalty||0)},0),
-      disbursed:allDisbursements.filter(function(d){return d.branch_id===b.id&&d.disburse_date===date}).reduce(function(s,d){return s+ +d.amount},0),
+      disbursed:disbByBranch[b.id]||0,
       paid:br.filter(function(r){return r.payment_status!=='unpaid'}).length};
   });
 
