@@ -39,6 +39,51 @@ function retentionCutoffISO(){                               // วันนี�
   d.setUTCDate(Math.min(+p[2],last));
   return d.toISOString().slice(0,10);
 }
+/* ═══ CACHE ในเครื่อง (IndexedDB) — ประวัติเก่า (>45 วัน) ============================
+   ปัญหาที่แก้: ข้อมูลย้อนหลังนอกช่วง RECENT_DAYS ถูกโหลดเต็มก้อนซ้ำทุกครั้งที่เปิด/รีเฟรชแอป
+   (พบจริง: daily_records โต >70,000 แถว — พนักงานเปิดแอปเก็บเงินหลายรอบ/วัน = โหลดก้อนเดิมซ้ำ
+   ไม่เคยจำไว้เลย หนักมากบนมือถือ/เน็ตช้า) → cache ไว้ในเครื่อง โหลดเต็มก้อนแค่ "วันละครั้งต่อเครื่อง"
+   (มิเรอร์ pattern เดียวกับ purgeOldRecords ที่ใช้ localStorage บอกว่าทำไปแล้ววันนี้หรือยัง)
+   ข้อมูลเก่ากว่า 45 วันแทบไม่มีการแก้ไขแล้ว (ต่างจากข้อมูลในช่วงล่าสุดที่ยังโหลดสดทุกครั้งตามปกติ)
+   ถ้าเครื่องไม่รองรับ IndexedDB หรือมีปัญหาใดๆ = ถอยไปโหลดสดทุกครั้งแบบเดิม (ไม่กระทบความถูกต้อง) */
+var CACHE_DB_NAME='loan_cache_v1';
+var _cacheDBPromise=null;
+function openCacheDB(){
+  if(_cacheDBPromise)return _cacheDBPromise;
+  _cacheDBPromise=new Promise(function(resolve,reject){
+    if(typeof indexedDB==='undefined'){reject(new Error('no indexeddb'));return}
+    var req=indexedDB.open(CACHE_DB_NAME,1);
+    req.onupgradeneeded=function(){
+      var db=req.result;
+      if(!db.objectStoreNames.contains('daily_records_old'))db.createObjectStore('daily_records_old',{keyPath:'id'});
+      if(!db.objectStoreNames.contains('disbursements_old'))db.createObjectStore('disbursements_old',{keyPath:'id'});
+    };
+    req.onsuccess=function(){resolve(req.result)};
+    req.onerror=function(){reject(req.error)};
+  });
+  return _cacheDBPromise;
+}
+function cacheGetAll(store){
+  return openCacheDB().then(function(db){
+    return new Promise(function(resolve,reject){
+      var tx=db.transaction(store,'readonly'),req=tx.objectStore(store).getAll();
+      req.onsuccess=function(){resolve(req.result||[])};
+      req.onerror=function(){reject(req.error)};
+    });
+  }).catch(function(){return null});   // null = อ่าน cache ไม่ได้ (เครื่องไม่รองรับ/พลาด) → ผู้เรียกต้องโหลดสดแทน
+}
+// เขียนทับ store ทั้งก้อนด้วยข้อมูลชุดใหม่ + ลบแถวที่พ้น retention ไปแล้วทิ้ง (มิเรอร์ purgeOldRecords ฝั่ง server)
+function cacheReplaceAll(store,rows,dateField,cutoff){
+  return openCacheDB().then(function(db){
+    return new Promise(function(resolve){
+      var tx=db.transaction(store,'readwrite'),os=tx.objectStore(store);
+      os.clear();
+      rows.forEach(function(r){if(!cutoff||r[dateField]>=cutoff)os.put(r)});
+      tx.oncomplete=function(){resolve()};
+      tx.onerror=function(){resolve()};   // พลาด = รอบหน้าลองใหม่ ไม่กระทบข้อมูลในหน่วยความจำตอนนี้
+    });
+  }).catch(function(){});
+}
 function round2(n){return Math.round((+n||0)*100)/100}
 function fmt(n){return (parseFloat(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function fmt0(n){return (parseFloat(n)||0).toLocaleString('th-TH')}
@@ -482,28 +527,49 @@ async function loadAll(){
   loadOlderDisbursements(recentCut,seq);   // เก็บยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลังเช่นกัน
 }
 
+// โหลด "ก้อนเก่ากว่าช่วงล่าสุด" ครั้งเดียวจาก network แล้วเก็บ cache ไว้ในเครื่อง — วันเดียวกันเปิดแอปกี่รอบก็อ่านจาก cache
+// (record_date/disburse_date ของแถวเก่าไม่เปลี่ยนแปลงแล้ว ส่วน cut ก็ค่าเดิมตลอดทั้งวัน — อ่าน cache ได้ถูกต้อง 100% ภายในวันเดียวกัน
+//  เครื่องไม่รองรับ IndexedDB/cache พลาด = ถอยไปโหลดสดทุกครั้งแบบเดิม ไม่กระทบความถูกต้องของข้อมูล)
 // โหลดประวัติการชำระที่เก่ากว่าช่วงล่าสุด (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับหน้าค่าแรงช่วงเก่า/ดูวันย้อนหลัง/ประวัติในรายละเอียด
 async function loadOlderRecords(cut,seq){
   try{
-    var r=await fetchAllRows(function(){return _sb.from('daily_records').select('*').lt('record_date',cut).order('record_date').order('created_at')});
-    if(r.error||!r.data||!r.data.length)return;
+    var cacheKey='cache_daily_records_old_date',today=todayISO();
+    var fresh=null;
+    if(localStorage.getItem(cacheKey)===today)fresh=await cacheGetAll('daily_records_old');
+    if(!fresh){
+      var r=await fetchAllRows(function(){return _sb.from('daily_records').select('*').lt('record_date',cut).order('record_date').order('created_at')});
+      if(r.error)return;
+      fresh=r.data||[];
+      cacheReplaceAll('daily_records_old',fresh,'record_date',retentionCutoffISO());   // เขียน cache ไว้ใช้ทั้งวัน (ไม่บล็อก)
+      localStorage.setItem(cacheKey,today);
+    }
+    if(!fresh.length)return;
     if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
     var have={};allRecords.forEach(function(x){have[x.id]=1});
-    var add=r.data.filter(function(x){return !have[x.id]});
+    var add=fresh.filter(function(x){return !have[x.id]});
     if(!add.length)return;
     allRecords=allRecords.concat(add);
     allRecords.sort(function(a,b){return String(a.record_date).localeCompare(String(b.record_date))||String(a.created_at||'').localeCompare(String(b.created_at||''))});
     await rebuildAndRender();
   }catch(e){/* พลาด = หน้าจอยังใช้ข้อมูลช่วงล่าสุดได้ปกติ */}
 }
-// โหลดยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลัง (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับดูสรุปยอดของวันย้อนหลังไกลๆ
+// โหลดยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลัง (ไม่บล็อกหน้าจอ) — cache ในเครื่องแบบเดียวกับ loadOlderRecords
 async function loadOlderDisbursements(cut,seq){
   try{
-    var r=await fetchAllRows(function(){return _sb.from('disbursements').select('*').lt('disburse_date',cut).order('disburse_date')});
-    if(r.error||!r.data||!r.data.length)return;
+    var cacheKey='cache_disbursements_old_date',today=todayISO();
+    var fresh=null;
+    if(localStorage.getItem(cacheKey)===today)fresh=await cacheGetAll('disbursements_old');
+    if(!fresh){
+      var r=await fetchAllRows(function(){return _sb.from('disbursements').select('*').lt('disburse_date',cut).order('disburse_date')});
+      if(r.error)return;
+      fresh=r.data||[];
+      cacheReplaceAll('disbursements_old',fresh,'disburse_date',retentionCutoffISO());
+      localStorage.setItem(cacheKey,today);
+    }
+    if(!fresh.length)return;
     if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
     var have={};allDisbursements.forEach(function(x){have[x.id]=1});
-    var add=r.data.filter(function(x){return !have[x.id]});
+    var add=fresh.filter(function(x){return !have[x.id]});
     if(!add.length)return;
     allDisbursements=allDisbursements.concat(add);
     renderDashboard();
