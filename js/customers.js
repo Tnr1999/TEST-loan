@@ -446,6 +446,8 @@ async function changeStatus(id,status){
   if(res.error){toast('ล้มเหลว: '+res.error.message,'err');return}
   // เก็บประวัติ "เคยตาย" ไว้ถาวร (ใช้โชว์ป้ายคืนเครดิตหลังปิด) — แยก update แบบ fail-safe เผื่อยังไม่รัน migration phase7
   if(status==='lost')await _sb.from('loans').update({was_lost:true}).eq('id',id);
+  // วันที่เปลี่ยนเป็น "ตาย" — ใช้แช่แข็งดอกไม่ให้วิ่งต่อ (cyclesDue) · แยก update fail-safe เผื่อยังไม่รัน migration phase17
+  if(status==='lost')await _sb.from('loans').update({lost_date:todayISO()}).eq('id',id);
   toast('✅ อัปเดตสถานะแล้ว','ok');await refreshLoan(id);openDetail(id);
 }
 // สลับโหมด "ผ่อนต้น" (หยุดคิดดอก) — Owner + หัวหน้ากอง
