@@ -473,6 +473,28 @@ async function fetchAllRows(buildQuery){
   }
   return {data:out,error:null};
 }
+// ตัดค่าซ้ำออกจากลิสต์ (เก็บลำดับเดิม) — ไม่ใช้ Set/Array.from กันมือถือรุ่นเก่าที่ยังไม่รองรับ
+function uniqueList(arr){
+  var seen={},out=[];
+  arr.forEach(function(x){if(x!=null&&!seen[x]){seen[x]=1;out.push(x)}});
+  return out;
+}
+// ดึงแถวด้วย .in(col, ids) แบบแบ่งก้อน (กัน URL ยาวเกินไปเมื่อ ids มีเยอะ) — ยิงขนานทุกก้อน
+// ใช้ตอนกรองตารางที่ไม่มี branch_id ตรงๆ (เช่น persons/daily_records) ผ่านลิสต์ id ที่รู้ขอบเขตแล้ว (เช่น person_id/loan_id ของบ้านที่เห็น)
+async function fetchByIdsChunked(table,selectCols,col,ids,extraFn){
+  if(!ids.length)return {data:[],error:null};
+  var CHUNK=200,chunks=[];
+  for(var i=0;i<ids.length;i+=CHUNK)chunks.push(ids.slice(i,i+CHUNK));
+  var results=await Promise.all(chunks.map(function(chunk){
+    return fetchAllRows(function(){
+      var qb=_sb.from(table).select(selectCols).in(col,chunk);
+      return extraFn?extraFn(qb):qb;
+    });
+  }));
+  var out=[],err=null;
+  results.forEach(function(r){if(r.error)err=r.error;else out=out.concat(r.data||[])});
+  return {data:out,error:err};
+}
 var _loadSeq=0;              // นับรอบโหลด — กันการโหลดย้อนหลังของรอบเก่ามาเขียนทับรอบใหม่
 var _dataLoaded=false;       // true หลัง loadAll() รอบแรกเสร็จสมบูรณ์ — กันจอโล่ง/ข้อความ "ไม่มีใครค้าง" ปลอมตอนยังโหลดไม่เสร็จ
 // ช่วงประวัติที่โหลด "ก่อนวาดหน้าจอ" (บล็อก first paint) — ที่เหลือตามมาทีหลังแบบไม่บล็อก (ดู loadOlderRecords)
@@ -486,43 +508,64 @@ async function loadAll(){
   var seq=++_loadSeq;
   await purgeOldRecords();
   var recentCut=addDaysISO(todayISO(),-RECENT_DAYS);
-  var q=[
+
+  // เฟส 1: ตารางเล็ก (กอง/บ้าน/สิทธิ์เห็นบ้าน) — โหลดก่อนเพื่อคำนวณขอบเขตบ้าน (bids) ที่ role นี้เห็น
+  // ใช้กรองตารางใหญ่ในเฟส 2-3 — ลด egress จริง (เดิมทุก role โหลดข้อมูลทั้งบริษัทเท่ากันหมด
+  // ทั้งที่พนักงาน/หัวหน้าสายเห็นแค่บ้าน/สายตัวเอง ถูกทิ้งไป 90%+ ตอนกรองฝั่งเครื่องอยู่แล้ว)
+  var q1=[
     _sb.from('groups').select('*').order('created_at'),
     _sb.from('branches').select('*').order('created_at'),
-    fetchAllRows(function(){return _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account').order('id')}),
-    fetchAllRows(function(){return _sb.from('loans').select('*').order('seq')}),
-    // ประวัติการชำระ: โหลดเฉพาะช่วงล่าสุดก่อน ให้หน้าจอขึ้นไว — ที่เก่ากว่านั้นตามมาใน loadOlderRecords
-    fetchAllRows(function(){return _sb.from('daily_records').select('*').gte('record_date',recentCut).order('record_date').order('created_at')}),
     _sb.from('user_branches').select('*'),
     _sb.from('user_groups').select('*')
   ];
-  if(canManageUsers()) q.push(_sb.from('users').select('id,username,full_name,role,is_active,created_at').order('created_at'));
-  var r=await Promise.all(q);
-  for(var i=0;i<r.length;i++){if(r[i].error){toast('โหลดข้อมูลล้มเหลว: '+r[i].error.message,'err');return}}
-  allGroups=r[0].data||[];
-  allBranches=r[1].data||[];
+  if(canManageUsers()) q1.push(_sb.from('users').select('id,username,full_name,role,is_active,created_at').order('created_at'));
+  var r1=await Promise.all(q1);
+  for(var i1=0;i1<r1.length;i1++){if(r1[i1].error){toast('โหลดข้อมูลล้มเหลว: '+r1[i1].error.message,'err');return}}
+  allGroups=r1[0].data||[];
+  allBranches=r1[1].data||[];
   // เรียงบ้านตามลำดับที่ลากจัดไว้ (sort_order) — fail-safe: ถ้ายังไม่มีคอลัมน์ = คงลำดับ created_at เดิม
   allBranches.sort(function(a,b){var av=(a.sort_order==null?9e9:a.sort_order),bv=(b.sort_order==null?9e9:b.sort_order);return av-bv||(a.created_at||'').localeCompare(b.created_at||'');});
-  allPersons=r[2].data||[];
-  allLoans=r[3].data||[];
-  allRecords=r[4].data||[];
-  allUserBranches=r[5].data||[];
-  allUserGroups=r[6].data||[];
-  if(canManageUsers()&&r[7]) allUsers=r[7].data||[];
+  allUserBranches=r1[2].data||[];
+  allUserGroups=r1[3].data||[];
+  if(canManageUsers()&&r1[4]) allUsers=r1[4].data||[];
 
-  // ชุดเสริม (fail-safe แยกจากชุดหลัก กันแอปพังถ้ายังไม่รัน migration) — ยิงขนานกันในรอบเดียว
-  // ① ยอดเบิก (phase4) — เฉพาะช่วงล่าสุดก่อน (เหมือน daily_records) ที่เก่ากว่านั้นตามมาใน loadOlderDisbursements
-  //    (ยอดเบิกไม่มีระบบลบถาวรแบบ daily_records เก็บสะสมทั้งประวัติ ยิ่งธุรกิจเปิดมานาน ตารางยิ่งโต ต้องกันโหลดทั้งก้อนตั้งแต่ตอนนี้)
-  // ② แจ้งเตือนกันโกง เฉพาะ owner (phase8) · ③ ผู้ใช้ สำหรับ role อื่น (owner โหลดในชุดหลักแล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
-  var extra=await Promise.all([
-    fetchAllRows(function(){return _sb.from('disbursements').select('*').gte('disburse_date',recentCut).order('disburse_date')}),
-    // แจ้งเตือน: ตอนเปิดแอปโหลดเฉพาะที่ยังไม่อ่าน (พอสำหรับ badge) — ลิสต์เต็มโหลดตอนเข้าหน้าแจ้งเตือน (loadFullAlerts)
+  var bids=isOwner()?null:myBranchIds();   // null = เห็นทุกบ้านอยู่แล้ว (owner) ไม่ต้องกรองระดับ query
+
+  // เฟส 2: ตารางที่มี branch_id ตรงๆ — กรองด้วย bids ได้เลยถ้าไม่ใช่ owner
+  var q2=[
+    fetchAllRows(function(){var qb=_sb.from('loans').select('*').order('seq');return bids?qb.in('branch_id',bids):qb}),
+    // ยอดเบิก (phase4) — เฉพาะช่วงล่าสุดก่อน (เหมือน daily_records) ที่เก่ากว่านั้นตามมาใน loadOlderDisbursements
+    // (ไม่มี retention ลบถาวรเหมือน daily_records เก็บสะสมทั้งประวัติ ยิ่งธุรกิจเปิดมานาน ตารางยิ่งโต ต้องกันโหลดทั้งก้อน)
+    fetchAllRows(function(){var qb=_sb.from('disbursements').select('*').gte('disburse_date',recentCut).order('disburse_date');return bids?qb.in('branch_id',bids):qb})
+  ];
+  var r2=await Promise.all(q2);
+  if(r2[0].error||r2[1].error){toast('โหลดข้อมูลล้มเหลว: '+(r2[0].error||r2[1].error).message,'err');return}
+  allLoans=r2[0].data||[];
+  allDisbursements=r2[1].data||[];
+
+  // เฟส 3: ตารางที่ไม่มี branch_id ตรง — persons กรองผ่าน person_id ของ loans ในขอบเขต (เฉพาะ role ไม่ใช่ owner)
+  // daily_records กรองผ่าน loan_id ในขอบเขตเช่นกัน (นอกเหนือจากช่วงวันที่เดิม) — .in() แบ่งก้อนกัน URL ยาวเกิน
+  var personIds=bids?uniqueList(allLoans.map(function(l){return l.person_id})):null;
+  var loanIds=bids?allLoans.map(function(l){return l.id}):null;
+  var q3=[
+    personIds
+      ?fetchByIdsChunked('persons','id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account','id',personIds)
+      :fetchAllRows(function(){return _sb.from('persons').select('id,full_name,phone,id_card,facebook_url,fb_group_url,bank_name,bank_account').order('id')}),
+    // ประวัติการชำระ: โหลดเฉพาะช่วงล่าสุดก่อน ให้หน้าจอขึ้นไว — ที่เก่ากว่านั้นตามมาใน loadOlderRecords
+    loanIds
+      ?fetchByIdsChunked('daily_records','*','loan_id',loanIds,function(qb){return qb.gte('record_date',recentCut).order('record_date').order('created_at')})
+      :fetchAllRows(function(){return _sb.from('daily_records').select('*').gte('record_date',recentCut).order('record_date').order('created_at')}),
+    // แจ้งเตือนกันโกง เฉพาะ owner (phase8) — ตอนเปิดแอปโหลดเฉพาะที่ยังไม่อ่าน (พอสำหรับ badge) · ลิสต์เต็มโหลดตอนเข้าหน้าแจ้งเตือน (loadFullAlerts)
     isOwner()?_sb.from('alerts').select('*').eq('is_read',false).order('created_at',{ascending:false}):null,
+    // ผู้ใช้ สำหรับ role อื่น (owner โหลดในเฟส 1 แล้ว · พนักงานต้องใช้หาหัวหน้าสาย/คอมหน้าค่าแรง)
     !isOwner()?_sb.from('users').select('id,username,full_name,role,is_active').order('created_at'):null
-  ]);
-  allDisbursements=(extra[0]&&!extra[0].error&&extra[0].data)||[];
-  allAlerts=(extra[1]&&!extra[1].error&&extra[1].data)||[];
-  if(extra[2]&&!extra[2].error)allUsers=extra[2].data||[];
+  ];
+  var r3=await Promise.all(q3);
+  if(r3[0].error||r3[1].error){toast('โหลดข้อมูลล้มเหลว: '+(r3[0].error||r3[1].error).message,'err');return}
+  allPersons=r3[0].data||[];
+  allRecords=r3[1].data||[];
+  allAlerts=(r3[2]&&!r3[2].error&&r3[2].data)||[];
+  if(r3[3]&&!r3[3].error)allUsers=r3[3].data||[];
 
   // บัญชีถูกปิด/ถูกลบระหว่างใช้งาน → เด้งออกทันที (เช็คจากรายชื่อผู้ใช้ที่โหลดมาแล้ว ไม่มี query เพิ่ม)
   if(allUsers.length){
@@ -532,25 +575,37 @@ async function loadAll(){
 
   _dataLoaded=true;   // ตั้งก่อน rebuildAndRender เพราะการ render ครั้งแรกต้องเลิกถือว่า "ยังโหลดไม่เสร็จ" แล้ว
   await rebuildAndRender();
-  loadOlderRecords(recentCut,seq);         // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
-  loadOlderDisbursements(recentCut,seq);   // เก็บยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลังเช่นกัน
+  loadOlderRecords(recentCut,seq,loanIds);       // เก็บประวัติที่เก่ากว่าช่วงล่าสุดตามหลัง — หน้าจอไม่ต้องรอ
+  loadOlderDisbursements(recentCut,seq,bids);    // เก็บยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลังเช่นกัน
 }
 
 // โหลด "ก้อนเก่ากว่าช่วงล่าสุด" ครั้งเดียวจาก network แล้วเก็บ cache ไว้ในเครื่อง — วันเดียวกันเปิดแอปกี่รอบก็อ่านจาก cache
 // (record_date/disburse_date ของแถวเก่าไม่เปลี่ยนแปลงแล้ว ส่วน cut ก็ค่าเดิมตลอดทั้งวัน — อ่าน cache ได้ถูกต้อง 100% ภายในวันเดียวกัน
 //  เครื่องไม่รองรับ IndexedDB/cache พลาด = ถอยไปโหลดสดทุกครั้งแบบเดิม ไม่กระทบความถูกต้องของข้อมูล)
+// cache วันนี้ใช้ได้ต่อเมื่อ "คนเดิม" เขียนไว้เท่านั้น — กันเครื่องที่ใช้ร่วมกันหลายคน (role ต่างกัน = ขอบเขตข้อมูลต่างกัน)
+// อ่าน cache ของอีกคนแล้วเข้าใจผิดว่าครบ (เช่น พนักงานอ่าน cache ที่ owner เขียนไว้ทั้งบริษัท หรือกลับกัน)
+function cacheValidToday(dateKey){
+  return localStorage.getItem(dateKey)===todayISO()&&localStorage.getItem(dateKey+'_user')===currentUser.id;
+}
+function markCacheToday(dateKey){
+  localStorage.setItem(dateKey,todayISO());
+  localStorage.setItem(dateKey+'_user',currentUser.id);
+}
 // โหลดประวัติการชำระที่เก่ากว่าช่วงล่าสุด (ไม่บล็อกหน้าจอ) — จำเป็นสำหรับหน้าค่าแรงช่วงเก่า/ดูวันย้อนหลัง/ประวัติในรายละเอียด
-async function loadOlderRecords(cut,seq){
+// loanIds = ขอบเขตสัญญาที่ role นี้เห็น (null = owner เห็นหมด ไม่ต้องกรอง)
+async function loadOlderRecords(cut,seq,loanIds){
   try{
-    var cacheKey='cache_daily_records_old_date',today=todayISO();
+    var cacheKey='cache_daily_records_old_date';
     var fresh=null;
-    if(localStorage.getItem(cacheKey)===today)fresh=await cacheGetAll('daily_records_old');
+    if(cacheValidToday(cacheKey))fresh=await cacheGetAll('daily_records_old');
     if(!fresh){
-      var r=await fetchAllRows(function(){return _sb.from('daily_records').select('*').lt('record_date',cut).order('record_date').order('created_at')});
+      var r=loanIds
+        ?await fetchByIdsChunked('daily_records','*','loan_id',loanIds,function(qb){return qb.lt('record_date',cut).order('record_date').order('created_at')})
+        :await fetchAllRows(function(){return _sb.from('daily_records').select('*').lt('record_date',cut).order('record_date').order('created_at')});
       if(r.error)return;
       fresh=r.data||[];
       cacheReplaceAll('daily_records_old',fresh,'record_date',retentionCutoffISO());   // เขียน cache ไว้ใช้ทั้งวัน (ไม่บล็อก)
-      localStorage.setItem(cacheKey,today);
+      markCacheToday(cacheKey);
     }
     if(!fresh.length)return;
     if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
@@ -563,17 +618,18 @@ async function loadOlderRecords(cut,seq){
   }catch(e){/* พลาด = หน้าจอยังใช้ข้อมูลช่วงล่าสุดได้ปกติ */}
 }
 // โหลดยอดเบิกที่เก่ากว่าช่วงล่าสุดตามหลัง (ไม่บล็อกหน้าจอ) — cache ในเครื่องแบบเดียวกับ loadOlderRecords
-async function loadOlderDisbursements(cut,seq){
+// bids = ขอบเขตบ้านที่ role นี้เห็น (null = owner เห็นหมด ไม่ต้องกรอง)
+async function loadOlderDisbursements(cut,seq,bids){
   try{
-    var cacheKey='cache_disbursements_old_date',today=todayISO();
+    var cacheKey='cache_disbursements_old_date';
     var fresh=null;
-    if(localStorage.getItem(cacheKey)===today)fresh=await cacheGetAll('disbursements_old');
+    if(cacheValidToday(cacheKey))fresh=await cacheGetAll('disbursements_old');
     if(!fresh){
-      var r=await fetchAllRows(function(){return _sb.from('disbursements').select('*').lt('disburse_date',cut).order('disburse_date')});
+      var r=await fetchAllRows(function(){var qb=_sb.from('disbursements').select('*').lt('disburse_date',cut).order('disburse_date');return bids?qb.in('branch_id',bids):qb});
       if(r.error)return;
       fresh=r.data||[];
       cacheReplaceAll('disbursements_old',fresh,'disburse_date',retentionCutoffISO());
-      localStorage.setItem(cacheKey,today);
+      markCacheToday(cacheKey);
     }
     if(!fresh.length)return;
     if(seq!==_loadSeq)return;                       // มี loadAll รอบใหม่แซงไปแล้ว — ทิ้งของรอบเก่า
