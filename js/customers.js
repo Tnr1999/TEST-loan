@@ -641,9 +641,11 @@ function custFormBranches(){
 }
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
 // ลูกค้าเปิดสัญญาได้ทุกบ้าน (ไม่บล็อกลิมิตแล้ว) — แต่ถ้ามีสัญญาค้างอยู่บ้านอื่น ยิงแจ้งเตือนให้ Owner รู้ว่าอยู่บ้านไหนบ้าง
-function notifyMultiBranch(personId,personName,newBranchId){
+// loansOverride = รายการสัญญาของคนนี้ที่เช็คสดจาก DB แล้ว (ไม่จำกัดขอบเขตบ้าน) — ใช้แทน allLoans ที่กรองตามบ้านที่เห็น
+// กันแจ้ง Owner ไม่ครบว่ามีสัญญาที่บ้านอื่นด้วย (allLoans อาจไม่มีบ้านที่เราไม่เห็น)
+function notifyMultiBranch(personId,personName,newBranchId,loansOverride){
   if(!personId)return; // คนใหม่ ยังไม่มีสัญญาที่ไหน
-  var active=allLoans.filter(function(l){return l.person_id===personId&&l.status!=='closed'});
+  var active=(loansOverride||allLoans).filter(function(l){return l.person_id===personId&&l.status!=='closed'});
   if(!active.length)return;
   var places=active.map(function(l){
     return branchName(l.branch_id)+' ('+groupNameOfBranch(l.branch_id)+')';
@@ -736,8 +738,23 @@ async function saveCustomer(){
   var existing=reloanPersonId?{id:reloanPersonId}:findExistingPerson({id_card:idcard,name:name,phone:phone});
   var exId=existing?existing.id:null;
 
+  // ยืนยันกับ DB จริงอีกชั้น (ไม่พึ่ง allPersons/allLoans ในเครื่องอย่างเดียว) — ตั้งแต่ loadAll กรองข้อมูลตาม
+  // ขอบเขตบ้านที่เห็น (ลด egress) ถ้าลูกค้าคนนี้มีสัญญาอยู่ "บ้านอื่นที่เราไม่เห็น" (เช่นตายอยู่อีกบ้าน) ข้อมูลในเครื่อง
+  // จะไม่มีเลย เช็คแค่ allLoans จะหลุดผ่านบล็อกกันโกงไปเงียบๆ — เช็คสด (เฉพาะคนนี้ ไม่ใช่ทั้งบริษัท) ก่อนเปิดสัญญาใหม่เสมอ
+  var exLoans=[];
+  if(!reloanPersonId){
+    if(!exId){
+      var idChk=await _sb.from('persons').select('id').eq('id_card',idcard).maybeSingle();
+      if(idChk.data)exId=idChk.data.id;
+    }
+    if(exId){
+      var loanChk=await fetchAllRows(function(){return _sb.from('loans').select('id,status,branch_id').eq('person_id',exId)});
+      exLoans=loanChk.data||[];
+    }
+  }
+
   // บล็อก + แจ้ง Owner: เปิดสัญญาใหม่ให้คนที่มีสัญญาสถานะ "ตาย" ค้างอยู่ (ต้องผ่าน Owner คืนเครดิตเท่านั้น)
-  if(exId&&!reloanPersonId&&allLoans.some(function(l){return l.person_id===exId&&l.status==='lost'})){
+  if(exId&&!reloanPersonId&&exLoans.some(function(l){return l.status==='lost'})){
     var lp=allPersons.find(function(p){return p.id===exId})||{};
     logAlert('dup_lost',{person_id:exId,person_name:lp.full_name||name,branch_id:branchId,
       message:'พยายามเปิดสัญญาใหม่ให้ลูกค้าที่มีสถานะ "ตาย" ค้างอยู่'});
@@ -747,7 +764,7 @@ async function saveCustomer(){
 
   // บล็อกแข็ง (ทุก role รวม Owner): มีสัญญาที่ยังไม่ปิด (ปกติ/ค้าง) อยู่แล้วในบ้านเดียวกัน — 1 บ้านต่อคน 1 สัญญาเปิดพร้อมกันเท่านั้น
   // (ตายในบ้านนี้ถูกจับโดยบล็อกด้านบนแล้ว) — ต้องการเพิ่มยอด ใช้ปุ่ม "+ เพิ่มยอด" แทน ไม่ใช่เปิดสัญญาใหม่ซ้อน
-  if(exId&&!reloanPersonId&&allLoans.some(function(l){return l.person_id===exId&&l.branch_id===branchId&&(l.status==='normal'||l.status==='overdue')})){
+  if(exId&&!reloanPersonId&&exLoans.some(function(l){return l.branch_id===branchId&&(l.status==='normal'||l.status==='overdue')})){
     var lpb=allPersons.find(function(p){return p.id===exId})||{};
     logAlert('dup_branch',{person_id:exId,person_name:lpb.full_name||name,branch_id:branchId,
       message:'พยายามเปิดสัญญาใหม่ซ้ำในบ้านเดียวกัน ทั้งที่มีสัญญาเปิดอยู่แล้ว'});
@@ -756,7 +773,7 @@ async function saveCustomer(){
   }
 
   // อยู่ได้ทุกบ้าน (คนละบ้าน) — ไม่บล็อก แต่แจ้ง Owner ว่าลูกค้าคนนี้มีสัญญาอยู่บ้านไหนบ้าง
-  notifyMultiBranch(exId,name,branchId);
+  notifyMultiBranch(exId,name,branchId,exLoans.length?exLoans:null);
 
   var saveLabel=reloanPersonId?'เปิดยอดใหม่':'เพิ่มลูกค้า';
   if(btn){btn.innerHTML='<span class="spin"></span>';btn.disabled=true}
