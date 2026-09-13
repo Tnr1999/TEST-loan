@@ -47,7 +47,8 @@ function renderCustomers(){
       var hit=c.full_name.toLowerCase().indexOf(search)>=0
         || (c.phone||'').indexOf(search)>=0
         || custCode(c).toLowerCase().indexOf(search)>=0
-        || String(c.seq).indexOf(search)>=0;
+        || String(c.seq).indexOf(search)>=0
+        || (c.id_card||'').indexOf(search)>=0;
       if(!hit)return false;
     }
     return true;
