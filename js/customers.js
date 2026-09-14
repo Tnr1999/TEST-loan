@@ -743,19 +743,20 @@ async function saveCustomer(){
   // ขอบเขตบ้านที่เห็น (ลด egress) ถ้าลูกค้าคนนี้มีสัญญาอยู่ "บ้านอื่นที่เราไม่เห็น" (เช่นตายอยู่อีกบ้าน) ข้อมูลในเครื่อง
   // จะไม่มีเลย เช็คแค่ allLoans จะหลุดผ่านบล็อกกันโกงไปเงียบๆ — เช็คสด (เฉพาะคนนี้ ไม่ใช่ทั้งบริษัท) ก่อนเปิดสัญญาใหม่เสมอ
   var exLoans=[];
-  if(!reloanPersonId){
-    if(!exId){
-      var idChk=await _sb.from('persons').select('id').eq('id_card',idcard).maybeSingle();
-      if(idChk.data)exId=idChk.data.id;
-    }
-    if(exId){
-      var loanChk=await fetchAllRows(function(){return _sb.from('loans').select('id,status,branch_id').eq('person_id',exId)});
-      exLoans=loanChk.data||[];
-    }
+  if(!exId&&!reloanPersonId){
+    var idChk=await _sb.from('persons').select('id').eq('id_card',idcard).maybeSingle();
+    if(idChk.data)exId=idChk.data.id;
+  }
+  if(exId){
+    // ดึงเสมอแม้โหมด "เปิดยอดใหม่" — คนคนเดียวกันอาจมีสัญญา "ตาย" ค้างอยู่ที่บ้านอื่น
+    // (reloanPersonId แค่บอกว่าสัญญาที่กำลังจะเปิดยอดใหม่ให้ปิดแล้ว ไม่ได้แปลว่าคนนี้ไม่มีสัญญาตายที่อื่น)
+    var loanChk=await fetchAllRows(function(){return _sb.from('loans').select('id,status,branch_id').eq('person_id',exId)});
+    exLoans=loanChk.data||[];
   }
 
   // บล็อก + แจ้ง Owner: เปิดสัญญาใหม่ให้คนที่มีสัญญาสถานะ "ตาย" ค้างอยู่ (ต้องผ่าน Owner คืนเครดิตเท่านั้น)
-  if(exId&&!reloanPersonId&&exLoans.some(function(l){return l.status==='lost'})){
+  // เช็คเสมอไม่ว่าโหมดเปิดยอดใหม่หรือไม่ (ตายที่บ้านไหนก็บล็อกหมด ไม่มีข้อยกเว้น)
+  if(exId&&exLoans.some(function(l){return l.status==='lost'})){
     var lp=allPersons.find(function(p){return p.id===exId})||{};
     logAlert('dup_lost',{person_id:exId,person_name:lp.full_name||name,branch_id:branchId,
       message:'พยายามเปิดสัญญาใหม่ให้ลูกค้าที่มีสถานะ "ตาย" ค้างอยู่'});
