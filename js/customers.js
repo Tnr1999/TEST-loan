@@ -571,6 +571,10 @@ var reloanPersonId=null; // โหมด "เปิดยอดใหม่" = �
 function openReloan(id){
   if(!canAddCustomer()){toast('คุณไม่มีสิทธิ์เปิดยอดใหม่','err');return}
   var c=allCustomers.find(function(x){return x.id===id});if(!c)return;
+  // บ้านปิดใช้งานแล้ว → ห้ามเปิดยอดใหม่ที่บ้านนี้ (เดิมถ้าปล่อยผ่านไป custFormBranches จะกรองบ้านนี้ออก
+  // จาก dropdown อยู่ดี ทำให้ presetCustFormBranch ตั้งค่าไม่ติด แล้วเงียบๆ ไปตกที่บ้านอื่นแทนโดยไม่มีใครรู้ตัว)
+  var b=allBranches.find(function(x){return x.id===c.branch_id});
+  if(b&&b.is_active===false){toast('บ้าน "'+b.name+'" ปิดใช้งานแล้ว — เปิดยอดใหม่ที่บ้านนี้ไม่ได้','err');return}
   openAddCustomer(c);
 }
 function openAddCustomer(reloanCust){
@@ -635,10 +639,11 @@ function presetCustFormBranch(branchId){
 function custFormBranches(){
   var gEl=document.getElementById('f-group');if(!gEl)return;
   var gid=gEl.value,bids=myBranchIds();
-  var bs=allBranches.filter(function(b){return bids.indexOf(b.id)>=0&&b.group_id===gid});
+  // บ้านปิดใช้งานแล้ว = เปิดสัญญาใหม่/เปิดยอดใหม่ไม่ได้อีก (ยังลบไม่ได้เพราะมีประวัติ แต่เลิกใช้ได้)
+  var bs=allBranches.filter(function(b){return bids.indexOf(b.id)>=0&&b.group_id===gid&&b.is_active!==false});
   document.getElementById('f-branch').innerHTML=bs.length
     ?bs.map(function(b){return '<option value="'+b.id+'">'+esc(b.name)+'</option>'}).join('')
-    :'<option value="">— ยังไม่มีบ้านในกองนี้ —</option>';
+    :'<option value="">— ไม่มีบ้านที่เปิดใช้งานในกองนี้ —</option>';
 }
 // ตรวจกฎกู้หลายที่: ≤2 กอง และ 1 บ้านต่อกอง
 // ลูกค้าเปิดสัญญาได้ทุกบ้าน (ไม่บล็อกลิมิตแล้ว) — แต่ถ้ามีสัญญาค้างอยู่บ้านอื่น ยิงแจ้งเตือนให้ Owner รู้ว่าอยู่บ้านไหนบ้าง
@@ -725,6 +730,7 @@ async function saveCustomer(){
   var branchId=document.getElementById('f-branch').value;
   if(!branchId){toast('กรุณาเลือกบ้าน','err');return}
   var branch=allBranches.find(function(b){return b.id===branchId});
+  if(branch&&branch.is_active===false){toast('บ้าน "'+branch.name+'" ปิดใช้งานแล้ว — เปิดสัญญาใหม่ไม่ได้','err');return}
   var interval=document.getElementById('modal-customer-body')._interval||1;
 
   // บังคับกรอกเลขบัตร 13 หลัก — จุดยึดของระบบกันโกง (ทุก role รวม Owner)

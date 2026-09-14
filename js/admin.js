@@ -19,11 +19,13 @@ function renderBranches(){
     var custCount=allCustomers.filter(function(c){return c.branch_id===b.id}).length;
     var staff=b.staff_id&&allUsers.find(function(u){return u.id===b.staff_id});
     var lh=lineHeadOfBranch(b.id);
-    return '<div class="card card-pad branch-drag-item" data-bid="'+b.id+'" style="display:flex;align-items:center;gap:10px">'+
+    var inactive=b.is_active===false;
+    return '<div class="card card-pad branch-drag-item" data-bid="'+b.id+'" style="display:flex;align-items:center;gap:10px'+(inactive?';opacity:0.55':'')+'">'+
       '<span class="drag-handle" title="ลากเพื่อจัดลำดับ" aria-label="ลากเพื่อจัดลำดับ">⠿</span>'+
-      '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+'</div>'+
+      '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:0.95rem">'+esc(b.name)+(inactive?' <span class="st st-closed" style="margin-left:6px">ปิดใช้งาน</span>':'')+'</div>'+
       '<div style="font-size:0.78rem;color:var(--muted);margin-top:3px">ค่าธรรมเนียม ฿'+fmt0(b.fee_per_person)+' / คน · ลูกค้า '+custCount+' ราย'+(staff?' · พนักงาน: '+esc(staff.full_name):'')+(lh?' · หัวหน้าสาย: '+esc(lh.full_name):'')+'</div></div>'+
       '<div class="row-flex" style="gap:8px"><button class="btn btn-ghost btn-sm" onclick="openEditBranch(\''+b.id+'\')">แก้ไข</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="toggleBranchActive(\''+b.id+'\')">'+(inactive?'เปิดใช้งาน':'ปิดใช้งาน')+'</button>'+
       '<button class="btn btn-red btn-sm" onclick="doDeleteBranch(\''+b.id+'\')">ลบ</button></div></div>';
   };
   // หัวหน้ากอง (ไม่ใช่ owner) → เห็นเฉพาะกอง/บ้านของตัวเอง
@@ -169,6 +171,14 @@ async function saveBranch(){
     if(!allUserBranches.some(function(ub){return ub.user_id===keep[k]&&ub.branch_id===bid}))
       await _sb.from('user_branches').insert({user_id:keep[k],branch_id:bid});
   toast(editingBranchId?'✅ แก้ไขสำเร็จ':'✅ เพิ่มบ้านสำเร็จ','ok');closeModal('modal-branch');await loadAll();
+}
+// ปิดใช้งานบ้าน (ไม่ลบ) — บ้านที่เคยมีลูกค้าลบไม่ได้ตลอดไป (FK) นี่คือทาง "เลิกใช้" แทน
+// ปิดแล้วเพิ่มลูกค้า/เปิดยอดใหม่ที่บ้านนี้ไม่ได้อีก แต่ลูกค้าเดิมยังรับเงิน/ดูรายงานได้ปกติ
+async function toggleBranchActive(id){
+  var b=allBranches.find(function(x){return x.id===id});if(!b)return;
+  var res=await _sb.from('branches').update({is_active:b.is_active===false}).eq('id',id);
+  if(res.error){toast('อัปเดตล้มเหลว: '+res.error.message,'err');return}
+  toast(b.is_active===false?'✅ เปิดใช้งานบ้านแล้ว':'✅ ปิดใช้งานบ้านแล้ว','ok');await loadAll();
 }
 async function doDeleteBranch(id){
   var b=allBranches.find(function(x){return x.id===id});
