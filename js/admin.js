@@ -183,16 +183,14 @@ async function toggleBranchActive(id){
 async function doDeleteBranch(id){
   var b=allBranches.find(function(x){return x.id===id});
   var loansHere=allLoans.filter(function(l){return l.branch_id===id});
-  // มีลูกค้า active (ปกติ/ค้าง/ตาย) → ห้ามลบเด็ดขาด กันหลักฐานยอดค้างชำระของลูกค้าจริงหายไป
-  var active=loansHere.filter(function(l){return l.status!=='closed'}).length;
-  if(active){toast('ลบไม่ได้ มีลูกค้าใช้งานอยู่ '+active+' ราย — ต้องปิดสัญญาให้หมดก่อน','err');return}
-  // เหลือแต่สัญญาปิดแล้ว → ลบได้จริง แต่เป็นการลบถาวร (ลบประวัติกู้/จ่าย/ยอดเบิกทั้งหมดของบ้านนี้ทิ้งด้วย)
+  // ไม่บล็อกอะไรทั้งนั้นตามที่ Owner ยืนยันแล้ว (แม้มีลูกค้า active/ค้าง/ตายอยู่ก็ลบได้) —
+  // เตือนใน confirm ให้ชัดว่ากำลังลบอะไรไปบ้าง แต่ไม่ขวางการลบ
+  var activeCount=loansHere.filter(function(l){return l.status!=='closed'}).length;
   var hasHistory=loansHere.length>0;
-  var ok=await showConfirm(hasHistory
-    ?{icon:'🗑',title:'ลบบ้าน (ลบถาวร)',
-      msg:'ลบบ้าน "'+b.name+'" พร้อมประวัติสัญญาที่ปิดแล้วทั้งหมด '+loansHere.length+' สัญญา (ยอดกู้/ยอดจ่าย/ยอดเบิกของลูกค้าทุกคนในบ้านนี้)?\nลบแล้วกู้คืนไม่ได้',
-      okText:'ลบถาวร',okClass:'btn-red'}
-    :{icon:'🏠',title:'ลบบ้าน',msg:'ลบบ้าน "'+b.name+'"?',okText:'ลบ',okClass:'btn-red'});
+  var msg='ลบบ้าน "'+b.name+'"'+(hasHistory?' พร้อมประวัติสัญญาทั้งหมด '+loansHere.length+' สัญญา (ยอดกู้/ยอดจ่าย/ยอดเบิกของลูกค้าทุกคนในบ้านนี้)':'')
+    +(activeCount?'\n⚠️ รวมลูกค้าที่ยังไม่ปิดสัญญา/ยังค้างชำระอยู่ '+activeCount+' ราย — หลักฐานยอดหนี้ที่ยังไม่ได้เก็บจะหายไปด้วย':'')
+    +(hasHistory?'\nลบแล้วกู้คืนไม่ได้':'?');
+  var ok=await showConfirm({icon:'🗑',title:'ลบบ้าน'+(hasHistory?' (ลบถาวร)':''),msg:msg,okText:hasHistory?'ลบถาวร':'ลบ',okClass:'btn-red'});
   if(!ok)return;
   // เคลียร์สิทธิ์เห็นบ้าน (พนักงาน/หัวหน้าสายที่ผูกไว้) ก่อน — เป็นแค่ mapping จึงลบได้ปลอดภัย ไม่งั้น FK กันลบ
   await _sb.from('user_branches').delete().eq('branch_id',id);
