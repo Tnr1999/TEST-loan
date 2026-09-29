@@ -600,7 +600,8 @@ function openAddCustomer(reloanCust){
       '<div class="field"><label>บ้าน <span class="req">*</span></label><select class="inp" id="f-branch"></select></div>'+
       '<div class="field"><label>วงเงินที่ปล่อย (บาท) <span class="req">*</span></label><div class="seg" id="f-principal">'+
         [300,500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(function(a){return '<button type="button" data-v="'+a+'" onclick="selPrincipal('+a+')">'+fmt0(a)+'</button>'}).join('')+
-        '</div><div class="field-err"></div></div>'+
+        '<button type="button" id="principal-custom-btn" onclick="selPrincipalCustom()">กำหนดเอง</button>'+
+        '</div><input class="inp mono" id="f-principal-custom" type="number" min="1" step="1" placeholder="ระบุจำนวนเงิน" style="margin-top:8px;display:none" oninput="onPrincipalCustomInput()"/><div class="field-err"></div></div>'+
       '<div class="field"><label>อัตราดอกรายวัน</label><input class="inp" value="10% (คงที่)" disabled style="opacity:0.7"/></div>'+
       '<div class="field"><label>ระยะเก็บดอก</label><div class="seg" id="f-interval">'+
         '<button class="sel" data-v="1" onclick="selInterval(1)">ทุกวัน</button>'+
@@ -687,6 +688,19 @@ function selInterval(v){
 function selPrincipal(v){
   document.querySelectorAll('#f-principal button').forEach(function(b){b.classList.toggle('sel',+b.getAttribute('data-v')===v)});
   document.getElementById('modal-customer-body')._principal=v;
+  var ci=document.getElementById('f-principal-custom');
+  if(ci){ci.style.display='none';ci.value='';}
+}
+// วงเงิน "กำหนดเอง" — พ้นจาก preset ปุ่มลัด เผื่อยอดที่ไม่ตรงกับตัวเลือกสำเร็จรูป
+function selPrincipalCustom(){
+  document.querySelectorAll('#f-principal button[data-v]').forEach(function(b){b.classList.remove('sel')});
+  document.getElementById('principal-custom-btn').classList.add('sel');
+  var ci=document.getElementById('f-principal-custom');
+  ci.style.display='block';ci.focus();
+  document.getElementById('modal-customer-body')._principal=+ci.value||null;
+}
+function onPrincipalCustomInput(){
+  document.getElementById('modal-customer-body')._principal=+document.getElementById('f-principal-custom').value||null;
 }
 async function saveCustomer(){
   var name=document.getElementById('f-name').value.trim();
